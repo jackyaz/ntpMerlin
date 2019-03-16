@@ -85,7 +85,6 @@ location.reload(true);
 <td valign="top">
 <div>&nbsp;</div>
 <div class="formfonttitle">Tools - NTP Daemon Performance Stats</div>
-<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
@@ -94,8 +93,8 @@ location.reload(true);
 </thead>
 <tr>
 <td colspan="2" align="center">
-<img src="stats-ntp-offset.png">
-<img src="stats-ntp-sysjit.png">
+<img src="/ext/stats-ntp-offset.png">
+<img src="/ext/stats-ntp-sysjit.png">
 </td>
 </tr>
 </table>
@@ -107,9 +106,9 @@ location.reload(true);
 </thead>
 <tr>
 <td colspan="2" align="center">
-<img src="stats-week-ntp-offset.png">
-<img src="stats-week-ntp-sysjit.png">
-<img src="stats-week-ntp-freq.png">
+<img src="/ext/stats-week-ntp-offset.png">
+<img src="/ext/stats-week-ntp-sysjit.png">
+<img src="/ext/stats-week-ntp-freq.png">
 </td>
 </tr>
 </table>
