@@ -1,17 +1,29 @@
 #! /bin/sh
 
-Install(){
-	opkg install ntp-utils
-	opkg install ntpd
-	opkg install rrdtool
-	/opt/etc/init.d/S77ntpd stop
-	rm -f /opt/etc/init.d/S77ntpd
-	/usr/sbin/curl -fsL --retry 3 "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/S77ntpd" -o "/opt/etc/init.d/S77ntpd"
-	/usr/sbin/curl -fsL --retry 3 "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/menuTree.js" -o "/jffs/scripts/ntpd/menuTree.js"
-	/usr/sbin/curl -fsL --retry 3 "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/ntp.conf" -o "/jffs/configs/ntp.conf"
-	/usr/sbin/curl -fsL --retry 3 "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/ntpdstats.asp" -o "/jffs/scripts/ntpdstats.asp"
-	mount -o bind /jffs/scripts/ntpd/menuTree.js /www/require/modules/menuTree.js
-	mount -o bind /jffs/scripts/ntpdstats.asp /www/Feedback_Info.asp
+Download_File(){
+	/usr/sbin/curl -fsL --retry 3 "$1" -o "$2"
+}
+
+RRD_Initialise(){
+	if [ ! -f /jffs/scripts/ntpdstats.rrd ]; then
+		Download_File "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/ntpdstats.xml" "/jffs/scripts/ntpdstats.xml"
+		rrdtool restore -f /jffs/scripts/ntpdstats.xml /jffs/scripts/ntpdstats.rrd
+		rm -f /jffs/scripts/ntpdstats.xml
+	fi
+}
+
+Modify_WebUI_File(){
+	#$1 = original
+	#$2 = modified
+	tmpfile=/tmp/"$(echo "$1" | cut -f1 -d".")"
+	cp "$1" "$tmpfile"
+	
+	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$3"
+	if ! diff -q "$3" "$2" >/dev/null 2>&1; then
+		cp "$3" "$2"
+	fi
+	
+	mount -o bind "$2" "$1"
 }
 
 Generate_NTPStats(){
@@ -19,11 +31,10 @@ Generate_NTPStats(){
 	# This script is adapted from http://www.wraith.sf.ca.us/ntp
 	# The original is part of a set of scripts written by Steven Bjork
 	
-	RDB=/jffs/scripts/ntpd/stats.rrd
-	#rrdtool restore -f /jffs/scripts/ntpd/stats.xml /jffs/scripts/ntpd/stats.rrd
+	RDB=/jffs/scripts/ntpdstats.rrd
 	
 	#shellcheck disable=SC2086
-	ntpq -4 -c rv $1 | awk 'BEGIN{ RS=","}{ print }' >> /tmp/ntp-rrdstats.$$
+	ntpq -4 -c rv | awk 'BEGIN{ RS=","}{ print }' >> /tmp/ntp-rrdstats.$$
 	
 	NOFFSET=$(grep offset /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
 	NFREQ=$(grep frequency /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
@@ -67,7 +78,7 @@ Generate_NTPStats(){
 		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
 		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
 		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" &
+		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" 2> /dev/null
 	
 	#shellcheck disable=SC2086
 	taskset 1 rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-offset.png \
@@ -78,7 +89,7 @@ Generate_NTPStats(){
 		LINE1.5:noffset#fc8500:"offset" \
 		GPRINT:noffset:MIN:"Min\: %3.1lf %s" \
 		GPRINT:noffset:MAX:"Max\: %3.1lf %s" \
-		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n"
+		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" 2> /dev/null
 	
 	#shellcheck disable=SC2086
 	taskset 2 rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-sysjit.png \
@@ -90,7 +101,7 @@ Generate_NTPStats(){
 		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
 		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
 		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n"
+		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" 2> /dev/null
 	
 	#shellcheck disable=SC2086
 	taskset 2 rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-freq.png \
@@ -101,10 +112,37 @@ Generate_NTPStats(){
 		GPRINT:freq:MIN:"Min\: %2.2lf" \
 		GPRINT:freq:MAX:"Max\: %2.2lf" \
 		GPRINT:freq:AVERAGE:"Avg\: %2.2lf" \
-		GPRINT:freq:LAST:"Curr\: %2.2lf\n"
-	#end
+		GPRINT:freq:LAST:"Curr\: %2.2lf\n" 2> /dev/null
 	
 	sed -i "/cmd \/jffs\/scripts\/ntpd\/ntpdstats.sh/d" /tmp/syslog.log-1 /tmp/syslog.log
 }
 
-Generate_NTPStats "$@"
+Install(){
+	opkg install ntp-utils
+	opkg install ntpd
+	opkg install rrdtool
+	/opt/etc/init.d/S77ntpd stop
+	rm -f /opt/etc/init.d/S77ntpd
+	
+	Download_File "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/S77ntpd" "/opt/etc/init.d/S77ntpd"
+	Download_File "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/ntp.conf" "/jffs/configs/ntp.conf"
+	
+	Download_File "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/ntpdstats_www.asp" "/jffs/scripts/ntpdstats_www.asp"
+	mount -o bind /jffs/scripts/ntpdstats_www.asp /www/Feedback_Info.asp
+	
+	Modify_WebUI_File "/www/require/modules/menuTree.js" "/jffs/scripts/ntpd_menuTree.js"
+	
+	RRD_Initialise
+	
+	/opt/etc/init.d/S77ntpd start
+	
+	Generate_NTPStats
+}
+
+if [ -z "$1" ]; then
+	Generate_NTPStats
+elif [ "$1" = "install" ]; then
+	Install
+else
+	exit 1
+fi
