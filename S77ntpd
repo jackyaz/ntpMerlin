@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# shellcheck disable=SC2034
+
+ENABLED=yes
+PROCS=ntpd
+ARGS="-c /jffs/configs/ntp.conf -f /opt/var/spool/ntp/ntp.drift -s /opt/var/spool/ntp -k /opt/etc/ntp -l /opt/var/spool/ntp/ntp.log"
+PREARGS=""
+PRECMD="killall ntp"
+DESC=$PROCS
+PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+. /opt/etc/init.d/rc.func
