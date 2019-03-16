@@ -13,17 +13,17 @@ RRD_Initialise(){
 }
 
 Modify_WebUI_File(){
-	#$1 = original
-	#$2 = modified
-	tmpfile=/tmp/"$(echo "$1" | cut -f1 -d".")"
-	cp "$1" "$tmpfile"
+	tmpfile=/tmp/menuTree.js
 	
-	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$3"
-	if ! diff -q "$3" "$2" >/dev/null 2>&1; then
-		cp "$3" "$2"
+	cp "/www/require/modules/menuTree.js" "$tmpfile"
+	
+	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
+	if ! diff -q "$tmpfile" "/jffs/scripts/ntpd_menuTree.js" >/dev/null 2>&1; then
+		cp "$tmpfile" "/jffs/scripts/ntpd_menuTree.js"
 	fi
 	
-	mount -o bind "$2" "$1"
+	umount "/www/require/modules/menuTree.js" 2>/dev/null
+	mount -o bind "/jffs/scripts/ntpd_menuTree.js" "/www/require/modules/menuTree.js"
 }
 
 Generate_NTPStats(){
@@ -124,13 +124,15 @@ Install(){
 	/opt/etc/init.d/S77ntpd stop
 	rm -f /opt/etc/init.d/S77ntpd
 	
-	Download_File "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/S77ntpd" "/opt/etc/init.d/S77ntpd"
 	Download_File "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/ntp.conf" "/jffs/configs/ntp.conf"
+	Download_File "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/S77ntpd" "/opt/etc/init.d/S77ntpd"
+	chmod +x /opt/etc/init.d/S77ntpd
 	
 	Download_File "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/ntpdstats_www.asp" "/jffs/scripts/ntpdstats_www.asp"
+	umount /www/Feedback_Info.asp 2>/dev/null
 	mount -o bind /jffs/scripts/ntpdstats_www.asp /www/Feedback_Info.asp
 	
-	Modify_WebUI_File "/www/require/modules/menuTree.js" "/jffs/scripts/ntpd_menuTree.js"
+	Modify_WebUI_File
 	
 	RRD_Initialise
 	
