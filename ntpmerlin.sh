@@ -484,6 +484,8 @@ Menu_Install(){
 	
 	NTPD_Customise
 	
+	Shortcut_ntpdMerlin create
+	
 	Generate_NTPStats
 }
 
