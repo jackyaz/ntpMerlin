@@ -288,7 +288,7 @@ Generate_NTPStats(){
 	D_COMMON='--start -93525 --x-grid MINUTE:20:HOUR:2:HOUR:4:0:%H:%M'
 	W_COMMON='--start -691175 --x-grid HOUR:3:DAY:1:DAY:1:0:%d/%m'
 	
-	mkdir -p "$(readlink -f /www/ext)"
+	mkdir -p "$(readlink /www/ext)"
 	
 	#shellcheck disable=SC2086
 	taskset 1 rrdtool graph --imgformat PNG /www/ext/stats-ntp-offset.png \
