@@ -4,7 +4,7 @@
 
 ENABLED=yes
 PROCS=ntpd
-ARGS="-c /jffs/configs/ntp.conf -f /opt/var/spool/ntp/ntp.drift -s /opt/var/spool/ntp -k /opt/etc/ntp -l /opt/var/spool/ntp/ntp.log"
+ARGS="-c /jffs/configs/ntp.conf"
 PREARGS=""
 PRECMD="killall ntp"
 DESC=$PROCS
