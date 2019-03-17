@@ -432,11 +432,12 @@ Menu_Uninstall(){
 	Print_Output "true" "Removing $NTPD_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
 	while true; do
-		printf "\\n\\e[1mDo you want to delete %s configuration file(s)? (y/n)\\e[0m\\n" "$NTPD_NAME"
+		printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m\\n" "$NTPD_NAME"
 		read -r "confirm"
 		case "$confirm" in
 			y|Y)
 				rm -f "/jffs/configs/ntp.conf" 2>/dev/null
+				rm -f "/jffs/scripts/ntpdstats_rrd.rrd" 2>/dev/null
 				break
 			;;
 			*)
@@ -445,6 +446,12 @@ Menu_Uninstall(){
 		esac
 	done
 	Shortcut_ntpdMerlin delete
+	/opt/etc/init.d/S77ntpd stop
+	opkg remove rrdtool
+	opkg remove ntpd
+	opkg remove ntp-utils	
+	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
+	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
 	rm -f "/jffs/scripts/ntpmerlin" 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"
