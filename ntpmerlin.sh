@@ -27,6 +27,16 @@ readonly WARN="\\e[33m"
 readonly PASS="\\e[32m"
 ### End of output format variables ###
 
+# $1 = print to syslog, $2 = message to print, $3 = log level
+Print_Output(){
+	if [ "$1" = "true" ]; then
+		logger -t "$NTPD_NAME" "$2"
+		printf "\\e[1m$3%s: $2\\e[0m\\n\\n" "$NTPD_NAME"
+	else
+		printf "\\e[1m$3%s: $2\\e[0m\\n\\n" "$NTPD_NAME"
+	fi
+}
+
 ### Code for this function courtesy of https://github.com/decoderman- credit to @thelonelycoder ###
 Firmware_Version_Check(){
 	echo "$1" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'
@@ -142,7 +152,6 @@ Mount_NTPD_WebUI(){
 	
 	mount -o bind /jffs/scripts/ntpdstats_www.asp /www/Feedback_Info.asp
 }
-
 
 Modify_WebUI_File(){
 	umount "/www/require/modules/menuTree.js" 2>/dev/null
