@@ -155,7 +155,8 @@ Modify_WebUI_File(){
 		cp "$tmpfile" "/jffs/scripts/ntpd_menuTree.js"
 	fi
 	
-	umount "/www/require/modules/menuTree.js" 2>/dev/null
+	rm -f "$tmpfile"
+	
 	mount -o bind "/jffs/scripts/ntpd_menuTree.js" "/www/require/modules/menuTree.js"
 }
 
@@ -299,14 +300,15 @@ ScriptHeader(){
 	printf "\\e[1m## |_||_|\__|| .__/\__,_||_|  |_|\___||_|  |_||_||_||_| ##\\e[0m\\n"
 	printf "\\e[1m##           |_|                                        ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
-	printf "\\e[1m##           %s on %-9s           ##\\e[0m\\n" "$NTPD_VERSION" "$ROUTER_MODEL"
+	printf "\\e[1m##                  %s on %-9s                 ##\\e[0m\\n" "$NTPD_VERSION" "$ROUTER_MODEL"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##       https://github.com/jackyaz/ntpdMerlin          ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\n"
 }
-
+##                 v1.0.0 on RT-AC86U                  ##
+##                                                      ##
 MainMenu(){
 	Shortcut_ntpdMerlin create
 	printf "1.    Generate updated %s graphs now\\n\\n" "$NTPD_NAME"
@@ -323,7 +325,7 @@ MainMenu(){
 		case "$menu" in
 			1)
 				printf "\\n"
-				Menu_Startup
+				Menu_GenerateStats
 				PressEnter
 				break
 			;;
