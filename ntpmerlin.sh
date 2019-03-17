@@ -430,7 +430,7 @@ Menu_Uninstall(){
 		esac
 	done
 	Shortcut_ntpdMerlin delete
-	rm -f "/jffs/scripts/$NTPD_NAME" 2>/dev/null
+	rm -f "/jffs/scripts/ntpmerlin" 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"
 }
