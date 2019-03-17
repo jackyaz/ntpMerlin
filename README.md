@@ -42,7 +42,7 @@ If you do not have Entware installed, you will need to use the full path:
 ```
 
 ## Updating
-Launch ntpmerlin and select option 3
+Launch ntpmerlin and select option u
 
 ## Help
 Please post about any issues and problems here: [ntpdMerlin on SNBForums](https://www.snbforums.com/threads/ntp-daemon-for-asuswrt-merlin.28041/)
