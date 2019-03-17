@@ -14,6 +14,7 @@
 
 ### Start of script variables ###
 readonly NTPD_NAME="ntpdMerlin"
+readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr '[A-Z]' '[a-z]' | sed 's/d//')
 readonly NTPD_VERSION="v1.0.0"
 readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpdMerlin/""$NTPD_BRANCH"
@@ -70,13 +71,13 @@ Clear_Lock(){
 
 Update_Version(){
 	if [ -z "$1" ]; then
-		localver=$(grep "NTPD_VERSION=" /jffs/scripts/ntpmerlin | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
+		localver=$(grep "NTPD_VERSION=" /jffs/scripts/"$NTPD_NAME_LOWER" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 		/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" | grep -qF "jackyaz" || { Print_Output "true" "404 error detected - stopping update" "$ERR"; return 1; }
 		serverver=$(/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO" | grep "NTPD_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 		if [ "$localver" != "$serverver" ]; then
 			Print_Output "true" "New version of $NTPD_NAME available - updating to $serverver" "$PASS"
-			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" -o "/jffs/scripts/ntpmerlin" && Print_Output "true" "$NTPD_NAME successfully updated"
-			chmod 0755 "/jffs/scripts/ntpmerlin"
+			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
+			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
 			Clear_Lock
 			exit 0
 		else
@@ -89,8 +90,8 @@ Update_Version(){
 		force)
 			serverver=$(/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" | grep "NTPD_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 			Print_Output "true" "Downloading latest version ($serverver) of $NTPD_NAME" "$PASS"
-			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" -o "/jffs/scripts/ntpmerlin" && Print_Output "true" "$NTPD_NAME successfully updated"
-			chmod 0755 "/jffs/scripts/ntpmerlin"
+			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
+			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
 			Clear_Lock
 			exit 0
 		;;
@@ -103,19 +104,19 @@ Auto_Startup(){
 		create)
 			if [ -f /jffs/scripts/services-start ]; then
 				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/services-start)
-				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/ntpmerlin startup"' # '"$NTPD_NAME" /jffs/scripts/services-start)
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$NTPD_NAME_LOWER startup"' # '"$NTPD_NAME" /jffs/scripts/services-start)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
 					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/scripts/services-start
 				fi
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
-					echo "/jffs/scripts/ntpmerlin startup"' # '"$NTPD_NAME" >> /jffs/scripts/services-start
+					echo "/jffs/scripts/$NTPD_NAME_LOWER startup"' # '"$NTPD_NAME" >> /jffs/scripts/services-start
 				fi
 			else
 				echo "#!/bin/sh" > /jffs/scripts/services-start
 				echo "" >> /jffs/scripts/services-start
-				echo "/jffs/scripts/ntpmerlin startup"' # '"$NTPD_NAME" >> /jffs/scripts/services-start
+				echo "/jffs/scripts/$NTPD_NAME_LOWER startup"' # '"$NTPD_NAME" >> /jffs/scripts/services-start
 				chmod 0755 /jffs/scripts/services-start
 			fi
 		;;
@@ -137,7 +138,7 @@ Auto_Cron(){
 			STARTUPLINECOUNT=$(cru l | grep -c "$NTPD_NAME")
 			
 			if [ "$STARTUPLINECOUNT" -eq 0 ]; then
-				cru a "$NTPD_NAME" "*/5 * * * * /jffs/scripts/ntpmerlin generate"
+				cru a "$NTPD_NAME" "*/5 * * * * /jffs/scripts/$NTPD_NAME_LOWER generate"
 			fi
 		;;
 		delete)
@@ -292,9 +293,9 @@ Generate_NTPStats(){
 Shortcut_ntpdMerlin(){
 	case $1 in
 		create)
-			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/ntpmerlin" ] && [ -f "/jffs/scripts/ntpmerlin" ]; then
-				ln -s /jffs/scripts/ntpmerlin /opt/bin
-				chmod 0755 /opt/bin/ntpmerlin
+			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/ntpmerlin" ] && [ -f "/jffs/scripts/$NTPD_NAME_LOWER" ]; then
+				ln -s /jffs/scripts/"$NTPD_NAME_LOWER" /opt/bin
+				chmod 0755 /opt/bin/"$NTPD_NAME_LOWER"
 			fi
 		;;
 		delete)
@@ -474,7 +475,7 @@ Menu_Uninstall(){
 	opkg remove ntp-utils
 	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
 	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
-	rm -f "/jffs/scripts/ntpmerlin" 2>/dev/null
+	rm -f "/jffs/scripts/$NTPD_NAME_LOWER" 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"
 }
