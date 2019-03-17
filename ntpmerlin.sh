@@ -89,7 +89,7 @@ Update_Version(){
 		force)
 			serverver=$(/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" | grep "NTPD_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 			Print_Output "true" "Downloading latest version ($serverver) of $NTPD_NAME" "$PASS"
-			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO.sh" -o "/jffs/scripts/ntpmerlin" && Print_Output "true" "$NTPD_NAME successfully updated"
+			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" -o "/jffs/scripts/ntpmerlin" && Print_Output "true" "$NTPD_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/ntpmerlin"
 			Clear_Lock
 			exit 0
