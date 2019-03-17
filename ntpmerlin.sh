@@ -165,6 +165,7 @@ Auto_NAT(){
 			fi
 		;;
 		check)
+		if [ -f /jffs/scripts/nat-start ]; then
 			STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/nat-start)
 			
 			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
@@ -172,6 +173,9 @@ Auto_NAT(){
 			else
 				return 1
 			fi
+		else
+			return 1
+		fi
 		;;
 	esac
 }
