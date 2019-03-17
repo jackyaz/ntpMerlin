@@ -4,7 +4,7 @@
 
 ENABLED=yes
 PROCS=ntpd
-ARGS="-c /jffs/configs/ntp.conf"
+ARGS="-c /jffs/configs/ntp.conf -g"
 PREARGS=""
 PRECMD="killall ntp"
 DESC=$PROCS
