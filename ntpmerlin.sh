@@ -134,6 +134,48 @@ Auto_Startup(){
 	esac
 }
 
+Auto_NAT(){
+	case $1 in
+		create)
+			if [ -f /jffs/scripts/nat-start ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/nat-start)
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$NTPD_NAME_LOWER ntpredirect"' # '"$NTPD_NAME" /jffs/scripts/nat-start)
+				
+				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
+					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/scripts/nat-start
+				fi
+				
+				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
+					echo "/jffs/scripts/$NTPD_NAME_LOWER ntpredirect"' # '"$NTPD_NAME" >> /jffs/scripts/nat-start
+				fi
+			else
+				echo "#!/bin/sh" > /jffs/scripts/nat-start
+				echo "" >> /jffs/scripts/nat-start
+				echo "/jffs/scripts/$NTPD_NAME_LOWER ntpredirect"' # '"$NTPD_NAME" >> /jffs/scripts/nat-start
+				chmod 0755 /jffs/scripts/nat-start
+			fi
+		;;
+		delete)
+			if [ -f /jffs/scripts/nat-start ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/nat-start)
+				
+				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/scripts/nat-start
+				fi
+			fi
+		;;
+		check)
+			STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/nat-start)
+			
+			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+				return 0
+			else
+				return 1
+			fi
+		;;
+	esac
+}
+
 Auto_Cron(){
 	case $1 in
 		create)
@@ -155,6 +197,18 @@ Auto_Cron(){
 
 Download_File(){
 	/usr/sbin/curl -fsL --retry 3 "$1" -o "$2"
+}
+
+NTP_Redirect(){
+	case $1 in
+		create)
+			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			iptables -t nat -A PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			;;
+		delete)
+			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+		;;
+esac
 }
 
 RRD_Initialise(){
@@ -339,11 +393,17 @@ ScriptHeader(){
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\n"
 }
-##                 v1.0.0 on RT-AC86U                  ##
-##                                                      ##
+
 MainMenu(){
 	Shortcut_ntpdMerlin create
+	NTP_REDIRECT_ENABLED=""
+	if [ "$(Auto_NAT check)" -eq 0 ]; then
+		NTP_REDIRECT_ENABLED="Enabled"
+	else
+		NTP_REDIRECT_ENABLED="Disabled"
+	fi
 	printf "1.    Generate updated %s graphs now\\n\\n" "$NTPD_NAME"
+	printf "2.    Toggle redirect of all NTP traffic to %s (currently %s)\\n\\n" "$NTPD_NAME" "$NTP_REDIRECT_ENABLED"
 	printf "u.    Check for updates\\n"
 	printf "e.    Exit %s\\n\\n" "$NTPD_NAME"
 	printf "z.    Uninstall %s\\n" "$NTPD_NAME"
@@ -358,6 +418,12 @@ MainMenu(){
 			1)
 				printf "\\n"
 				Menu_GenerateStats
+				PressEnter
+				break
+			;;
+			2)
+				printf "\\n"
+				Menu_ToggleNTPRedirect
 				PressEnter
 				break
 			;;
@@ -437,6 +503,20 @@ Menu_GenerateStats(){
 	Clear_Lock
 }
 
+Menu_ToggleNTPRedirect(){
+	Check_Lock
+	if [ "$(Auto_NAT check)" -eq 0 ]; then
+		Auto_NAT delete
+		NTP_Redirect delete
+		printf "\\n\\e[1mNTP Redirect has been disabled\\e[0m\\n"
+	else
+		Auto_NAT create
+		NTP_Redirect create
+		printf "\\n\\e[1mNTP Redirect has been enabled\\e[0m\\n"
+	fi
+	PressEnter
+	Clear_Lock
+}
 Menu_Update(){
 	Check_Lock
 	sleep 1
@@ -456,6 +536,8 @@ Menu_Uninstall(){
 	Print_Output "true" "Removing $NTPD_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
+	Auto_NAT delete
+	NTP_Redirect delete
 	while true; do
 		printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m\\n" "$NTPD_NAME"
 		read -r "confirm"
@@ -503,6 +585,11 @@ case "$1" in
 	;;
 	generate)
 		Menu_GenerateStats
+		exit 0
+	;;
+	ntpredirect)
+		Auto_NAT create
+		NTP_Redirect create
 		exit 0
 	;;
 	update)
