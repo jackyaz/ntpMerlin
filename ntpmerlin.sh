@@ -397,7 +397,7 @@ ScriptHeader(){
 MainMenu(){
 	Shortcut_ntpdMerlin create
 	NTP_REDIRECT_ENABLED=""
-	if [ "$(Auto_NAT check)" ]; then
+	if Auto_NAT check; then
 		NTP_REDIRECT_ENABLED="Enabled"
 	else
 		NTP_REDIRECT_ENABLED="Disabled"
@@ -505,16 +505,15 @@ Menu_GenerateStats(){
 
 Menu_ToggleNTPRedirect(){
 	Check_Lock
-	if [ "$(Auto_NAT check)" ]; then
+	if Auto_NAT check; then
 		Auto_NAT delete
 		NTP_Redirect delete
-		printf "\\n\\e[1mNTP Redirect has been disabled\\e[0m\\n"
+		printf "\\e[1mNTP Redirect has been disabled\\e[0m\\n\\n"
 	else
 		Auto_NAT create
 		NTP_Redirect create
-		printf "\\n\\e[1mNTP Redirect has been enabled\\e[0m\\n"
+		printf "\\e[1mNTP Redirect has been enabled\\e[0m\\n\\n"
 	fi
-	PressEnter
 	Clear_Lock
 }
 Menu_Update(){
