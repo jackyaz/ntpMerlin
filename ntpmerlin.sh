@@ -202,7 +202,7 @@ Generate_NTPStats(){
 		LINE1.5:noffset#fc8500:"offset" \
 		GPRINT:noffset:MIN:"Min\: %3.1lf %s" \
 		GPRINT:noffset:MAX:"Max\: %3.1lf %s" \
-		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" 2> /dev/null
+		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	taskset 2 rrdtool graph --imgformat PNG /www/ext/stats-ntp-sysjit.png \
@@ -216,7 +216,7 @@ Generate_NTPStats(){
 		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
 		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
 		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" 2> /dev/null
+		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	taskset 1 rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-offset.png \
@@ -227,7 +227,7 @@ Generate_NTPStats(){
 		LINE1.5:noffset#fc8500:"offset" \
 		GPRINT:noffset:MIN:"Min\: %3.1lf %s" \
 		GPRINT:noffset:MAX:"Max\: %3.1lf %s" \
-		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" 2> /dev/null
+		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	taskset 2 rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-sysjit.png \
@@ -239,7 +239,7 @@ Generate_NTPStats(){
 		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
 		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
 		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" 2> /dev/null
+		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	taskset 2 rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-freq.png \
@@ -250,7 +250,7 @@ Generate_NTPStats(){
 		GPRINT:freq:MIN:"Min\: %2.2lf" \
 		GPRINT:freq:MAX:"Max\: %2.2lf" \
 		GPRINT:freq:AVERAGE:"Avg\: %2.2lf" \
-		GPRINT:freq:LAST:"Curr\: %2.2lf\n" 2> /dev/null
+		GPRINT:freq:LAST:"Curr\: %2.2lf\n" >/dev/null 2>&1
 	
 	sed -i "/cmd \/jffs\/scripts\/ntpd\/ntpdstats.sh/d" /tmp/syslog.log-1 /tmp/syslog.log
 }
