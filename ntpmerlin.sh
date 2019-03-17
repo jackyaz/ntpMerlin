@@ -17,7 +17,7 @@ readonly NTPD_NAME="ntpdMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.0.0"
+readonly NTPD_VERSION="v1.0.1"
 readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpdMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
@@ -283,6 +283,8 @@ Generate_NTPStats(){
 	
 	D_COMMON='--start -93525 --x-grid MINUTE:20:HOUR:2:HOUR:4:0:%H:%M'
 	W_COMMON='--start -691175 --x-grid HOUR:3:DAY:1:DAY:1:0:%d/%m'
+	
+	mkdir -p "$(readlink -f /www/ext)"
 	
 	#shellcheck disable=SC2086
 	taskset 1 rrdtool graph --imgformat PNG /www/ext/stats-ntp-offset.png \
