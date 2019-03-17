@@ -131,6 +131,25 @@ Auto_Startup(){
 	esac
 }
 
+Auto_Cron(){
+	case $1 in
+		create)
+			STARTUPLINECOUNT=$(cru l | grep -c "$NTPD_NAME")
+			
+			if [ "$STARTUPLINECOUNT" -eq 0 ]; then
+				cru a "$NTPD_NAME" "*/5 * * * * /jffs/scripts/ntpmerlin generate"
+			fi
+		;;
+		delete)
+			STARTUPLINECOUNT=$(cru l | grep -c "$NTPD_NAME")
+			
+			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+				cru d "$NTPD_NAME"
+			fi
+		;;
+	esac
+}
+
 Download_File(){
 	/usr/sbin/curl -fsL --retry 3 "$1" -o "$2"
 }
@@ -182,6 +201,7 @@ Generate_NTPStats(){
 	# This script is adapted from http://www.wraith.sf.ca.us/ntp
 	# The original is part of a set of scripts written by Steven Bjork
 	Auto_Startup create 2>/dev/null
+	Auto_Cron create 2>/dev/null
 	
 	RDB=/jffs/scripts/ntpdstats_rrd.rrd
 	
@@ -266,7 +286,7 @@ Generate_NTPStats(){
 		GPRINT:freq:AVERAGE:"Avg\: %2.2lf" \
 		GPRINT:freq:LAST:"Curr\: %2.2lf\n" >/dev/null 2>&1
 	
-	sed -i "/cmd \/jffs\/scripts\/ntpd\/ntpdstats.sh/d" /tmp/syslog.log-1 /tmp/syslog.log
+	sed -i "/cmd \/jffs\/scripts\/ntpd\/ntpmerlin/d" /tmp/syslog.log-1 /tmp/syslog.log
 }
 
 Shortcut_ntpdMerlin(){
@@ -401,6 +421,7 @@ Menu_Install(){
 Menu_Startup(){
 	Check_Lock
 	Auto_Startup create 2>/dev/null
+	Auto_Cron create 2>/dev/null
 	Mount_NTPD_WebUI
 	Modify_WebUI_File
 	RRD_Initialise
@@ -431,6 +452,7 @@ Menu_Uninstall(){
 	Check_Lock
 	Print_Output "true" "Removing $NTPD_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
+	Auto_Cron delete 2>/dev/null
 	while true; do
 		printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m\\n" "$NTPD_NAME"
 		read -r "confirm"
@@ -449,7 +471,7 @@ Menu_Uninstall(){
 	/opt/etc/init.d/S77ntpd stop
 	opkg remove rrdtool
 	opkg remove ntpd
-	opkg remove ntp-utils	
+	opkg remove ntp-utils
 	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
 	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
 	rm -f "/jffs/scripts/ntpmerlin" 2>/dev/null
@@ -460,6 +482,7 @@ Menu_Uninstall(){
 if [ -z "$1" ]; then
 	Check_Lock
 	Auto_Startup create 2>/dev/null
+	Auto_Cron create 2>/dev/null
 	Clear_Lock
 	ScriptHeader
 	MainMenu
