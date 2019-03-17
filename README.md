@@ -53,3 +53,5 @@ If this is the first time you are using scripts, don't panic! In your router's W
 Further reading about scripts is available here: [AsusWRT-Merlin User-scripts](https://github.com/RMerl/asuswrt-merlin/wiki/User-scripts)
 
 ![WebUI enable scripts](https://puu.sh/A3wnG/00a43283ed.png)
+
+[**PayPal donation**](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=KWHP2LFLJV84Q)
