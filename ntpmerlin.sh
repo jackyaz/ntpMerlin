@@ -202,7 +202,7 @@ Download_File(){
 NTP_Redirect(){
 	case $1 in
 		create)
-			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 			iptables -t nat -A PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
 			;;
 		delete)
@@ -230,7 +230,7 @@ Mount_NTPD_WebUI(){
 }
 
 Modify_WebUI_File(){
-	umount "/www/require/modules/menuTree.js" 2>/dev/null
+	umount /www/require/modules/menuTree.js 2>/dev/null
 	sleep 1
 	tmpfile=/tmp/menuTree.js
 	cp "/www/require/modules/menuTree.js" "$tmpfile"
@@ -559,6 +559,8 @@ Menu_Uninstall(){
 	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
 	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
 	rm -f "/jffs/scripts/$NTPD_NAME_LOWER" 2>/dev/null
+	umount /www/require/modules/menuTree.js 2>/dev/null
+	umount /www/Feedback_Info.asp 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"
 }
