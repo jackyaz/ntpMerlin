@@ -258,14 +258,14 @@ Generate_NTPStats(){
 Shortcut_ntpdMerlin(){
 	case $1 in
 		create)
-			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/$NTPD_NAME" ] && [ -f "/jffs/scripts/$NTPD_NAME" ]; then
-				ln -s /jffs/scripts/$NTPD_NAME /opt/bin
-				chmod 0755 /opt/bin/$NTPD_NAME
+			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/ntpmerlin" ] && [ -f "/jffs/scripts/ntpmerlin" ]; then
+				ln -s /jffs/scripts/ntpmerlin /opt/bin
+				chmod 0755 /opt/bin/ntpmerlin
 			fi
 		;;
 		delete)
-			if [ -f "/opt/bin/$NTPD_NAME" ]; then
-				rm -f /opt/bin/$NTPD_NAME
+			if [ -f "/opt/bin/ntpmerlin" ]; then
+				rm -f /opt/bin/ntpmerlin
 			fi
 		;;
 	esac
