@@ -72,11 +72,11 @@ Clear_Lock(){
 Update_Version(){
 	if [ -z "$1" ]; then
 		localver=$(grep "NTPD_VERSION=" /jffs/scripts/"$NTPD_NAME_LOWER" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
-		/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" | grep -qF "jackyaz" || { Print_Output "true" "404 error detected - stopping update" "$ERR"; return 1; }
+		/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" | grep -qF "jackyaz" || { Print_Output "true" "404 error detected - stopping update" "$ERR"; return 1; }
 		serverver=$(/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO" | grep "NTPD_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 		if [ "$localver" != "$serverver" ]; then
 			Print_Output "true" "New version of $NTPD_NAME available - updating to $serverver" "$PASS"
-			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
+			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
 			Clear_Lock
 			exit 0
@@ -88,9 +88,9 @@ Update_Version(){
 	
 	case "$1" in
 		force)
-			serverver=$(/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" | grep "NTPD_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
+			serverver=$(/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" | grep "NTPD_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 			Print_Output "true" "Downloading latest version ($serverver) of $NTPD_NAME" "$PASS"
-			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/ntpmerlin.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
+			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
 			Clear_Lock
 			exit 0
@@ -287,20 +287,20 @@ Generate_NTPStats(){
 		GPRINT:freq:AVERAGE:"Avg\: %2.2lf" \
 		GPRINT:freq:LAST:"Curr\: %2.2lf\n" >/dev/null 2>&1
 	
-	sed -i "/cmd \/jffs\/scripts\/ntpd\/ntpmerlin/d" /tmp/syslog.log-1 /tmp/syslog.log
+	sed -i "/cmd \/jffs\/scripts\/ntpd\/$NTPD_NAME_LOWER/d" /tmp/syslog.log-1 /tmp/syslog.log
 }
 
 Shortcut_ntpdMerlin(){
 	case $1 in
 		create)
-			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/ntpmerlin" ] && [ -f "/jffs/scripts/$NTPD_NAME_LOWER" ]; then
+			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/$NTPD_NAME_LOWER" ] && [ -f "/jffs/scripts/$NTPD_NAME_LOWER" ]; then
 				ln -s /jffs/scripts/"$NTPD_NAME_LOWER" /opt/bin
 				chmod 0755 /opt/bin/"$NTPD_NAME_LOWER"
 			fi
 		;;
 		delete)
-			if [ -f "/opt/bin/ntpmerlin" ]; then
-				rm -f /opt/bin/ntpmerlin
+			if [ -f "/opt/bin/$NTPD_NAME_LOWER" ]; then
+				rm -f /opt/bin/"$NTPD_NAME_LOWER"
 			fi
 		;;
 	esac
