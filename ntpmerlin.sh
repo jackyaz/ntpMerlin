@@ -14,6 +14,8 @@
 
 ### Start of script variables ###
 readonly NTPD_NAME="ntpdMerlin"
+#shellcheck disable=SC2019
+#shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
 readonly NTPD_VERSION="v1.0.0"
 readonly NTPD_BRANCH="master"
