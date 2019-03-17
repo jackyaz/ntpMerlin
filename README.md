@@ -17,7 +17,6 @@ This script serves as a user-friendly installer for [kvic](https://github.com/kv
 ### Models
 All modes supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Models confirmed to work are below:
 *   RT-AC86U
-*   RT-AX88U
 
 ### Firmware versions
 You must be running firmware no older than:
