@@ -134,15 +134,19 @@ RRD_Initialise(){
 }
 
 Mount_NTPD_WebUI(){
+	umount /www/Feedback_Info.asp 2>/dev/null
+	sleep 1
 	if [ ! -f /jffs/scripts/ntpdstats_www.asp ]; then
 		Download_File "$NTPD_REPO/ntpdstats_www.asp" "/jffs/scripts/ntpdstats_www.asp"
 	fi
-	umount /www/Feedback_Info.asp 2>/dev/null
+	
 	mount -o bind /jffs/scripts/ntpdstats_www.asp /www/Feedback_Info.asp
 }
 
 
 Modify_WebUI_File(){
+	umount "/www/require/modules/menuTree.js" 2>/dev/null
+	sleep 1
 	tmpfile=/tmp/menuTree.js
 	cp "/www/require/modules/menuTree.js" "$tmpfile"
 	
