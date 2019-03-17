@@ -1,3 +1,3 @@
 language: shell
 script:
-  - bash -c 'shopt -s globstar; shellcheck ntpdstats.sh'
+  - bash -c 'shopt -s globstar; shellcheck ntpmerlin.sh'
