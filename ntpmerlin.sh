@@ -17,7 +17,7 @@ readonly NTPD_NAME="ntpdMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.0.5"
+readonly NTPD_VERSION="v1.0.6"
 readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpdMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
@@ -71,6 +71,30 @@ Clear_Lock(){
 	return 0
 }
 
+Update_File(){
+	if [ "$1" = "S77ntpd" ]; then
+		tmpfile="/tmp/$1"
+		Download_File "$NTPD_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "/opt/etc/init.d/$1" >/dev/null 2>&1; then
+			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			NTPD_Customise
+		fi
+		rm -f "$tmpfile"
+	elif [ "$1" = "ntp.conf" ]; then
+		tmpfile="/tmp/$1"
+		Download_File "$NTPD_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "/jffs/configs/$1" >/dev/null 2>&1; then
+			Print_Output "true" "New version of $1 downloaded, previous file saved to /jffs/configs/$1.bak" "$PASS"
+			mv "/jffs/configs/$1" "/jffs/configs/$1.bak"
+			Download_File "$NTPD_REPO/$1" "/jffs/configs/$1"
+			/opt/etc/init.d/S77ntpd restart
+		fi
+		rm -f "$tmpfile"
+	else
+		return 1
+	fi
+}
+
 Update_Version(){
 	if [ -z "$1" ]; then
 		localver=$(grep "NTPD_VERSION=" /jffs/scripts/"$NTPD_NAME_LOWER" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
@@ -78,6 +102,8 @@ Update_Version(){
 		serverver=$(/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" | grep "NTPD_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 		if [ "$localver" != "$serverver" ]; then
 			Print_Output "true" "New version of $NTPD_NAME available - updating to $serverver" "$PASS"
+			Update_File "S77ntpd"
+			Update_File "ntp.conf"
 			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
 			Clear_Lock
@@ -93,6 +119,8 @@ Update_Version(){
 		force)
 			serverver=$(/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" | grep "NTPD_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 			Print_Output "true" "Downloading latest version ($serverver) of $NTPD_NAME" "$PASS"
+			Update_File "S77ntpd"
+			Update_File "ntp.conf"
 			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
 			Clear_Lock
@@ -481,7 +509,7 @@ Menu_Install(){
 	opkg install ntp-utils
 	opkg install ntpd
 	opkg install rrdtool
-		
+	
 	Download_File "$NTPD_REPO/ntp.conf" "/jffs/configs/ntp.conf"
 	
 	Mount_NTPD_WebUI
