@@ -379,8 +379,8 @@ Generate_NTPStats(){
 		GPRINT:freq:AVERAGE:"Avg\: %2.2lf" \
 		GPRINT:freq:LAST:"Curr\: %2.2lf\n" >/dev/null 2>&1
 	
-	syslogfile="$(readlink -f /tmp/syslog.log)"
-	syslogfile2="$(readlink -f /tmp/syslog.log-1)"
+	#syslogfile="$(readlink -f /tmp/syslog.log)"
+	#syslogfile2="$(readlink -f /tmp/syslog.log-1)"
 	
 	#sed -i "/cmd \/jffs\/scripts\/$NTPD_NAME_LOWER/d" /tmp/syslog.log-1 /tmp/syslog.log
 }
