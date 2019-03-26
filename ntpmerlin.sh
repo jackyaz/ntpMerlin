@@ -382,7 +382,7 @@ Generate_NTPStats(){
 	syslogfile="$(readlink -f /tmp/syslog.log)"
 	syslogfile2="$(readlink -f /tmp/syslog.log-1)"
 	
-	#sed -i "/cmd \/jffs\/scripts\/ntpd\/$NTPD_NAME_LOWER/d" /tmp/syslog.log-1 /tmp/syslog.log
+	#sed -i "/cmd \/jffs\/scripts\/$NTPD_NAME_LOWER/d" /tmp/syslog.log-1 /tmp/syslog.log
 }
 
 Shortcut_ntpdMerlin(){
