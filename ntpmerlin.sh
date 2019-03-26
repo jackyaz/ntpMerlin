@@ -17,7 +17,7 @@ readonly NTPD_NAME="ntpdMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.0.7"
+readonly NTPD_VERSION="v1.0.8"
 readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpdMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
@@ -432,6 +432,7 @@ ScriptHeader(){
 
 MainMenu(){
 	Shortcut_ntpdMerlin create
+	Update_File "S77ntpd"
 	NTP_REDIRECT_ENABLED=""
 	if Auto_NAT check; then
 		NTP_REDIRECT_ENABLED="Enabled"
