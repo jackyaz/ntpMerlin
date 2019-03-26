@@ -1,13 +1,13 @@
-# ntpdMerlin - NTP Daemon for AsusWRT Merlin - with graphs
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bc89c12c4bf44b49b28161f328e49b0)](https://www.codacy.com/app/jackyaz/ntpdMerlin?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/ntpdMerlin&amp;utm_campaign=Badge_Grade)
-[![Build Status](https://travis-ci.com/jackyaz/ntpdMerlin.svg?branch=master)](https://travis-ci.com/jackyaz/ntpdMerlin)
+# ntpMerlin - NTP Daemon for AsusWRT Merlin - with graphs
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bc89c12c4bf44b49b28161f328e49b0)](https://www.codacy.com/app/jackyaz/ntpMerlin?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/ntpMerlin&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.com/jackyaz/ntpMerlin.svg?branch=master)](https://travis-ci.com/jackyaz/ntpMerlin)
 
 ## v1.0.8
 ### Updated on 2019-03-26
 ## About
-Run an NTP server for your network for your network. Graphs available for NTP accuracy on the Tools page of the WebUI
+Run an NTP server for your network. Graphs available for NTP accuracy on the Tools page of the WebUI.
 
-ntpdMerlin is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
+ntpMerlin is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
 
 This script serves as a user-friendly installer for [kvic](https://github.com/kvic-z)'s [project](https://github.com/kvic-z/goodies-asuswrt/wiki/Install-NTP-Daemon-for-Asuswrt-Merlin)
 
@@ -16,6 +16,8 @@ This script serves as a user-friendly installer for [kvic](https://github.com/kv
 ## Supported Models
 ### Models
 All modes supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Models confirmed to work are below:
+*   RT-AC66U_B1
+*   RT-AC68U
 *   RT-AC86U
 *   RT-AC88U
 *   RT-AX88U
@@ -28,11 +30,11 @@ You must be running firmware no older than:
 Using your preferred SSH client/terminal, copy and paste the following command, then press Enter:
 
 ```sh
-/usr/sbin/curl --retry 3 "https://raw.githubusercontent.com/jackyaz/ntpdMerlin/master/ntpmerlin.sh" -o "/jffs/scripts/ntpmerlin" && chmod 0755 /jffs/scripts/ntpmerlin && /jffs/scripts/ntpmerlin install
+/usr/sbin/curl --retry 3 "https://raw.githubusercontent.com/jackyaz/ntpMerlin/master/ntpmerlin.sh" -o "/jffs/scripts/ntpmerlin" && chmod 0755 /jffs/scripts/ntpmerlin && /jffs/scripts/ntpmerlin install
 ```
 
 ## Usage
-To launch the ntpdMerlin menu after installation, use:
+To launch the ntpMerlin menu after installation, use:
 ```sh
 ntpmerlin
 ```
@@ -46,7 +48,7 @@ If you do not have Entware installed, you will need to use the full path:
 Launch ntpmerlin and select option u
 
 ## Help
-Please post about any issues and problems here: [ntpdMerlin on SNBForums](https://www.snbforums.com/threads/ntpdmerlin-installer-for-kvic-ntp-daemon.55756/)
+Please post about any issues and problems here: [ntpMerlin on SNBForums](https://www.snbforums.com/threads/ntpmerlin-installer-for-kvic-ntp-daemon.55756/)
 
 ## FAQs
 ### I haven't used scripts before on AsusWRT-Merlin

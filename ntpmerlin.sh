@@ -1,25 +1,27 @@
 #!/bin/sh
 
 ##########################################################
+##         _           __  __              _  _         ##
+##        | |         |  \/  |            | |(_)        ##
+##  _ __  | |_  _ __  | \  / |  ___  _ __ | | _  _ __   ##
+## | '_ \ | __|| '_ \ | |\/| | / _ \| '__|| || || '_ \  ##
+## | | | || |_ | |_) || |  | ||  __/| |   | || || | | | ##
+## |_| |_| \__|| .__/ |_|  |_| \___||_|   |_||_||_| |_| ##
+##             | |                                      ##
+##             |_|                                      ##
 ##                                                      ##
-##       _             _  __  __            _  _        ##
-##  _ _ | |_  _ __  __| ||  \/  | ___  _ _ | |(_) _ _   ##
-## | ' \|  _|| '_ \/ _` || |\/| |/ -_)| '_|| || || ' \  ##
-## |_||_|\__|| .__/\__,_||_|  |_|\___||_|  |_||_||_||_| ##
-##           |_|                                        ##
-##                                                      ##
-##       https://github.com/jackyaz/ntpdMerlin          ##
+##       https://github.com/jackyaz/ntpMerlin           ##
 ##                                                      ##
 ##########################################################
 
 ### Start of script variables ###
-readonly NTPD_NAME="ntpdMerlin"
+readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.0.8"
+readonly NTPD_VERSION="v1.0.9"
 readonly NTPD_BRANCH="master"
-readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpdMerlin/""$NTPD_BRANCH"
+readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
 
@@ -382,7 +384,7 @@ Generate_NTPStats(){
 	#sed -i "/cmd \/jffs\/scripts\/ntpd\/$NTPD_NAME_LOWER/d" /tmp/syslog.log-1 /tmp/syslog.log
 }
 
-Shortcut_ntpdMerlin(){
+Shortcut_ntpMerlin(){
 	case $1 in
 		create)
 			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/$NTPD_NAME_LOWER" ] && [ -f "/jffs/scripts/$NTPD_NAME_LOWER" ]; then
@@ -416,22 +418,25 @@ ScriptHeader(){
 	printf "\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
-	printf "\\e[1m##       _             _  __  __            _  _        ##\\e[0m\\n"
-	printf "\\e[1m##  _ _ | |_  _ __  __| ||  \/  | ___  _ _ | |(_) _ _   ##\\e[0m\\n"
-	printf "\\e[1m## | ' \|  _|| '_ \/ _  || |\/| |/ -_)| '_|| || || ' \  ##\\e[0m\\n"
-	printf "\\e[1m## |_||_|\__|| .__/\__,_||_|  |_|\___||_|  |_||_||_||_| ##\\e[0m\\n"
-	printf "\\e[1m##           |_|                                        ##\\e[0m\\n"
+	printf "\\e[1m##         _           __  __              _  _         ##\\e[0m\\n"
+	printf "\\e[1m##        | |         |  \/  |            | |(_)        ##\\e[0m\\n"
+	printf "\\e[1m##  _ __  | |_  _ __  | \  / |  ___  _ __ | | _  _ __   ##\\e[0m\\n"
+	printf "\\e[1m## | '_ \ | __|| '_ \ | |\/| | / _ \| '__|| || || '_ \  ##\\e[0m\\n"
+	printf "\\e[1m## | | | || |_ | |_) || |  | ||  __/| |   | || || | | | ##\\e[0m\\n"
+	printf "\\e[1m## |_| |_| \__|| .__/ |_|  |_| \___||_|   |_||_||_| |_| ##\\e[0m\\n"
+	printf "\\e[1m##            | |                                       ##\\e[0m\\n"
+	printf "\\e[1m##            |_|                                       ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##                  %s on %-9s                 ##\\e[0m\\n" "$NTPD_VERSION" "$ROUTER_MODEL"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
-	printf "\\e[1m##       https://github.com/jackyaz/ntpdMerlin          ##\\e[0m\\n"
+	printf "\\e[1m##       https://github.com/jackyaz/ntpMerlin           ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\n"
 }
 
 MainMenu(){
-	Shortcut_ntpdMerlin create
+	Shortcut_ntpMerlin create
 	Update_File "S77ntpd"
 	NTP_REDIRECT_ENABLED=""
 	if Auto_NAT check; then
@@ -521,7 +526,7 @@ Menu_Install(){
 	
 	NTPD_Customise
 	
-	Shortcut_ntpdMerlin create
+	Shortcut_ntpMerlin create
 	
 	Generate_NTPStats
 }
@@ -590,7 +595,7 @@ Menu_Uninstall(){
 			;;
 		esac
 	done
-	Shortcut_ntpdMerlin delete
+	Shortcut_ntpMerlin delete
 	/opt/etc/init.d/S77ntpd stop
 	opkg remove rrdtool
 	opkg remove ntpd
