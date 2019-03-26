@@ -2,8 +2,8 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bc89c12c4bf44b49b28161f328e49b0)](https://www.codacy.com/app/jackyaz/ntpdMerlin?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/ntpdMerlin&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.com/jackyaz/ntpdMerlin.svg?branch=master)](https://travis-ci.com/jackyaz/ntpdMerlin)
 
-## v1.0.6
-### Updated on 2019-03-17
+## v1.0.7
+### Updated on 2019-03-26
 ## About
 Run an NTP server for your network for your network. Graphs available for NTP accuracy on the Tools page of the WebUI
 
@@ -17,6 +17,8 @@ This script serves as a user-friendly installer for [kvic](https://github.com/kv
 ### Models
 All modes supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Models confirmed to work are below:
 *   RT-AC86U
+*   RT-AC88U
+*   RT-AX88U
 
 ### Firmware versions
 You must be running firmware no older than:
