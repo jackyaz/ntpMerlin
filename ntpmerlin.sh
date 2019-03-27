@@ -19,7 +19,7 @@ readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.0.9"
+readonly NTPD_VERSION="v1.0.10"
 readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
@@ -50,6 +50,8 @@ Firmware_Version_Check(){
 
 ### Code for these functions inspired by https://github.com/Adamm00 - credit to @Adamm ###
 Check_Lock(){
+	Auto_Cron deleteold 2>/dev/null
+	Auto_Startup deleteold 2>/dev/null
 	if [ -f "/tmp/$NTPD_NAME.lock" ]; then
 		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$NTPD_NAME.lock)))
 		if [ "$ageoflock" -gt 120 ]; then
@@ -163,6 +165,15 @@ Auto_Startup(){
 				fi
 			fi
 		;;
+		deleteold)
+			if [ -f /jffs/scripts/services-start ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"ntpdMerlin" /jffs/scripts/services-start)
+				
+				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+					sed -i -e '/# '"ntpdMerlin"'/d' /jffs/scripts/services-start
+				fi
+			fi
+		;;
 	esac
 }
 
@@ -226,6 +237,13 @@ Auto_Cron(){
 			
 			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
 				cru d "$NTPD_NAME"
+			fi
+		;;
+		deleteold)
+			STARTUPLINECOUNT=$(cru l | grep -c "ntpdMerlin")
+			
+			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+				cru d "ntpdMerlin"
 			fi
 		;;
 	esac
@@ -295,6 +313,8 @@ Generate_NTPStats(){
 	# The original is part of a set of scripts written by Steven Bjork
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_Cron deleteold 2>/dev/null
+	Auto_Startup deleteold 2>/dev/null
 	
 	RDB=/jffs/scripts/ntpdstats_rrd.rrd
 	
@@ -436,8 +456,6 @@ ScriptHeader(){
 }
 
 MainMenu(){
-	Shortcut_ntpMerlin create
-	Update_File "S77ntpd"
 	NTP_REDIRECT_ENABLED=""
 	if Auto_NAT check; then
 		NTP_REDIRECT_ENABLED="Enabled"
@@ -535,6 +553,8 @@ Menu_Startup(){
 	Check_Lock
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_Startup deleteold 2>/dev/null
+	Auto_Cron deleteold 2>/dev/null
 	Mount_NTPD_WebUI
 	Modify_WebUI_File
 	RRD_Initialise
@@ -579,6 +599,8 @@ Menu_Uninstall(){
 	Print_Output "true" "Removing $NTPD_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
+	Auto_Startup deleteold 2>/dev/null
+	Auto_Cron deleteold 2>/dev/null
 	Auto_NAT delete
 	NTP_Redirect delete
 	while true; do
@@ -613,6 +635,10 @@ if [ -z "$1" ]; then
 	Check_Lock
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_Startup deleteold 2>/dev/null
+	Auto_Cron deleteold 2>/dev/null
+	Shortcut_ntpMerlin create
+	Update_File "S77ntpd"
 	Clear_Lock
 	ScriptHeader
 	MainMenu
