@@ -1,25 +1,27 @@
 #!/bin/sh
 
 ##########################################################
+##         _           __  __              _  _         ##
+##        | |         |  \/  |            | |(_)        ##
+##  _ __  | |_  _ __  | \  / |  ___  _ __ | | _  _ __   ##
+## | '_ \ | __|| '_ \ | |\/| | / _ \| '__|| || || '_ \  ##
+## | | | || |_ | |_) || |  | ||  __/| |   | || || | | | ##
+## |_| |_| \__|| .__/ |_|  |_| \___||_|   |_||_||_| |_| ##
+##             | |                                      ##
+##             |_|                                      ##
 ##                                                      ##
-##       _             _  __  __            _  _        ##
-##  _ _ | |_  _ __  __| ||  \/  | ___  _ _ | |(_) _ _   ##
-## | ' \|  _|| '_ \/ _` || |\/| |/ -_)| '_|| || || ' \  ##
-## |_||_|\__|| .__/\__,_||_|  |_|\___||_|  |_||_||_||_| ##
-##           |_|                                        ##
-##                                                      ##
-##       https://github.com/jackyaz/ntpdMerlin          ##
+##       https://github.com/jackyaz/ntpMerlin           ##
 ##                                                      ##
 ##########################################################
 
 ### Start of script variables ###
-readonly NTPD_NAME="ntpdMerlin"
+readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.0.7"
-readonly NTPD_BRANCH="develop"
-readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpdMerlin/""$NTPD_BRANCH"
+readonly NTPD_VERSION="v1.0.10"
+readonly NTPD_BRANCH="master"
+readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
 
@@ -48,6 +50,8 @@ Firmware_Version_Check(){
 
 ### Code for these functions inspired by https://github.com/Adamm00 - credit to @Adamm ###
 Check_Lock(){
+	Auto_Cron deleteold 2>/dev/null
+	Auto_Startup deleteold 2>/dev/null
 	if [ -f "/tmp/$NTPD_NAME.lock" ]; then
 		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$NTPD_NAME.lock)))
 		if [ "$ageoflock" -gt 120 ]; then
@@ -83,10 +87,9 @@ Update_File(){
 	elif [ "$1" = "ntp.conf" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$NTPD_REPO/$1" "$tmpfile"
-		if ! diff -q "$tmpfile" "/jffs/configs/$1" >/dev/null 2>&1; then
-			Print_Output "true" "New version of $1 downloaded, previous file saved to /jffs/configs/$1.bak" "$PASS"
-			mv "/jffs/configs/$1" "/jffs/configs/$1.bak"
-			Download_File "$NTPD_REPO/$1" "/jffs/configs/$1"
+		if ! diff -q "$tmpfile" "/jffs/configs/$1.default" >/dev/null 2>&1; then
+			Print_Output "true" "New version of $1 downloaded, previous file saved to /jffs/configs/$1.default" "$PASS"
+			Download_File "$NTPD_REPO/$1" "/jffs/configs/$1.default"
 			/opt/etc/init.d/S77ntpd restart
 		fi
 		rm -f "$tmpfile"
@@ -161,6 +164,15 @@ Auto_Startup(){
 				fi
 			fi
 		;;
+		deleteold)
+			if [ -f /jffs/scripts/services-start ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"ntpdMerlin" /jffs/scripts/services-start)
+				
+				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+					sed -i -e '/# '"ntpdMerlin"'/d' /jffs/scripts/services-start
+				fi
+			fi
+		;;
 	esac
 }
 
@@ -224,6 +236,13 @@ Auto_Cron(){
 			
 			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
 				cru d "$NTPD_NAME"
+			fi
+		;;
+		deleteold)
+			STARTUPLINECOUNT=$(cru l | grep -c "ntpdMerlin")
+			
+			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+				cru d "ntpdMerlin"
 			fi
 		;;
 	esac
@@ -293,6 +312,8 @@ Generate_NTPStats(){
 	# The original is part of a set of scripts written by Steven Bjork
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_Cron deleteold 2>/dev/null
+	Auto_Startup deleteold 2>/dev/null
 	
 	RDB=/jffs/scripts/ntpdstats_rrd.rrd
 	
@@ -379,13 +400,10 @@ Generate_NTPStats(){
 		GPRINT:freq:AVERAGE:"Avg\: %2.2lf" \
 		GPRINT:freq:LAST:"Curr\: %2.2lf\n" >/dev/null 2>&1
 	
-	#syslogfile="$(readlink -f /tmp/syslog.log)"
-	#syslogfile2="$(readlink -f /tmp/syslog.log-1)"
-	
-	#sed -i "/cmd \/jffs\/scripts\/$NTPD_NAME_LOWER/d" /tmp/syslog.log-1 /tmp/syslog.log
+	#sed -i "/cmd \/jffs\/scripts\/ntpd\/$NTPD_NAME_LOWER/d" /tmp/syslog.log-1 /tmp/syslog.log
 }
 
-Shortcut_ntpdMerlin(){
+Shortcut_ntpMerlin(){
 	case $1 in
 		create)
 			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/$NTPD_NAME_LOWER" ] && [ -f "/jffs/scripts/$NTPD_NAME_LOWER" ]; then
@@ -419,22 +437,24 @@ ScriptHeader(){
 	printf "\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
-	printf "\\e[1m##       _             _  __  __            _  _        ##\\e[0m\\n"
-	printf "\\e[1m##  _ _ | |_  _ __  __| ||  \/  | ___  _ _ | |(_) _ _   ##\\e[0m\\n"
-	printf "\\e[1m## | ' \|  _|| '_ \/ _  || |\/| |/ -_)| '_|| || || ' \  ##\\e[0m\\n"
-	printf "\\e[1m## |_||_|\__|| .__/\__,_||_|  |_|\___||_|  |_||_||_||_| ##\\e[0m\\n"
-	printf "\\e[1m##           |_|                                        ##\\e[0m\\n"
+	printf "\\e[1m##         _           __  __              _  _         ##\\e[0m\\n"
+	printf "\\e[1m##        | |         |  \/  |            | |(_)        ##\\e[0m\\n"
+	printf "\\e[1m##  _ __  | |_  _ __  | \  / |  ___  _ __ | | _  _ __   ##\\e[0m\\n"
+	printf "\\e[1m## | '_ \ | __|| '_ \ | |\/| | / _ \| '__|| || || '_ \  ##\\e[0m\\n"
+	printf "\\e[1m## | | | || |_ | |_) || |  | ||  __/| |   | || || | | | ##\\e[0m\\n"
+	printf "\\e[1m## |_| |_| \__|| .__/ |_|  |_| \___||_|   |_||_||_| |_| ##\\e[0m\\n"
+	printf "\\e[1m##             | |                                      ##\\e[0m\\n"
+	printf "\\e[1m##             |_|                                      ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
-	printf "\\e[1m##                  %s on %-9s                 ##\\e[0m\\n" "$NTPD_VERSION" "$ROUTER_MODEL"
+	printf "\\e[1m##                  %s on %-9s                ##\\e[0m\\n" "$NTPD_VERSION" "$ROUTER_MODEL"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
-	printf "\\e[1m##       https://github.com/jackyaz/ntpdMerlin          ##\\e[0m\\n"
+	printf "\\e[1m##       https://github.com/jackyaz/ntpMerlin           ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\n"
 }
 
 MainMenu(){
-	Shortcut_ntpdMerlin create
 	NTP_REDIRECT_ENABLED=""
 	if Auto_NAT check; then
 		NTP_REDIRECT_ENABLED="Enabled"
@@ -523,7 +543,7 @@ Menu_Install(){
 	
 	NTPD_Customise
 	
-	Shortcut_ntpdMerlin create
+	Shortcut_ntpMerlin create
 	
 	Generate_NTPStats
 }
@@ -532,6 +552,8 @@ Menu_Startup(){
 	Check_Lock
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_Startup deleteold 2>/dev/null
+	Auto_Cron deleteold 2>/dev/null
 	Mount_NTPD_WebUI
 	Modify_WebUI_File
 	RRD_Initialise
@@ -576,6 +598,8 @@ Menu_Uninstall(){
 	Print_Output "true" "Removing $NTPD_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
+	Auto_Startup deleteold 2>/dev/null
+	Auto_Cron deleteold 2>/dev/null
 	Auto_NAT delete
 	NTP_Redirect delete
 	while true; do
@@ -592,7 +616,7 @@ Menu_Uninstall(){
 			;;
 		esac
 	done
-	Shortcut_ntpdMerlin delete
+	Shortcut_ntpMerlin delete
 	/opt/etc/init.d/S77ntpd stop
 	opkg remove rrdtool
 	opkg remove ntpd
@@ -610,6 +634,10 @@ if [ -z "$1" ]; then
 	Check_Lock
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_Startup deleteold 2>/dev/null
+	Auto_Cron deleteold 2>/dev/null
+	Shortcut_ntpMerlin create
+	Update_File "S77ntpd"
 	Clear_Lock
 	ScriptHeader
 	MainMenu
