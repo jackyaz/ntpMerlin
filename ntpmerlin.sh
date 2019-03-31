@@ -79,42 +79,32 @@ Clear_Lock() {
 	return 0
 }
 
-Update_File() {
-	if [ "$1" = "S77ntpd" ]; then
-		tmpfile="/tmp/$1"
-		Download_File "$NTPD_REPO/$1" "$tmpfile"
-		if ! diff -q "$tmpfile" "/opt/etc/init.d/$1" >/dev/null 2>&1; then
-			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			NTPD_Customise
-		fi
-		rm -f "$tmpfile"
-	elif [ "$1" = "ntp.conf" ]; then
-		tmpfile="/tmp/$1"
-		Download_File "$NTPD_REPO/$1" "$tmpfile"
-		if [ -f "/jffs/configs/$1.default" ]; then
-			if ! diff -q "$tmpfile" "/jffs/configs/$1.default" >/dev/null 2>&1; then
-				Download_File "$NTPD_REPO/$1" "/jffs/configs/$1.default"
-				Print_Output "true" "New default version of $1 downloaded to /jffs/configs/$1.default, please compare against your /jffs/configs/$1" "$PASS"
-			fi
-		else
-			Download_File "$NTPD_REPO/$1" "/jffs/configs/$1.default"
-			Print_Output "true" "/jffs/configs/$1.default does not exist, downloading now. Please compare against your /jffs/configs/$1" "$PASS"
-		fi
-		rm -f "$tmpfile"
-	else
-		return 1
-	fi
-}
-
 Update_Version() {
 	if [ -z "$1" ]; then
+		doupdate="false"
 		localver=$(grep "NTPD_VERSION=" /jffs/scripts/"$NTPD_NAME_LOWER" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 		/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" | grep -qF "jackyaz" || { Print_Output "true" "404 error detected - stopping update" "$ERR"; return 1; }
 		serverver=$(/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" | grep "NTPD_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 		if [ "$localver" != "$serverver" ]; then
+			doupdate="version"
+		else
+			localmd5="$(md5sum "/jffs/scripts/$NTPD_NAME_LOWER" | awk '{print $1}')"
+			remotemd5="$(curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" | md5sum | awk '{print $1}')"
+			if [ "$localmd5" != "$remotemd5" ]; then
+				doupdate="md5"
+			fi
+		fi
+		
+		if [ "$doupdate" = "version" ]; then
 			Print_Output "true" "New version of $NTPD_NAME available - updating to $serverver" "$PASS"
-			Update_File "S77ntpd"
-			Update_File "ntp.conf"
+		elif [ "$doupdate" = "md5" ]; then
+			Print_Output "true" "MD5 hash of $NTPD_NAME does not match - downloading updated $serverver" "$PASS"
+		fi
+			
+		Update_File "S77ntpd"
+		Update_File "ntp.conf"
+		
+		if [ "$doupdate" != "false" ]; then
 			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
 			Clear_Lock
@@ -141,6 +131,33 @@ Update_Version() {
 	esac
 }
 ############################################################################
+
+Update_File() {
+	if [ "$1" = "S77ntpd" ]; then
+		tmpfile="/tmp/$1"
+		Download_File "$NTPD_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "/opt/etc/init.d/$1" >/dev/null 2>&1; then
+			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			NTPD_Customise
+		fi
+		rm -f "$tmpfile"
+	elif [ "$1" = "ntp.conf" ]; then
+		tmpfile="/tmp/$1"
+		Download_File "$NTPD_REPO/$1" "$tmpfile"
+		if [ -f "/jffs/configs/$1.default" ]; then
+			if ! diff -q "$tmpfile" "/jffs/configs/$1.default" >/dev/null 2>&1; then
+				Download_File "$NTPD_REPO/$1" "/jffs/configs/$1.default"
+				Print_Output "true" "New default version of $1 downloaded to /jffs/configs/$1.default, please compare against your /jffs/configs/$1" "$PASS"
+			fi
+		else
+			Download_File "$NTPD_REPO/$1" "/jffs/configs/$1.default"
+			Print_Output "true" "/jffs/configs/$1.default does not exist, downloading now. Please compare against your /jffs/configs/$1" "$PASS"
+		fi
+		rm -f "$tmpfile"
+	else
+		return 1
+	fi
+}
 
 Auto_Startup() {
 	case $1 in
@@ -586,6 +603,7 @@ Menu_ToggleNTPRedirect() {
 	fi
 	Clear_Lock
 }
+
 Menu_Update() {
 	Check_Lock
 	sleep 1
