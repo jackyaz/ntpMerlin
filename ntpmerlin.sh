@@ -512,6 +512,11 @@ MainMenu() {
 				PressEnter
 				break
 			;;
+			3)
+				printf "\\n"
+				Menu_Edit
+				break
+			;;
 			u)
 				printf "\\n"
 				Menu_Update
