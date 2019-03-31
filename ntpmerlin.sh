@@ -49,11 +49,11 @@ Firmware_Version_Check() {
 ############################################################################
 
 ### Code for these functions inspired by https://github.com/Adamm00 - credit to @Adamm ###
-Check_Lock() {
+Check_Lock(){
 	Auto_Cron deleteold 2>/dev/null
 	Auto_Startup deleteold 2>/dev/null
 	if [ -f "/tmp/$NTPD_NAME.lock" ]; then
-		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$NTPD_NAME.lock)))
+		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$YAZFI_NAME.lock)))
 		if [ "$ageoflock" -gt 120 ]; then
 			Print_Output "true" "Stale lock file found (>120 seconds old) - purging lock" "$ERR"
 			kill "$(sed -n '1p' /tmp/$NTPD_NAME.lock)" >/dev/null 2>&1
@@ -62,7 +62,11 @@ Check_Lock() {
 			return 0
 		else
 			Print_Output "true" "Lock file found (age: $ageoflock seconds) - stopping to prevent duplicate runs" "$ERR"
-			exit 1
+			#if [ -z "$1" ]; then
+				exit 1
+			#else
+			#	return 1
+			#fi
 		fi
 	else
 		echo "$$" > "/tmp/$NTPD_NAME.lock"
