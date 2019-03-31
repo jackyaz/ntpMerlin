@@ -33,7 +33,7 @@ readonly PASS="\\e[32m"
 ### End of output format variables ###
 
 # $1 = print to syslog, $2 = message to print, $3 = log level
-Print_Output() {
+Print_Output(){
 	if [ "$1" = "true" ]; then
 		logger -t "$NTPD_NAME" "$2"
 		printf "\\e[1m$3%s: $2\\e[0m\\n\\n" "$NTPD_NAME"
@@ -43,7 +43,7 @@ Print_Output() {
 }
 
 ### Code for this function courtesy of https://github.com/decoderman- credit to @thelonelycoder ###
-Firmware_Version_Check() {
+Firmware_Version_Check(){
 	echo "$1" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'
 }
 ############################################################################
@@ -74,12 +74,12 @@ Check_Lock(){
 	fi
 }
 
-Clear_Lock() {
+Clear_Lock(){
 	rm -f "/tmp/$NTPD_NAME.lock" 2>/dev/null
 	return 0
 }
 
-Update_Version() {
+Update_Version(){
 	if [ -z "$1" ]; then
 		doupdate="false"
 		localver=$(grep "NTPD_VERSION=" /jffs/scripts/"$NTPD_NAME_LOWER" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
@@ -132,7 +132,7 @@ Update_Version() {
 }
 ############################################################################
 
-Update_File() {
+Update_File(){
 	if [ "$1" = "S77ntpd" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$NTPD_REPO/$1" "$tmpfile"
@@ -159,7 +159,7 @@ Update_File() {
 	fi
 }
 
-Auto_Startup() {
+Auto_Startup(){
 	case $1 in
 		create)
 			if [ -f /jffs/scripts/services-start ]; then
@@ -201,7 +201,7 @@ Auto_Startup() {
 	esac
 }
 
-Auto_NAT() {
+Auto_NAT(){
 	case $1 in
 		create)
 			if [ -f /jffs/scripts/nat-start ]; then
@@ -247,7 +247,7 @@ Auto_NAT() {
 	esac
 }
 
-Auto_Cron() {
+Auto_Cron(){
 	case $1 in
 		create)
 			STARTUPLINECOUNT=$(cru l | grep -c "$NTPD_NAME")
@@ -273,11 +273,11 @@ Auto_Cron() {
 	esac
 }
 
-Download_File() {
+Download_File(){
 	/usr/sbin/curl -fsL --retry 3 "$1" -o "$2"
 }
 
-NTP_Redirect() {
+NTP_Redirect(){
 	case $1 in
 		create)
 			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
@@ -289,7 +289,7 @@ NTP_Redirect() {
 	esac
 }
 
-RRD_Initialise() {
+RRD_Initialise(){
 	if [ ! -f /jffs/scripts/ntpdstats_rrd.rrd ]; then
 		Download_File "$NTPD_REPO/ntpdstats_xml.xml" "/jffs/scripts/ntpdstats_xml.xml"
 		rrdtool restore -f /jffs/scripts/ntpdstats_xml.xml /jffs/scripts/ntpdstats_rrd.rrd
@@ -297,7 +297,7 @@ RRD_Initialise() {
 	fi
 }
 
-Mount_NTPD_WebUI() {
+Mount_NTPD_WebUI(){
 	umount /www/Feedback_Info.asp 2>/dev/null
 	sleep 1
 	if [ ! -f /jffs/scripts/ntpdstats_www.asp ]; then
@@ -307,7 +307,7 @@ Mount_NTPD_WebUI() {
 	mount -o bind /jffs/scripts/ntpdstats_www.asp /www/Feedback_Info.asp
 }
 
-Modify_WebUI_File() {
+Modify_WebUI_File(){
 	umount /www/require/modules/menuTree.js 2>/dev/null
 	sleep 1
 	tmpfile=/tmp/menuTree.js
@@ -323,7 +323,7 @@ Modify_WebUI_File() {
 	mount -o bind "/jffs/scripts/ntpd_menuTree.js" "/www/require/modules/menuTree.js"
 }
 
-NTPD_Customise() {
+NTPD_Customise(){
 	/opt/etc/init.d/S77ntpd stop
 	rm -f /opt/etc/init.d/S77ntpd
 	Download_File "$NTPD_REPO/S77ntpd" "/opt/etc/init.d/S77ntpd"
@@ -331,7 +331,7 @@ NTPD_Customise() {
 	/opt/etc/init.d/S77ntpd start
 }
 
-Generate_NTPStats() {
+Generate_NTPStats(){
 	# This function originally written by kvic, updated by Jack Yaz
 	# This script is adapted from http://www.wraith.sf.ca.us/ntp
 	# The original is part of a set of scripts written by Steven Bjork
@@ -427,7 +427,7 @@ Generate_NTPStats() {
 	
 }
 
-Shortcut_ntpMerlin() {
+Shortcut_ntpMerlin(){
 	case $1 in
 		create)
 			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/$NTPD_NAME_LOWER" ] && [ -f "/jffs/scripts/$NTPD_NAME_LOWER" ]; then
@@ -443,7 +443,7 @@ Shortcut_ntpMerlin() {
 	esac
 }
 
-PressEnter() {
+PressEnter(){
 	while true; do
 		printf "Press enter to continue..."
 		read -r "key"
@@ -456,7 +456,7 @@ PressEnter() {
 	return 0
 }
 
-ScriptHeader() {
+ScriptHeader(){
 	clear
 	printf "\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
@@ -478,7 +478,7 @@ ScriptHeader() {
 	printf "\\n"
 }
 
-MainMenu() {
+MainMenu(){
 	NTP_REDIRECT_ENABLED=""
 	if Auto_NAT check; then
 		NTP_REDIRECT_ENABLED="Enabled"
@@ -559,7 +559,7 @@ MainMenu() {
 	MainMenu
 }
 
-Menu_Install() {
+Menu_Install(){
 	opkg install ntp-utils
 	opkg install ntpd
 	opkg install rrdtool
@@ -579,7 +579,7 @@ Menu_Install() {
 	Generate_NTPStats
 }
 
-Menu_Startup() {
+Menu_Startup(){
 	Check_Lock
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
@@ -591,7 +591,7 @@ Menu_Startup() {
 	Clear_Lock
 }
 
-Menu_GenerateStats() {
+Menu_GenerateStats(){
 	Check_Lock
 	Generate_NTPStats
 	Clear_Lock
@@ -640,7 +640,7 @@ Menu_Edit(){
 	Clear_Lock
 }
 
-Menu_ToggleNTPRedirect() {
+Menu_ToggleNTPRedirect(){
 	Check_Lock
 	if Auto_NAT check; then
 		Auto_NAT delete
@@ -654,21 +654,21 @@ Menu_ToggleNTPRedirect() {
 	Clear_Lock
 }
 
-Menu_Update() {
+Menu_Update(){
 	Check_Lock
 	sleep 1
 	Update_Version
 	Clear_Lock
 }
 
-Menu_ForceUpdate() {
+Menu_ForceUpdate(){
 	Check_Lock
 	sleep 1
 	Update_Version force
 	Clear_Lock
 }
 
-Menu_Uninstall() {
+Menu_Uninstall(){
 	Check_Lock
 	Print_Output "true" "Removing $NTPD_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
