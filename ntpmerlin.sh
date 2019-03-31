@@ -486,7 +486,7 @@ MainMenu() {
 		NTP_REDIRECT_ENABLED="Disabled"
 	fi
 	printf "1.    Generate updated %s graphs now\\n\\n" "$NTPD_NAME"
-	printf "2.    Toggle redirect of all NTP traffic to %s\\n      (currently %s)\\n" "$NTPD_NAME" "$NTP_REDIRECT_ENABLED"
+	printf "2.    Toggle redirect of all NTP traffic to %s\\n      (currently %s)\\n\\n" "$NTPD_NAME" "$NTP_REDIRECT_ENABLED"
 	printf "3.    Edit %s config\\n\\n" "$NTPD_NAME"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$NTPD_NAME"
