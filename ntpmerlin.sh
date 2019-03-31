@@ -590,6 +590,49 @@ Menu_GenerateStats() {
 	Clear_Lock
 }
 
+Menu_Edit(){
+	Check_Lock
+	texteditor=""
+	exitmenu="false"
+	
+	printf "\\n\\e[1mA choice of text editors is available:\\e[0m\\n"
+	printf "1.    nano (recommended for beginners)\\n"
+	printf "2.    vi\\n"
+	printf "\\ne.    Exit to main menu\\n"
+	
+	while true; do
+		printf "\\n\\e[1mChoose an option:\\e[0m    "
+		read -r "editor"
+		case "$editor" in
+			1)
+				texteditor="nano -K"
+				break
+			;;
+			2)
+				texteditor="vi"
+				break
+			;;
+			e)
+				exitmenu="true"
+				break
+			;;
+			*)
+				printf "\\nPlease choose a valid option\\n\\n"
+			;;
+		esac
+	done
+	
+	if [ "$exitmenu" != "true" ]; then
+		oldmd5="$(md5sum "/jffs/configs/ntp.conf" | awk '{print $1}')"
+		$texteditor /jffs/configs/ntp.conf
+		newmd5="$(md5sum "/jffs/configs/ntp.conf" | awk '{print $1}')"
+		if [ "$oldmd5" != "$newmd5" ]; then
+			/opt/etc/init.d/S77ntpd restart
+		fi
+	fi
+	Clear_Lock
+}
+
 Menu_ToggleNTPRedirect() {
 	Check_Lock
 	if Auto_NAT check; then
