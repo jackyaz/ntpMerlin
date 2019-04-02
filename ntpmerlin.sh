@@ -485,8 +485,13 @@ ScriptHeader(){
 		DST_ENABLED="Active"
 	fi
 	
-	#DST_SETTING="$(nvram get time_zone_dstoff)"
-	#=M3.5.0/2,M10.5.0/2
+	DST_SETTING="$(nvram get time_zone_dstoff)"
+	DST_SETTING="$(echo "$DST_SETTING" | sed 's/M//g')"
+	DST_START="$(echo "$DST_SETTING" | cut -f1 -d",")"
+	DST_START="Month $(echo "$DST_START" | cut -f1 -d".") Week $(echo "$DST_START" | cut -f2 -d".") Weekday $(echo "$DST_START" | cut -f3 -d"." | cut -f1 -d"/") Hour $(echo "$DST_START" | cut -f3 -d"." | cut -f2 -d"/")"
+	DST_END="$(echo "$DST_SETTING" | cut -f2 -d",")"
+	DST_END="Month $(echo "$DST_END" | cut -f1 -d".") Week $(echo "$DST_END" | cut -f2 -d".") Weekday $(echo "$DST_END" | cut -f3 -d"." | cut -f1 -d"/") Hour $(echo "$DST_END" | cut -f3 -d"." | cut -f2 -d"/")"
+	
 	printf "\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
@@ -504,9 +509,10 @@ ScriptHeader(){
 	printf "\\e[1m##       https://github.com/jackyaz/ntpMerlin           ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
-	printf "\\e[1m##              DST is currently %-8s               ##\\e[0m\\n" "$DST_ENABLED"
-	
-	
+	printf "\\e[1m##               DST is currently %-8s              ##\\e[0m\\n" "$DST_ENABLED"
+	printf "\\e[1m##                                                      ##\\e[0m\\n"
+	printf "\\e[1m## DST starts on %-33s              ##\\e[0m\\n" "$DST_START"
+	printf "\\e[1m## DST ends on %-33s              ##\\e[0m\\n" "$DST_END"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\n"
