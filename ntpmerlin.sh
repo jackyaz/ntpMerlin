@@ -504,7 +504,7 @@ ScriptHeader(){
 	printf "\\e[1m##       https://github.com/jackyaz/ntpMerlin           ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
-	printf "\\e[1m##          DST is currently %-8s                       ##\\e[0m\\n" "$DST_ENABLED"
+	printf "\\e[1m##              DST is currently %-8s              ##\\e[0m\\n" "$DST_ENABLED"
 	
 	
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
