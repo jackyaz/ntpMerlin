@@ -480,9 +480,9 @@ ScriptHeader(){
 	DST_ENABLED="$(nvram get time_zone_dst)"
 	if ! Validate_Number "" "$DST_ENABLED" "silent"; then DST_ENABLED=0; fi
 	if [ "$DST_ENABLED" -eq "0" ]; then
-		DST_ENABLED="Disabled"
+		DST_ENABLED="Inactive"
 	else
-		DST_ENABLED="Enabled"
+		DST_ENABLED="Active"
 	fi
 	
 	#DST_SETTING="$(nvram get time_zone_dstoff)"
@@ -504,7 +504,7 @@ ScriptHeader(){
 	printf "\\e[1m##       https://github.com/jackyaz/ntpMerlin           ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
-	printf "\\e[1m##              DST is currently %-8s              ##\\e[0m\\n" "$DST_ENABLED"
+	printf "\\e[1m##              DST is currently %-8s               ##\\e[0m\\n" "$DST_ENABLED"
 	
 	
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
