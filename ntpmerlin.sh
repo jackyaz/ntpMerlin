@@ -308,19 +308,22 @@ Mount_NTPD_WebUI(){
 }
 
 Modify_WebUI_File(){
+	if [ -f "/jffs/scripts/ntpd_menuTree.js" ]; then
+		mv "/jffs/scripts/ntpd_menuTree.js" "/jffs/scripts/custom_menuTree.js"
+	fi
 	umount /www/require/modules/menuTree.js 2>/dev/null
 	sleep 1
 	tmpfile=/tmp/menuTree.js
 	cp "/www/require/modules/menuTree.js" "$tmpfile"
 	
 	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
-	if ! diff -q "$tmpfile" "/jffs/scripts/ntpd_menuTree.js" >/dev/null 2>&1; then
-		cp "$tmpfile" "/jffs/scripts/ntpd_menuTree.js"
+	if ! diff -q "$tmpfile" "/jffs/scripts/custom_menuTree.js" >/dev/null 2>&1; then
+		cp "$tmpfile" "/jffs/scripts/custom_menuTree.js"
 	fi
 	
 	rm -f "$tmpfile"
 	
-	mount -o bind "/jffs/scripts/ntpd_menuTree.js" "/www/require/modules/menuTree.js"
+	mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
 }
 
 NTPD_Customise(){
@@ -339,6 +342,10 @@ Generate_NTPStats(){
 	Auto_Cron create 2>/dev/null
 	Auto_Cron deleteold 2>/dev/null
 	Auto_Startup deleteold 2>/dev/null
+	
+	if [ -f "/jffs/scripts/ntpd_menuTree.js" ]; then
+		Modify_WebUI_File
+	fi
 	
 	RDB=/jffs/scripts/ntpdstats_rrd.rrd
 	
@@ -696,11 +703,12 @@ Menu_Uninstall(){
 	opkg remove rrdtool
 	opkg remove ntpd
 	opkg remove ntp-utils
-	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
-	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
-	rm -f "/jffs/scripts/$NTPD_NAME_LOWER" 2>/dev/null
 	umount /www/require/modules/menuTree.js 2>/dev/null
 	umount /www/Feedback_Info.asp 2>/dev/null
+	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
+	rm -f "/jffs/scripts/custom_menuTree.js" 2>/dev/null
+	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
+	rm -f "/jffs/scripts/$NTPD_NAME_LOWER" 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"
 }
