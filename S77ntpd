@@ -10,7 +10,7 @@ while [ "$(nvram get ntp_ready)" = "0" ] && [ "$ntptimer" -lt "300" ]; do
 done
 
 if [ "$ntptimer" -ge "300" ]; then
-	logger -st "S61stubby" "NTP failed to sync after 5 minutes - please check immediately!"
+	logger -st "S77ntpd" "NTP failed to sync after 5 minutes - please check immediately!"
 	echo ""
 	exit 1
 fi
