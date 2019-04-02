@@ -159,6 +159,18 @@ Update_File(){
 	fi
 }
 
+Validate_Number(){
+	if [ "$2" -eq "$2" ] 2>/dev/null; then
+		return 0
+	else
+		formatted="$(echo "$1" | sed -e 's/|/ /g')"
+		if [ -z "$3" ]; then
+			Print_Output "false" "$formatted - $2 is not a number" "$ERR"
+		fi
+		return 1
+	fi
+}
+
 Auto_Startup(){
 	case $1 in
 		create)
@@ -465,6 +477,21 @@ PressEnter(){
 
 ScriptHeader(){
 	clear
+	DST_ENABLED="$(nvram get time_zone_dst)"
+	if ! Validate_Number "" "$DST_ENABLED" "silent"; then DST_ENABLED=0; fi
+	if [ "$DST_ENABLED" -eq "0" ]; then
+		DST_ENABLED="Inactive"
+	else
+		DST_ENABLED="Active"
+	fi
+	
+	DST_SETTING="$(nvram get time_zone_dstoff)"
+	DST_SETTING="$(echo "$DST_SETTING" | sed 's/M//g')"
+	DST_START="$(echo "$DST_SETTING" | cut -f1 -d",")"
+	DST_START="Month $(echo "$DST_START" | cut -f1 -d".") Week $(echo "$DST_START" | cut -f2 -d".") Weekday $(echo "$DST_START" | cut -f3 -d"." | cut -f1 -d"/") Hour $(echo "$DST_START" | cut -f3 -d"." | cut -f2 -d"/")"
+	DST_END="$(echo "$DST_SETTING" | cut -f2 -d",")"
+	DST_END="Month $(echo "$DST_END" | cut -f1 -d".") Week $(echo "$DST_END" | cut -f2 -d".") Weekday $(echo "$DST_END" | cut -f3 -d"." | cut -f1 -d"/") Hour $(echo "$DST_END" | cut -f3 -d"." | cut -f2 -d"/")"
+	
 	printf "\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
@@ -480,6 +507,12 @@ ScriptHeader(){
 	printf "\\e[1m##                  %s on %-9s                 ##\\e[0m\\n" "$NTPD_VERSION" "$ROUTER_MODEL"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##       https://github.com/jackyaz/ntpMerlin           ##\\e[0m\\n"
+	printf "\\e[1m##                                                      ##\\e[0m\\n"
+	printf "\\e[1m##                                                      ##\\e[0m\\n"
+	printf "\\e[1m##               DST is currently %-8s              ##\\e[0m\\n" "$DST_ENABLED"
+	printf "\\e[1m##                                                      ##\\e[0m\\n"
+	printf "\\e[1m##    DST starts on %-33s   ##\\e[0m\\n" "$DST_START"
+	printf "\\e[1m##    DST ends on %-33s     ##\\e[0m\\n" "$DST_END"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\n"
