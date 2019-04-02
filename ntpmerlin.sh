@@ -159,6 +159,18 @@ Update_File(){
 	fi
 }
 
+Validate_Number(){
+	if [ "$2" -eq "$2" ] 2>/dev/null; then
+		return 0
+	else
+		formatted="$(echo "$1" | sed -e 's/|/ /g')"
+		if [ -z "$3" ]; then
+			Print_Output "false" "$formatted - $2 is not a number" "$ERR"
+		fi
+		return 1
+	fi
+}
+
 Auto_Startup(){
 	case $1 in
 		create)
