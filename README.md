@@ -11,7 +11,7 @@ ntpMerlin is free to use under the [GNU General Public License version 3](https:
 
 This script serves as a user-friendly installer for [kvic](https://github.com/kvic-z)'s [project](https://github.com/kvic-z/goodies-asuswrt/wiki/Install-NTP-Daemon-for-Asuswrt-Merlin)
 
-![Menu UI](https://puu.sh/D5Oyt/4e2b31bc13.png)
+![Menu UI](https://puu.sh/D9ccG/42b28695af.png)
 
 ## Supported Models
 ### Models
