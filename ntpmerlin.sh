@@ -477,6 +477,16 @@ PressEnter(){
 
 ScriptHeader(){
 	clear
+	DST_ENABLED="$(nvram get time_zone_dst)"
+	if ! Validate_Number "" "$DST_ENABLED" "silent"; then DST_ENABLED=0; fi
+	if [ "$DST_ENABLED" -eq "0" ]; then
+		DST_ENABLED="Disabled"
+	else
+		DST_ENABLED="Enabled"
+	fi
+	
+	#DST_SETTING="$(nvram get time_zone_dstoff)"
+	#=M3.5.0/2,M10.5.0/2
 	printf "\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
@@ -492,6 +502,11 @@ ScriptHeader(){
 	printf "\\e[1m##                  %s on %-9s                 ##\\e[0m\\n" "$NTPD_VERSION" "$ROUTER_MODEL"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##       https://github.com/jackyaz/ntpMerlin           ##\\e[0m\\n"
+	printf "\\e[1m##                                                      ##\\e[0m\\n"
+	printf "\\e[1m##                                                      ##\\e[0m\\n"
+	printf "\\e[1m##          DST is currently %-8s                       ##\\e[0m\\n" "$DST_ENABLED"
+	
+	
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\n"
