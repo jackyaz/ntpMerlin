@@ -372,7 +372,7 @@ Generate_NTPStats(){
 	NDISPER=$(grep rootdisp /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
 	
 	rrdtool update $RDB N:"$NOFFSET":"$NSJIT":"$NCJIT":"$NWANDER":"$NFREQ":"$NDISPER"
-	rm /tmp/ntp-rrdstats.$$
+	#rm /tmp/ntp-rrdstats.$$
 	
 	TZ=$(cat /etc/TZ)
 	export TZ
