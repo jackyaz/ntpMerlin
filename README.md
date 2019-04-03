@@ -39,7 +39,7 @@ To launch the ntpMerlin menu after installation, use:
 ntpmerlin
 ```
 
-If you do not have Entware installed, you will need to use the full path:
+If this does not work, you will need to use the full path:
 ```sh
 /jffs/scripts/ntpmerlin
 ```
