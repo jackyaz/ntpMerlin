@@ -740,10 +740,12 @@ Menu_Uninstall(){
 	umount /www/Feedback_Info.asp 2>/dev/null
 	sed -i '/{url: "Feedback_Info.asp", tabName: "NTP Daemon"}/d' "/jffs/scripts/custom_menuTree.js"
 	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
+	umount /www/require/modules/menuTree.js 2>/dev/null
 	if [ ! -f "/jffs/scripts/spdmerlin" ]; then
 		opkg remove --autoremove rrdtool
-		umount /www/require/modules/menuTree.js 2>/dev/null
 		rm -f "/jffs/scripts/custom_menuTree.js" 2>/dev/null
+	else
+		mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
 	fi
 	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
 	rm -f "/jffs/scripts/$NTPD_NAME_LOWER" 2>/dev/null
