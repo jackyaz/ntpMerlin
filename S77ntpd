@@ -3,6 +3,7 @@
 # shellcheck disable=SC2034
 
 # Wait for NTP before starting
+logger -st "S77ntpd" "Waiting for NTP to sync before starting..."
 ntptimer=0
 while [ "$(nvram get ntp_ready)" = "0" ] && [ "$ntptimer" -lt "300" ]; do
 	ntptimer=$((ntptimer+1))

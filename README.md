@@ -2,8 +2,8 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bc89c12c4bf44b49b28161f328e49b0)](https://www.codacy.com/app/jackyaz/ntpMerlin?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/ntpMerlin&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.com/jackyaz/ntpMerlin.svg?branch=master)](https://travis-ci.com/jackyaz/ntpMerlin)
 
-## v1.2.0
-### Updated on 2019-04-02
+## v1.2.1
+### Updated on 2019-04-04
 ## About
 Run an NTP server for your network. Graphs available for NTP accuracy on the Tools page of the WebUI.
 

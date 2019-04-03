@@ -19,7 +19,7 @@ readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.2.0"
+readonly NTPD_VERSION="v1.2.1"
 readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
@@ -328,6 +328,11 @@ Modify_WebUI_File(){
 	tmpfile=/tmp/menuTree.js
 	cp "/www/require/modules/menuTree.js" "$tmpfile"
 	
+	if [ -f "/jffs/scripts/spdmerlin" ]; then
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
+		sed -i '/{url: "Advanced_Feedback.asp", tabName: "<#2033#>"}/d' "$tmpfile"
+		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
+	fi
 	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
 	if ! diff -q "$tmpfile" "/jffs/scripts/custom_menuTree.js" >/dev/null 2>&1; then
 		cp "$tmpfile" "/jffs/scripts/custom_menuTree.js"
@@ -386,7 +391,7 @@ Generate_NTPStats(){
 	mkdir -p "$(readlink /www/ext)"
 	
 	#shellcheck disable=SC2086
-	taskset 1 rrdtool graph --imgformat PNG /www/ext/stats-ntp-offset.png \
+	rrdtool graph --imgformat PNG /www/ext/stats-ntp-offset.png \
 		$COMMON $D_COMMON \
 		--title "Offset (s) - $DATE" \
 		DEF:offset="$RDB":offset:LAST \
@@ -397,13 +402,11 @@ Generate_NTPStats(){
 		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	taskset 2 rrdtool graph --imgformat PNG /www/ext/stats-ntp-sysjit.png \
+	rrdtool graph --imgformat PNG /www/ext/stats-ntp-sysjit.png \
 		$COMMON $D_COMMON \
 		--title "Jitter (s) - $DATE" \
 		DEF:sjit=$RDB:sjit:LAST \
 		CDEF:nsjit=sjit,1000,/ \
-		DEF:offset=$RDB:offset:LAST \
-		CDEF:noffset=offset,1000,/ \
 		AREA:nsjit#778787:"jitter" \
 		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
 		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
@@ -411,7 +414,7 @@ Generate_NTPStats(){
 		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	taskset 1 rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-offset.png \
+	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-offset.png \
 		$COMMON $W_COMMON \
 		--title "Offset (s) - $DATE" \
 		DEF:offset=$RDB:offset:LAST \
@@ -422,7 +425,7 @@ Generate_NTPStats(){
 		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	taskset 2 rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-sysjit.png \
+	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-sysjit.png \
 		$COMMON $W_COMMON --alt-autoscale-max \
 		--title "Jitter (s) - $DATE" \
 		DEF:sjit=$RDB:sjit:LAST \
@@ -434,7 +437,7 @@ Generate_NTPStats(){
 		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	taskset 2 rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-freq.png \
+	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-freq.png \
 		$COMMON $W_COMMON --alt-autoscale --alt-y-grid \
 		--title "Drift (ppm) - $DATE" \
 		DEF:freq=$RDB:freq:LAST \
@@ -443,7 +446,6 @@ Generate_NTPStats(){
 		GPRINT:freq:MAX:"Max\: %2.2lf" \
 		GPRINT:freq:AVERAGE:"Avg\: %2.2lf" \
 		GPRINT:freq:LAST:"Curr\: %2.2lf\n" >/dev/null 2>&1
-	
 }
 
 Shortcut_ntpMerlin(){
@@ -599,7 +601,40 @@ MainMenu(){
 	MainMenu
 }
 
+Check_Requirements(){
+	CHECKSFAILED="false"
+	
+	if [ "$(nvram get jffs2_scripts)" -ne 1 ]; then
+		nvram set jffs2_scripts=1
+		nvram commit
+		Print_Output "true" "Custom JFFS Scripts enabled" "$WARN"
+	fi
+	
+	if [ ! -f "/opt/bin/opkg" ]; then
+		Print_Output "true" "Entware not detected!" "$ERR"
+		CHECKSFAILED="true"
+	fi
+	
+	if [ "$CHECKSFAILED" = "false" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 Menu_Install(){
+	Print_Output "true" "Welcome to $NTPD_NAME $NTPD_VERSION, a script by JackYaz"
+	sleep 1
+	
+	Print_Output "true" "Checking your router meets the requirements for $NTPD_NAME"
+	
+	if ! Check_Requirements; then
+		Print_Output "true" "Requirements for $NTPD_NAME not met, please see above for the reason(s)" "$CRIT"
+		PressEnter
+		Clear_Lock
+		exit 1
+	fi
+	
 	opkg install ntp-utils
 	opkg install ntpd
 	opkg install rrdtool
@@ -733,13 +768,18 @@ Menu_Uninstall(){
 	done
 	Shortcut_ntpMerlin delete
 	/opt/etc/init.d/S77ntpd stop
-	opkg remove rrdtool
-	opkg remove ntpd
-	opkg remove ntp-utils
-	umount /www/require/modules/menuTree.js 2>/dev/null
+	opkg remove --autoremove ntpd
+	opkg remove --autoremove ntp-utils
 	umount /www/Feedback_Info.asp 2>/dev/null
+	sed -i '/{url: "Feedback_Info.asp", tabName: "NTP Daemon"}/d' "/jffs/scripts/custom_menuTree.js"
 	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
-	rm -f "/jffs/scripts/custom_menuTree.js" 2>/dev/null
+	umount /www/require/modules/menuTree.js 2>/dev/null
+	if [ ! -f "/jffs/scripts/spdmerlin" ]; then
+		opkg remove --autoremove rrdtool
+		rm -f "/jffs/scripts/custom_menuTree.js" 2>/dev/null
+	else
+		mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
+	fi
 	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
 	rm -f "/jffs/scripts/$NTPD_NAME_LOWER" 2>/dev/null
 	Clear_Lock
