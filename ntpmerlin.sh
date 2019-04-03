@@ -730,9 +730,9 @@ Menu_Uninstall(){
 	done
 	Shortcut_ntpMerlin delete
 	/opt/etc/init.d/S77ntpd stop
-	opkg remove rrdtool
-	opkg remove ntpd
-	opkg remove ntp-utils
+	opkg remove --autoremove rrdtool
+	opkg remove --autoremove ntpd
+	opkg remove --autoremove ntp-utils
 	umount /www/require/modules/menuTree.js 2>/dev/null
 	umount /www/Feedback_Info.asp 2>/dev/null
 	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
