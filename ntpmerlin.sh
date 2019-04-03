@@ -738,6 +738,7 @@ Menu_Uninstall(){
 	opkg remove --autoremove ntpd
 	opkg remove --autoremove ntp-utils
 	umount /www/Feedback_Info.asp 2>/dev/null
+	sed -i '/{url: "Feedback_Info.asp", tabName: "NTP Daemon"}/d' "/jffs/scripts/custom_menuTree.js"
 	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
 	if [ ! -f "/jffs/scripts/spdmerlin" ]; then
 		opkg remove --autoremove rrdtool
