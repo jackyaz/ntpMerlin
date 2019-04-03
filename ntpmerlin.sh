@@ -328,6 +328,11 @@ Modify_WebUI_File(){
 	tmpfile=/tmp/menuTree.js
 	cp "/www/require/modules/menuTree.js" "$tmpfile"
 	
+	if [ -f "/jffs/scripts/spdmerlin" ]; then
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
+		sed -i '/{url: "Advanced_Feedback.asp", tabName: "<#2033#>"}/d' "$tmpfile"
+		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
+	fi
 	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
 	if ! diff -q "$tmpfile" "/jffs/scripts/custom_menuTree.js" >/dev/null 2>&1; then
 		cp "$tmpfile" "/jffs/scripts/custom_menuTree.js"
@@ -733,10 +738,12 @@ Menu_Uninstall(){
 	opkg remove --autoremove rrdtool
 	opkg remove --autoremove ntpd
 	opkg remove --autoremove ntp-utils
-	umount /www/require/modules/menuTree.js 2>/dev/null
 	umount /www/Feedback_Info.asp 2>/dev/null
 	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
-	rm -f "/jffs/scripts/custom_menuTree.js" 2>/dev/null
+	if [ ! -f "/jffs/scripts/spdmerlin" ]; then
+		umount /www/require/modules/menuTree.js 2>/dev/null
+		rm -f "/jffs/scripts/custom_menuTree.js" 2>/dev/null
+	fi
 	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
 	rm -f "/jffs/scripts/$NTPD_NAME_LOWER" 2>/dev/null
 	Clear_Lock
