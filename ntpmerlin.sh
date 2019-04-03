@@ -402,8 +402,6 @@ Generate_NTPStats(){
 		--title "Jitter (s) - $DATE" \
 		DEF:cjit=$RDB:cjit:LAST \
 		CDEF:ncjit=cjit,1000,/ \
-		DEF:offset=$RDB:offset:LAST \
-		CDEF:noffset=offset,1000,/ \
 		AREA:ncjit#778787:"jitter" \
 		GPRINT:ncjit:MIN:"Min\: %3.1lf %s" \
 		GPRINT:ncjit:MAX:"Max\: %3.1lf %s" \
@@ -443,7 +441,6 @@ Generate_NTPStats(){
 		GPRINT:freq:MAX:"Max\: %2.2lf" \
 		GPRINT:freq:AVERAGE:"Avg\: %2.2lf" \
 		GPRINT:freq:LAST:"Curr\: %2.2lf\n" >/dev/null 2>&1
-	
 }
 
 Shortcut_ntpMerlin(){
