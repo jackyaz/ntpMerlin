@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/jackyaz/ntpMerlin.svg?branch=master)](https://travis-ci.com/jackyaz/ntpMerlin)
 
 ## v1.2.1
-### Updated on 2019-04-03
+### Updated on 2019-04-04
 ## About
 Run an NTP server for your network. Graphs available for NTP accuracy on the Tools page of the WebUI.
 

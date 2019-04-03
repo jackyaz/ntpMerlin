@@ -20,7 +20,7 @@ readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
 readonly NTPD_VERSION="v1.2.1"
-readonly NTPD_BRANCH="develop"
+readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
@@ -377,7 +377,7 @@ Generate_NTPStats(){
 	NDISPER=$(grep rootdisp /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
 	
 	rrdtool update $RDB N:"$NOFFSET":"$NSJIT":"$NCJIT":"$NWANDER":"$NFREQ":"$NDISPER"
-	#rm /tmp/ntp-rrdstats.$$
+	rm /tmp/ntp-rrdstats.$$
 	
 	TZ=$(cat /etc/TZ)
 	export TZ
@@ -405,13 +405,13 @@ Generate_NTPStats(){
 	rrdtool graph --imgformat PNG /www/ext/stats-ntp-sysjit.png \
 		$COMMON $D_COMMON \
 		--title "Jitter (s) - $DATE" \
-		DEF:cjit=$RDB:cjit:LAST \
-		CDEF:ncjit=cjit,1000,/ \
-		AREA:ncjit#778787:"jitter" \
-		GPRINT:ncjit:MIN:"Min\: %3.1lf %s" \
-		GPRINT:ncjit:MAX:"Max\: %3.1lf %s" \
-		GPRINT:ncjit:AVERAGE:"Avg\: %3.1lf %s" \
-		GPRINT:ncjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
+		DEF:sjit=$RDB:sjit:LAST \
+		CDEF:nsjit=sjit,1000,/ \
+		AREA:nsjit#778787:"jitter" \
+		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
+		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
+		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
+		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-offset.png \
@@ -428,13 +428,13 @@ Generate_NTPStats(){
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-sysjit.png \
 		$COMMON $W_COMMON --alt-autoscale-max \
 		--title "Jitter (s) - $DATE" \
-		DEF:cjit=$RDB:cjit:LAST \
-		CDEF:ncjit=cjit,1000,/ \
-		AREA:ncjit#778787:"jitter" \
-		GPRINT:ncjit:MIN:"Min\: %3.1lf %s" \
-		GPRINT:ncjit:MAX:"Max\: %3.1lf %s" \
-		GPRINT:ncjit:AVERAGE:"Avg\: %3.1lf %s" \
-		GPRINT:ncjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
+		DEF:sjit=$RDB:sjit:LAST \
+		CDEF:nsjit=sjit,1000,/ \
+		AREA:nsjit#778787:"jitter" \
+		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
+		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
+		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
+		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-freq.png \
