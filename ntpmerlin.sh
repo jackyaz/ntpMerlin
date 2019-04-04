@@ -329,8 +329,8 @@ Modify_WebUI_File(){
 	cp "/www/require/modules/menuTree.js" "$tmpfile"
 	
 	if [ -f "/jffs/scripts/spdmerlin" ]; then
+		sed -i '/{url: "Advanced_Feedback.asp", tabName: }/d' "$tmpfile"
 		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
-		sed -i '/{url: "Advanced_Feedback.asp", tabName: "<#2033#>"}/d' "$tmpfile"
 		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
 	fi
 	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
@@ -635,6 +635,7 @@ Menu_Install(){
 		exit 1
 	fi
 	
+	opkg update
 	opkg install ntp-utils
 	opkg install ntpd
 	opkg install rrdtool
