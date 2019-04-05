@@ -367,7 +367,7 @@ Generate_NTPStats(){
 	RDB=/jffs/scripts/ntpdstats_rrd.rrd
 	
 	#shellcheck disable=SC2086
-	killall ntp
+	killall ntp 2>/dev/null
 	ntpq -4 -c rv | awk 'BEGIN{ RS=","}{ print }' >> /tmp/ntp-rrdstats.$$
 	
 	NOFFSET=$(grep offset /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
