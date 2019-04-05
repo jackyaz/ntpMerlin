@@ -2,18 +2,20 @@
 
 # shellcheck disable=SC2034
 
-# Wait for NTP before starting
-logger -st "S77ntpd" "Waiting for NTP to sync before starting..."
-ntptimer=0
-while [ "$(nvram get ntp_ready)" = "0" ] && [ "$ntptimer" -lt "300" ]; do
-	ntptimer=$((ntptimer+1))
-	sleep 1
-done
+if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
+	# Wait for NTP before starting
+	logger -st "S77ntpd" "Waiting for NTP to sync before starting..."
+	ntptimer=0
+	while [ "$(nvram get ntp_ready)" = "0" ] && [ "$ntptimer" -lt "300" ]; do
+		ntptimer=$((ntptimer+1))
+		sleep 1
+	done
 
-if [ "$ntptimer" -ge "300" ]; then
-	logger -st "S77ntpd" "NTP failed to sync after 5 minutes - please check immediately!"
-	echo ""
-	exit 1
+	if [ "$ntptimer" -ge "300" ]; then
+		logger -st "S77ntpd" "NTP failed to sync after 5 minutes - please check immediately!"
+		echo ""
+		exit 1
+	fi
 fi
 
 ENABLED=yes
