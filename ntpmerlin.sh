@@ -103,6 +103,7 @@ Update_Version(){
 			
 		Update_File "S77ntpd"
 		Update_File "ntp.conf"
+		Update_File "ntpdstats_www.asp"
 		
 		if [ "$doupdate" != "false" ]; then
 			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
@@ -122,6 +123,7 @@ Update_Version(){
 			Print_Output "true" "Downloading latest version ($serverver) of $NTPD_NAME" "$PASS"
 			Update_File "S77ntpd"
 			Update_File "ntp.conf"
+			Update_File "ntpdstats_www.asp"
 			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
 			Clear_Lock
@@ -152,6 +154,15 @@ Update_File(){
 		else
 			Download_File "$NTPD_REPO/$1" "/jffs/configs/$1.default"
 			Print_Output "true" "/jffs/configs/$1.default does not exist, downloading now. Please compare against your /jffs/configs/$1" "$PASS"
+		fi
+		rm -f "$tmpfile"
+	elif [ "$1" = "ntpdstats_www.asp" ]; then
+		tmpfile="/tmp/$1"
+		Download_File "$NTPD_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "/jffs/scripts/$1" >/dev/null 2>&1; then
+			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			rm -f "/jffs/scripts/$1"
+			Mount_NTPD_WebUI
 		fi
 		rm -f "$tmpfile"
 	else
@@ -320,6 +331,7 @@ Mount_NTPD_WebUI(){
 }
 
 Modify_WebUI_File(){
+	### menuTree.js ###
 	if [ -f "/jffs/scripts/ntpd_menuTree.js" ]; then
 		mv "/jffs/scripts/ntpd_menuTree.js" "/jffs/scripts/custom_menuTree.js"
 	fi
@@ -341,6 +353,27 @@ Modify_WebUI_File(){
 	rm -f "$tmpfile"
 	
 	mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
+	### ###
+	
+	### start_apply.htm ###
+	umount /www/start_apply.htm 2>/dev/null
+	sleep 1
+	tmpfile=/tmp/start_apply.htm
+	cp "/www/start_apply.htm" "$tmpfile"
+	sed -i -e 's/setTimeout("parent.redirect();", action_wait\*1000);/parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(getXMLAndRedirect, restart_time\*1000);/' "$tmpfile"
+
+	if [ ! -f /jffs/scripts/custom_start_apply.htm ]; then
+		cp "/www/start_apply.htm" "/jffs/scripts/custom_start_apply.htm"
+	fi
+
+	if ! diff -q "$tmpfile" "/jffs/scripts/custom_start_apply.htm" >/dev/null 2>&1; then
+		cp "$tmpfile" "/jffs/scripts/custom_start_apply.htm"
+	fi
+
+	rm -f "$tmpfile"
+
+	mount -o bind /jffs/scripts/custom_start_apply.htm /www/start_apply.htm
+	### ###
 }
 
 NTPD_Customise(){
