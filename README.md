@@ -13,6 +13,10 @@ This script serves as a user-friendly installer for [kvic](https://github.com/kv
 
 ![Menu UI](https://puu.sh/D9ccG/42b28695af.png)
 
+#### Supporting development
+Love the script and want to support future development? Any and all donations gratefully received!
+[**PayPal donation**](https://paypal.me/jackyaz21)
+
 ## Supported Models
 ### Models
 All modes supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Models confirmed to work are below:
@@ -59,4 +63,4 @@ Further reading about scripts is available here: [AsusWRT-Merlin User-scripts](h
 ![WebUI enable scripts](https://puu.sh/A3wnG/00a43283ed.png)
 
 #### Supporting development
-[**PayPal donation**](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=KWHP2LFLJV84Q)
+[**PayPal donation**](https://paypal.me/jackyaz21)
