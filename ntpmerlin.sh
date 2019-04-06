@@ -426,6 +426,7 @@ Generate_NTPStats(){
 	# The original is part of a set of scripts written by Steven Bjork
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_ServiceEvent create 2>/dev/null
 	Auto_Cron deleteold 2>/dev/null
 	Auto_Startup deleteold 2>/dev/null
 	
@@ -729,6 +730,7 @@ Menu_Startup(){
 	Check_Lock
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_ServiceEvent create 2>/dev/null
 	Auto_Startup deleteold 2>/dev/null
 	Auto_Cron deleteold 2>/dev/null
 	Mount_NTPD_WebUI
@@ -819,6 +821,7 @@ Menu_Uninstall(){
 	Print_Output "true" "Removing $NTPD_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
+	Auto_ServiceEvent delete 2>/dev/null
 	Auto_Startup deleteold 2>/dev/null
 	Auto_Cron deleteold 2>/dev/null
 	Auto_NAT delete
@@ -861,6 +864,7 @@ if [ -z "$1" ]; then
 	Check_Lock
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_ServiceEvent create 2>/dev/null
 	Auto_Startup deleteold 2>/dev/null
 	Auto_Cron deleteold 2>/dev/null
 	Shortcut_ntpMerlin create
