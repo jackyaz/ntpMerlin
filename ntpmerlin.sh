@@ -845,7 +845,11 @@ case "$1" in
 		exit 0
 	;;
 	generate)
-		Menu_GenerateStats
+		if [ -z "$2" ] && [ -z "$3" ]; then
+			Menu_GenerateStats
+		elif [ "$2" = "start" ] && [ "$3" = "$NTPD_NAME_LOWER" ]; then
+			Menu_GenerateStats
+		fi
 		exit 0
 	;;
 	ntpredirect)
