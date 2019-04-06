@@ -13,7 +13,7 @@ This script serves as a user-friendly installer for [kvic](https://github.com/kv
 
 ![Menu UI](https://puu.sh/D9ccG/42b28695af.png)
 
-#### Supporting development
+### Supporting development
 Love the script and want to support future development? Any and all donations gratefully received!
 [**PayPal donation**](https://paypal.me/jackyaz21)
 
