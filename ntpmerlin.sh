@@ -396,7 +396,7 @@ Modify_WebUI_File(){
 	sleep 1
 	tmpfile=/tmp/start_apply.htm
 	cp "/www/start_apply.htm" "$tmpfile"
-	sed -i -e 's/setTimeout("parent.redirect();", action_wait\*1000);/parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(getXMLAndRedirect, restart_time\*1000);/' "$tmpfile"
+	sed -i -e 's/setTimeout("parent.redirect();", action_wait\*1000);/parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please refresh with Ctrl+F5");}, restart_time\*1000);/' "$tmpfile"
 
 	if [ ! -f /jffs/scripts/custom_start_apply.htm ]; then
 		cp "/www/start_apply.htm" "/jffs/scripts/custom_start_apply.htm"
