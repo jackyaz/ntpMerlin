@@ -19,7 +19,7 @@ readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.2.2"
+readonly NTPD_VERSION="v1.2.3"
 readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
@@ -103,6 +103,8 @@ Update_Version(){
 			
 		Update_File "S77ntpd"
 		Update_File "ntp.conf"
+		Update_File "ntpdstats_www.asp"
+		Modify_WebUI_File
 		
 		if [ "$doupdate" != "false" ]; then
 			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
@@ -122,6 +124,8 @@ Update_Version(){
 			Print_Output "true" "Downloading latest version ($serverver) of $NTPD_NAME" "$PASS"
 			Update_File "S77ntpd"
 			Update_File "ntp.conf"
+			Update_File "ntpdstats_www.asp"
+			Modify_WebUI_File
 			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
 			Clear_Lock
@@ -154,6 +158,15 @@ Update_File(){
 			Print_Output "true" "/jffs/configs/$1.default does not exist, downloading now. Please compare against your /jffs/configs/$1" "$PASS"
 		fi
 		rm -f "$tmpfile"
+	elif [ "$1" = "ntpdstats_www.asp" ]; then
+		tmpfile="/tmp/$1"
+		Download_File "$NTPD_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "/jffs/scripts/$1" >/dev/null 2>&1; then
+			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			rm -f "/jffs/scripts/$1"
+			Mount_NTPD_WebUI
+		fi
+		rm -f "$tmpfile"
 	else
 		return 1
 	fi
@@ -169,6 +182,42 @@ Validate_Number(){
 		fi
 		return 1
 	fi
+}
+
+Auto_ServiceEvent(){
+	case $1 in
+		create)
+			if [ -f /jffs/scripts/service-event ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/service-event)
+				# shellcheck disable=SC2016
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$NTPD_NAME_LOWER generate"' "$1" "$2" &'' # '"$NTPD_NAME" /jffs/scripts/service-event)
+				
+				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
+					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/scripts/service-event
+				fi
+				
+				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
+					# shellcheck disable=SC2016
+					echo "/jffs/scripts/$NTPD_NAME_LOWER generate"' "$1" "$2" &'' # '"$NTPD_NAME" >> /jffs/scripts/service-event
+				fi
+			else
+				echo "#!/bin/sh" > /jffs/scripts/service-event
+				echo "" >> /jffs/scripts/service-event
+				# shellcheck disable=SC2016
+				echo "/jffs/scripts/$NTPD_NAME_LOWER generate"' "$1" "$2" &'' # '"$NTPD_NAME" >> /jffs/scripts/service-event
+				chmod 0755 /jffs/scripts/service-event
+			fi
+		;;
+		delete)
+			if [ -f /jffs/scripts/service-event ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/service-event)
+				
+				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/scripts/service-event
+				fi
+			fi
+		;;
+	esac
 }
 
 Auto_Startup(){
@@ -311,7 +360,6 @@ RRD_Initialise(){
 
 Mount_NTPD_WebUI(){
 	umount /www/Feedback_Info.asp 2>/dev/null
-	sleep 1
 	if [ ! -f /jffs/scripts/ntpdstats_www.asp ]; then
 		Download_File "$NTPD_REPO/ntpdstats_www.asp" "/jffs/scripts/ntpdstats_www.asp"
 	fi
@@ -320,16 +368,16 @@ Mount_NTPD_WebUI(){
 }
 
 Modify_WebUI_File(){
+	### menuTree.js ###
 	if [ -f "/jffs/scripts/ntpd_menuTree.js" ]; then
 		mv "/jffs/scripts/ntpd_menuTree.js" "/jffs/scripts/custom_menuTree.js"
 	fi
 	umount /www/require/modules/menuTree.js 2>/dev/null
-	sleep 1
 	tmpfile=/tmp/menuTree.js
 	cp "/www/require/modules/menuTree.js" "$tmpfile"
 	
 	if [ -f "/jffs/scripts/spdmerlin" ]; then
-		sed -i '/{url: "Advanced_Feedback.asp", tabName: }/d' "$tmpfile"
+		sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
 		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
 		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
 	fi
@@ -341,6 +389,26 @@ Modify_WebUI_File(){
 	rm -f "$tmpfile"
 	
 	mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
+	### ###
+	
+	### start_apply.htm ###
+	umount /www/start_apply.htm 2>/dev/null
+	tmpfile=/tmp/start_apply.htm
+	cp "/www/start_apply.htm" "$tmpfile"
+	sed -i -e 's/setTimeout("parent.redirect();", action_wait\*1000);/parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time\*1000);/' "$tmpfile"
+
+	if [ ! -f /jffs/scripts/custom_start_apply.htm ]; then
+		cp "/www/start_apply.htm" "/jffs/scripts/custom_start_apply.htm"
+	fi
+
+	if ! diff -q "$tmpfile" "/jffs/scripts/custom_start_apply.htm" >/dev/null 2>&1; then
+		cp "$tmpfile" "/jffs/scripts/custom_start_apply.htm"
+	fi
+
+	rm -f "$tmpfile"
+
+	mount -o bind /jffs/scripts/custom_start_apply.htm /www/start_apply.htm
+	### ###
 }
 
 NTPD_Customise(){
@@ -357,6 +425,7 @@ Generate_NTPStats(){
 	# The original is part of a set of scripts written by Steven Bjork
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_ServiceEvent create 2>/dev/null
 	Auto_Cron deleteold 2>/dev/null
 	Auto_Startup deleteold 2>/dev/null
 	
@@ -616,6 +685,14 @@ Check_Requirements(){
 		CHECKSFAILED="true"
 	fi
 	
+	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -lt "$(Firmware_Version_Check 384.5)" ] && [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ne "$(Firmware_Version_Check 374.43)" ]; then
+		Print_Output "true" "Older Merlin firmware detected - service-event requires 384.5 or later" "$WARN"
+		Print_Output "true" "Please update to benefit from $NTPD_NAME stats generation in WebUI" "$WARN"
+	elif [ "$(Firmware_Version_Check "$(nvram get buildno)")" -eq "$(Firmware_Version_Check 374.43)" ]; then
+		Print_Output "true" "John's fork detected - service-event requires 374.43_32D6j9527 or later" "$WARN"
+		Print_Output "true" "Please update to benefit from $NTPD_NAME stats generation in WebUI" "$WARN"
+	fi
+	
 	if [ "$CHECKSFAILED" = "false" ]; then
 		return 0
 	else
@@ -660,6 +737,7 @@ Menu_Startup(){
 	Check_Lock
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_ServiceEvent create 2>/dev/null
 	Auto_Startup deleteold 2>/dev/null
 	Auto_Cron deleteold 2>/dev/null
 	Mount_NTPD_WebUI
@@ -733,14 +811,12 @@ Menu_ToggleNTPRedirect(){
 
 Menu_Update(){
 	Check_Lock
-	sleep 1
 	Update_Version
 	Clear_Lock
 }
 
 Menu_ForceUpdate(){
 	Check_Lock
-	sleep 1
 	Update_Version force
 	Clear_Lock
 }
@@ -750,6 +826,7 @@ Menu_Uninstall(){
 	Print_Output "true" "Removing $NTPD_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
+	Auto_ServiceEvent delete 2>/dev/null
 	Auto_Startup deleteold 2>/dev/null
 	Auto_Cron deleteold 2>/dev/null
 	Auto_NAT delete
@@ -792,6 +869,7 @@ if [ -z "$1" ]; then
 	Check_Lock
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
+	Auto_ServiceEvent create 2>/dev/null
 	Auto_Startup deleteold 2>/dev/null
 	Auto_Cron deleteold 2>/dev/null
 	Shortcut_ntpMerlin create
@@ -812,7 +890,11 @@ case "$1" in
 		exit 0
 	;;
 	generate)
-		Menu_GenerateStats
+		if [ -z "$2" ] && [ -z "$3" ]; then
+			Menu_GenerateStats
+		elif [ "$2" = "start" ] && [ "$3" = "$NTPD_NAME_LOWER" ]; then
+			Menu_GenerateStats
+		fi
 		exit 0
 	;;
 	ntpredirect)
