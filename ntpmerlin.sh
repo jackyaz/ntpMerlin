@@ -686,6 +686,14 @@ Check_Requirements(){
 		CHECKSFAILED="true"
 	fi
 	
+	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -lt "$(Firmware_Version_Check 384.5)" ] && [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ne "$(Firmware_Version_Check 374.43)" ]; then
+		Print_Output "true" "Older Merlin firmware detected - service-event requires 384.5 or later" "$WARN"
+		Print_Output "true" "Please update to benefit from $NTPD_NAME stats generation in WebUI" "$WARN"
+	elif [ "$(Firmware_Version_Check "$(nvram get buildno)")" -eq "$(Firmware_Version_Check 374.43)" ]; then
+		Print_Output "true" "John's fork detected - service-event requires 374.43_32D6j9527 or later" "$WARN"
+		Print_Output "true" "Please update to benefit from $NTPD_NAME stats generation in WebUI" "$WARN"
+	fi
+	
 	if [ "$CHECKSFAILED" = "false" ]; then
 		return 0
 	else
