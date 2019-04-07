@@ -104,6 +104,7 @@ Update_Version(){
 		Update_File "S77ntpd"
 		Update_File "ntp.conf"
 		Update_File "ntpdstats_www.asp"
+		Modify_WebUI_File
 		
 		if [ "$doupdate" != "false" ]; then
 			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
@@ -124,6 +125,7 @@ Update_Version(){
 			Update_File "S77ntpd"
 			Update_File "ntp.conf"
 			Update_File "ntpdstats_www.asp"
+			Modify_WebUI_File
 			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
 			Clear_Lock
