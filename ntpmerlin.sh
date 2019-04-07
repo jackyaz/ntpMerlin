@@ -360,7 +360,6 @@ RRD_Initialise(){
 
 Mount_NTPD_WebUI(){
 	umount /www/Feedback_Info.asp 2>/dev/null
-	sleep 1
 	if [ ! -f /jffs/scripts/ntpdstats_www.asp ]; then
 		Download_File "$NTPD_REPO/ntpdstats_www.asp" "/jffs/scripts/ntpdstats_www.asp"
 	fi
@@ -374,7 +373,6 @@ Modify_WebUI_File(){
 		mv "/jffs/scripts/ntpd_menuTree.js" "/jffs/scripts/custom_menuTree.js"
 	fi
 	umount /www/require/modules/menuTree.js 2>/dev/null
-	sleep 1
 	tmpfile=/tmp/menuTree.js
 	cp "/www/require/modules/menuTree.js" "$tmpfile"
 	
@@ -395,7 +393,6 @@ Modify_WebUI_File(){
 	
 	### start_apply.htm ###
 	umount /www/start_apply.htm 2>/dev/null
-	sleep 1
 	tmpfile=/tmp/start_apply.htm
 	cp "/www/start_apply.htm" "$tmpfile"
 	sed -i -e 's/setTimeout("parent.redirect();", action_wait\*1000);/parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please refresh with Ctrl+F5");}, restart_time\*1000);/' "$tmpfile"
@@ -814,14 +811,12 @@ Menu_ToggleNTPRedirect(){
 
 Menu_Update(){
 	Check_Lock
-	sleep 1
 	Update_Version
 	Clear_Lock
 }
 
 Menu_ForceUpdate(){
 	Check_Lock
-	sleep 1
 	Update_Version force
 	Clear_Lock
 }
