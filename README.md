@@ -61,6 +61,3 @@ If this is the first time you are using scripts, don't panic! In your router's W
 Further reading about scripts is available here: [AsusWRT-Merlin User-scripts](https://github.com/RMerl/asuswrt-merlin/wiki/User-scripts)
 
 ![WebUI enable scripts](https://puu.sh/A3wnG/00a43283ed.png)
-
-#### Supporting development
-[**PayPal donation**](https://paypal.me/jackyaz21)
