@@ -50,8 +50,6 @@ Firmware_Version_Check(){
 
 ### Code for these functions inspired by https://github.com/Adamm00 - credit to @Adamm ###
 Check_Lock(){
-	Auto_Cron deleteold 2>/dev/null
-	Auto_Startup deleteold 2>/dev/null
 	if [ -f "/tmp/$NTPD_NAME.lock" ]; then
 		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$NTPD_NAME.lock)))
 		if [ "$ageoflock" -gt 120 ]; then
@@ -250,15 +248,6 @@ Auto_Startup(){
 				fi
 			fi
 		;;
-		deleteold)
-			if [ -f /jffs/scripts/services-start ]; then
-				STARTUPLINECOUNT=$(grep -c '# '"ntpdMerlin" /jffs/scripts/services-start)
-				
-				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
-					sed -i -e '/# '"ntpdMerlin"'/d' /jffs/scripts/services-start
-				fi
-			fi
-		;;
 	esac
 }
 
@@ -324,13 +313,6 @@ Auto_Cron(){
 				cru d "$NTPD_NAME"
 			fi
 		;;
-		deleteold)
-			STARTUPLINECOUNT=$(cru l | grep -c "ntpdMerlin")
-			
-			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
-				cru d "ntpdMerlin"
-			fi
-		;;
 	esac
 }
 
@@ -369,9 +351,6 @@ Mount_NTPD_WebUI(){
 
 Modify_WebUI_File(){
 	### menuTree.js ###
-	if [ -f "/jffs/scripts/ntpd_menuTree.js" ]; then
-		mv "/jffs/scripts/ntpd_menuTree.js" "/jffs/scripts/custom_menuTree.js"
-	fi
 	umount /www/require/modules/menuTree.js 2>/dev/null
 	tmpfile=/tmp/menuTree.js
 	cp "/www/require/modules/menuTree.js" "$tmpfile"
@@ -426,12 +405,6 @@ Generate_NTPStats(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	Auto_Cron deleteold 2>/dev/null
-	Auto_Startup deleteold 2>/dev/null
-	
-	if [ -f "/jffs/scripts/ntpd_menuTree.js" ]; then
-		Modify_WebUI_File
-	fi
 	
 	RDB=/jffs/scripts/ntpdstats_rrd.rrd
 	
@@ -738,8 +711,6 @@ Menu_Startup(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	Auto_Startup deleteold 2>/dev/null
-	Auto_Cron deleteold 2>/dev/null
 	Mount_NTPD_WebUI
 	Modify_WebUI_File
 	RRD_Initialise
@@ -827,8 +798,6 @@ Menu_Uninstall(){
 	Auto_Startup delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
 	Auto_ServiceEvent delete 2>/dev/null
-	Auto_Startup deleteold 2>/dev/null
-	Auto_Cron deleteold 2>/dev/null
 	Auto_NAT delete
 	NTP_Redirect delete
 	while true; do
@@ -870,8 +839,6 @@ if [ -z "$1" ]; then
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	Auto_Startup deleteold 2>/dev/null
-	Auto_Cron deleteold 2>/dev/null
 	Shortcut_ntpMerlin create
 	Update_File "S77ntpd"
 	Clear_Lock
