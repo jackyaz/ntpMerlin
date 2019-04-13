@@ -19,7 +19,7 @@ readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.2.3"
+readonly NTPD_VERSION="v1.2.4"
 readonly NTPD_BRANCH="develop"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
@@ -354,6 +354,12 @@ Modify_WebUI_File(){
 	umount /www/require/modules/menuTree.js 2>/dev/null
 	tmpfile=/tmp/menuTree.js
 	cp "/www/require/modules/menuTree.js" "$tmpfile"
+	
+	if [ -f "/jffs/scripts/connmon" ]; then
+		sed -i '/{url: "AdaptiveQoS_ROG.asp", tabName: /d' "$tmpfile"
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "AdaptiveQoS_ROG.asp", tabName: "Uptime Monitoring"},' "$tmpfile"
+		sed -i '/retArray.push("AdaptiveQoS_ROG.asp");/d' "$tmpfile"
+	fi
 	
 	if [ -f "/jffs/scripts/spdmerlin" ]; then
 		sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
@@ -820,13 +826,15 @@ Menu_Uninstall(){
 	opkg remove --autoremove ntp-utils
 	umount /www/Feedback_Info.asp 2>/dev/null
 	sed -i '/{url: "Feedback_Info.asp", tabName: "NTP Daemon"}/d' "/jffs/scripts/custom_menuTree.js"
-	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
 	umount /www/require/modules/menuTree.js 2>/dev/null
-	if [ ! -f "/jffs/scripts/spdmerlin" ]; then
+	umount /www/start_apply.htm 2>/dev/null
+	if [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
 		opkg remove --autoremove rrdtool
 		rm -f "/jffs/scripts/custom_menuTree.js" 2>/dev/null
+		rm -f "/jffs/scripts/custom_start_apply.htm" 2>/dev/null
 	else
 		mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
+		mount -o bind "/jffs/scripts/custom_start_apply.htm" "/www/start_apply.htm"
 	fi
 	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
 	rm -f "/jffs/scripts/$NTPD_NAME_LOWER" 2>/dev/null
