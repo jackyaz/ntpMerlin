@@ -350,38 +350,38 @@ Mount_NTPD_WebUI(){
 }
 
 Modify_WebUI_File(){
-	### menuTree.js ###
-	umount /www/require/modules/menuTree.js 2>/dev/null
-	tmpfile=/tmp/menuTree.js
-	cp "/www/require/modules/menuTree.js" "$tmpfile"
-	
-	if [ ! -f /jffs/scripts/custom_menuTree.js ]; then
-		cp "/www/require/modules/menuTree.js" "/jffs/scripts/custom_menuTree.js"
-	fi
-	
-	if [ -f "/jffs/scripts/connmon" ]; then
-		sed -i '/{url: "AdaptiveQoS_ROG.asp", tabName: /d' "$tmpfile"
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "AdaptiveQoS_ROG.asp", tabName: "Uptime Monitoring"},' "$tmpfile"
-		sed -i '/retArray.push("AdaptiveQoS_ROG.asp");/d' "$tmpfile"
-	fi
-	
-	if [ -f "/jffs/scripts/spdmerlin" ]; then
-		sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
-		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
-	fi
-	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
-	if ! diff -q "$tmpfile" "/jffs/scripts/custom_menuTree.js" >/dev/null 2>&1; then
-		cp "$tmpfile" "/jffs/scripts/custom_menuTree.js"
-	fi
-	
-	rm -f "$tmpfile"
-	
-	mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
-	### ###
-	
-	### state.js ###
-	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -le "$(Firmware_Version_Check 380.67)" ]; then
+	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -gt "$(Firmware_Version_Check 380.67)" ]; then
+		### menuTree.js ###
+		umount /www/require/modules/menuTree.js 2>/dev/null
+		tmpfile=/tmp/menuTree.js
+		cp "/www/require/modules/menuTree.js" "$tmpfile"
+		
+		if [ ! -f /jffs/scripts/custom_menuTree.js ]; then
+			cp "/www/require/modules/menuTree.js" "/jffs/scripts/custom_menuTree.js"
+		fi
+		
+		if [ -f "/jffs/scripts/connmon" ]; then
+			sed -i '/{url: "AdaptiveQoS_ROG.asp", tabName: /d' "$tmpfile"
+			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "AdaptiveQoS_ROG.asp", tabName: "Uptime Monitoring"},' "$tmpfile"
+			sed -i '/retArray.push("AdaptiveQoS_ROG.asp");/d' "$tmpfile"
+		fi
+		
+		if [ -f "/jffs/scripts/spdmerlin" ]; then
+			sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
+			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
+			sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
+		fi
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
+		if ! diff -q "$tmpfile" "/jffs/scripts/custom_menuTree.js" >/dev/null 2>&1; then
+			cp "$tmpfile" "/jffs/scripts/custom_menuTree.js"
+		fi
+		
+		rm -f "$tmpfile"
+		
+		mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
+		### ###
+	else
+		### state.js ###
 		umount /www/state.js 2>/dev/null
 		tmpfile=/tmp/state.js
 		cp "/www/state.js" "$tmpfile"
@@ -412,8 +412,8 @@ Modify_WebUI_File(){
 		rm -f "$tmpfile"
 		
 		mount -o bind /jffs/scripts/custom_state.js /www/state.js
+		### ###
 	fi
-	### ###
 	
 	### start_apply.htm ###
 	umount /www/start_apply.htm 2>/dev/null
