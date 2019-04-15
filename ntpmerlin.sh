@@ -481,10 +481,11 @@ Generate_NTPStats(){
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-ntp-offset.png \
 		$COMMON $D_COMMON \
-		--title "Offset (s) - $DATE" \
+		--title "Offset - $DATE" \
+		--vertical-label "Seconds" \
 		DEF:offset="$RDB":offset:LAST \
 		CDEF:noffset=offset,1000,/ \
-		LINE1.5:noffset#fc8500:"offset" \
+		LINE1.5:noffset#fc8500:"offset (s)" \
 		GPRINT:noffset:MIN:"Min\: %3.1lf %s" \
 		GPRINT:noffset:MAX:"Max\: %3.1lf %s" \
 		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
@@ -492,10 +493,11 @@ Generate_NTPStats(){
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-ntp-sysjit.png \
 		$COMMON $D_COMMON \
-		--title "Jitter (s) - $DATE" \
+		--title "Jitter - $DATE" \
+		--vertical-label "Seconds" \
 		DEF:sjit=$RDB:sjit:LAST \
 		CDEF:nsjit=sjit,1000,/ \
-		AREA:nsjit#778787:"jitter" \
+		AREA:nsjit#778787:"jitter (s)" \
 		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
 		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
 		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
@@ -504,10 +506,11 @@ Generate_NTPStats(){
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-offset.png \
 		$COMMON $W_COMMON \
-		--title "Offset (s) - $DATE" \
+		--title "Offset - $DATE" \
+		--vertical-label "Seconds" \
 		DEF:offset=$RDB:offset:LAST \
 		CDEF:noffset=offset,1000,/ \
-		LINE1.5:noffset#fc8500:"offset" \
+		LINE1.5:noffset#fc8500:"offset (s)" \
 		GPRINT:noffset:MIN:"Min\: %3.1lf %s" \
 		GPRINT:noffset:MAX:"Max\: %3.1lf %s" \
 		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
@@ -515,10 +518,11 @@ Generate_NTPStats(){
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-sysjit.png \
 		$COMMON $W_COMMON --alt-autoscale-max \
-		--title "Jitter (s) - $DATE" \
+		--title "Jitter - $DATE" \
+		--vertical-label "Seconds" \
 		DEF:sjit=$RDB:sjit:LAST \
 		CDEF:nsjit=sjit,1000,/ \
-		AREA:nsjit#778787:"jitter" \
+		AREA:nsjit#778787:"jitter (s)" \
 		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
 		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
 		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
@@ -527,7 +531,8 @@ Generate_NTPStats(){
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-freq.png \
 		$COMMON $W_COMMON --alt-autoscale --alt-y-grid \
-		--title "Drift (ppm) - $DATE" \
+		--title "Drift - $DATE" \
+		--vertical-label "ppm" \
 		DEF:freq=$RDB:freq:LAST \
 		LINE1.5:freq#778787:"drift (ppm)" \
 		GPRINT:freq:MIN:"Min\: %2.2lf" \
