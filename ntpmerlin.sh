@@ -486,9 +486,10 @@ Generate_NTPStats(){
 		DEF:offset="$RDB":offset:LAST \
 		CDEF:noffset=offset,1000,/ \
 		LINE1.5:noffset#fc8500:"offset (s)" \
-		GPRINT:noffset:MIN:"Min\: %3.1lf %s" \
-		GPRINT:noffset:MAX:"Max\: %3.1lf %s" \
-		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
+		GPRINT:noffset:MIN:"Min\: %3.3lf %s" \
+		GPRINT:noffset:MAX:"Max\: %3.3lf %s" \
+		GPRINT:noffset:AVERAGE:"Avg\: %3.3lf %s" \
+		GPRINT:noffset:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-ntp-sysjit.png \
@@ -498,10 +499,10 @@ Generate_NTPStats(){
 		DEF:sjit=$RDB:sjit:LAST \
 		CDEF:nsjit=sjit,1000,/ \
 		AREA:nsjit#778787:"jitter (s)" \
-		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
-		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
-		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
+		GPRINT:nsjit:MIN:"Min\: %3.3lf %s" \
+		GPRINT:nsjit:MAX:"Max\: %3.3lf %s" \
+		GPRINT:nsjit:AVERAGE:"Avg\: %3.3lf %s" \
+		GPRINT:nsjit:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-offset.png \
@@ -511,9 +512,10 @@ Generate_NTPStats(){
 		DEF:offset=$RDB:offset:LAST \
 		CDEF:noffset=offset,1000,/ \
 		LINE1.5:noffset#fc8500:"offset (s)" \
-		GPRINT:noffset:MIN:"Min\: %3.1lf %s" \
-		GPRINT:noffset:MAX:"Max\: %3.1lf %s" \
-		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
+		GPRINT:noffset:MIN:"Min\: %3.3lf %s" \
+		GPRINT:noffset:MAX:"Max\: %3.3lf %s" \
+		GPRINT:noffset:AVERAGE:"Avg\: %3.3lf %s" \
+		GPRINT:noffset:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-sysjit.png \
@@ -523,10 +525,10 @@ Generate_NTPStats(){
 		DEF:sjit=$RDB:sjit:LAST \
 		CDEF:nsjit=sjit,1000,/ \
 		AREA:nsjit#778787:"jitter (s)" \
-		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
-		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
-		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
+		GPRINT:nsjit:MIN:"Min\: %3.3lf %s" \
+		GPRINT:nsjit:MAX:"Max\: %3.3lf %s" \
+		GPRINT:nsjit:AVERAGE:"Avg\: %3.3lf %s" \
+		GPRINT:nsjit:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-freq.png \
@@ -535,10 +537,10 @@ Generate_NTPStats(){
 		--vertical-label "ppm" \
 		DEF:freq=$RDB:freq:LAST \
 		LINE1.5:freq#778787:"drift (ppm)" \
-		GPRINT:freq:MIN:"Min\: %2.2lf" \
-		GPRINT:freq:MAX:"Max\: %2.2lf" \
-		GPRINT:freq:AVERAGE:"Avg\: %2.2lf" \
-		GPRINT:freq:LAST:"Curr\: %2.2lf\n" >/dev/null 2>&1
+		GPRINT:freq:MIN:"Min\: %3.3lf" \
+		GPRINT:freq:MAX:"Max\: %3.3lf" \
+		GPRINT:freq:AVERAGE:"Avg\: %3.3lf" \
+		GPRINT:freq:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
 }
 
 Shortcut_ntpMerlin(){
