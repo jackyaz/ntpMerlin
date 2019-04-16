@@ -19,7 +19,7 @@ readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.2.3"
+readonly NTPD_VERSION="v1.2.4"
 readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
@@ -50,8 +50,6 @@ Firmware_Version_Check(){
 
 ### Code for these functions inspired by https://github.com/Adamm00 - credit to @Adamm ###
 Check_Lock(){
-	Auto_Cron deleteold 2>/dev/null
-	Auto_Startup deleteold 2>/dev/null
 	if [ -f "/tmp/$NTPD_NAME.lock" ]; then
 		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$NTPD_NAME.lock)))
 		if [ "$ageoflock" -gt 120 ]; then
@@ -163,7 +161,7 @@ Update_File(){
 		Download_File "$NTPD_REPO/$1" "$tmpfile"
 		if ! diff -q "$tmpfile" "/jffs/scripts/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			rm -f "/jffs/scripts/$1"
+			mv "/jffs/scripts/$1" "/jffs/scripts/$1.old"
 			Mount_NTPD_WebUI
 		fi
 		rm -f "$tmpfile"
@@ -250,15 +248,6 @@ Auto_Startup(){
 				fi
 			fi
 		;;
-		deleteold)
-			if [ -f /jffs/scripts/services-start ]; then
-				STARTUPLINECOUNT=$(grep -c '# '"ntpdMerlin" /jffs/scripts/services-start)
-				
-				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
-					sed -i -e '/# '"ntpdMerlin"'/d' /jffs/scripts/services-start
-				fi
-			fi
-		;;
 	esac
 }
 
@@ -324,13 +313,6 @@ Auto_Cron(){
 				cru d "$NTPD_NAME"
 			fi
 		;;
-		deleteold)
-			STARTUPLINECOUNT=$(cru l | grep -c "ntpdMerlin")
-			
-			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
-				cru d "ntpdMerlin"
-			fi
-		;;
 	esac
 }
 
@@ -368,28 +350,70 @@ Mount_NTPD_WebUI(){
 }
 
 Modify_WebUI_File(){
-	### menuTree.js ###
-	if [ -f "/jffs/scripts/ntpd_menuTree.js" ]; then
-		mv "/jffs/scripts/ntpd_menuTree.js" "/jffs/scripts/custom_menuTree.js"
+	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -gt "$(Firmware_Version_Check 380.67)" ]; then
+		### menuTree.js ###
+		umount /www/require/modules/menuTree.js 2>/dev/null
+		tmpfile=/tmp/menuTree.js
+		cp "/www/require/modules/menuTree.js" "$tmpfile"
+		
+		if [ ! -f /jffs/scripts/custom_menuTree.js ]; then
+			cp "/www/require/modules/menuTree.js" "/jffs/scripts/custom_menuTree.js"
+		fi
+		
+		if [ -f "/jffs/scripts/connmon" ]; then
+			sed -i '/{url: "AdaptiveQoS_ROG.asp", tabName: /d' "$tmpfile"
+			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "AdaptiveQoS_ROG.asp", tabName: "Uptime Monitoring"},' "$tmpfile"
+			sed -i '/retArray.push("AdaptiveQoS_ROG.asp");/d' "$tmpfile"
+		fi
+		
+		if [ -f "/jffs/scripts/spdmerlin" ]; then
+			sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
+			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
+			sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
+		fi
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
+		if ! diff -q "$tmpfile" "/jffs/scripts/custom_menuTree.js" >/dev/null 2>&1; then
+			cp "$tmpfile" "/jffs/scripts/custom_menuTree.js"
+		fi
+		
+		rm -f "$tmpfile"
+		
+		mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
+		### ###
+	else
+		### state.js ###
+		umount /www/state.js 2>/dev/null
+		tmpfile=/tmp/state.js
+		cp "/www/state.js" "$tmpfile"
+		
+		if [ ! -f /jffs/scripts/custom_state.js ]; then
+			cp "/www/state.js" "/jffs/scripts/custom_state.js"
+		fi
+		
+		if [ -f "/jffs/scripts/spdmerlin" ] && [ -f "/jffs/scripts/connmon" ]; then
+			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "SpeedTest", "Uptime Monitoring");/' "$tmpfile"
+			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp", "AdaptiveQoS_ROG.asp");/' "$tmpfile"
+		elif [ -f "/jffs/scripts/spdmerlin" ]; then
+			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "SpeedTest");/' "$tmpfile"
+			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp");/' "$tmpfile"
+		elif [ -f "/jffs/scripts/connmon" ]; then
+			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "Uptime Monitoring");/' "$tmpfile"
+			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "AdaptiveQoS_ROG.asp");/' "$tmpfile"
+		fi
+		
+		if [ -f "/jffs/scripts/spdmerlin" ]; then
+			sed -i -e '/else if(location.pathname == "\/Advanced_Feedback.asp") {/,+4d' "$tmpfile"
+		fi
+		
+		if ! diff -q "$tmpfile" "/jffs/scripts/custom_state.js" >/dev/null 2>&1; then
+			cp "$tmpfile" "/jffs/scripts/custom_state.js"
+		fi
+		
+		rm -f "$tmpfile"
+		
+		mount -o bind /jffs/scripts/custom_state.js /www/state.js
+		### ###
 	fi
-	umount /www/require/modules/menuTree.js 2>/dev/null
-	tmpfile=/tmp/menuTree.js
-	cp "/www/require/modules/menuTree.js" "$tmpfile"
-	
-	if [ -f "/jffs/scripts/spdmerlin" ]; then
-		sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
-		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
-	fi
-	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
-	if ! diff -q "$tmpfile" "/jffs/scripts/custom_menuTree.js" >/dev/null 2>&1; then
-		cp "$tmpfile" "/jffs/scripts/custom_menuTree.js"
-	fi
-	
-	rm -f "$tmpfile"
-	
-	mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
-	### ###
 	
 	### start_apply.htm ###
 	umount /www/start_apply.htm 2>/dev/null
@@ -426,12 +450,6 @@ Generate_NTPStats(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	Auto_Cron deleteold 2>/dev/null
-	Auto_Startup deleteold 2>/dev/null
-	
-	if [ -f "/jffs/scripts/ntpd_menuTree.js" ]; then
-		Modify_WebUI_File
-	fi
 	
 	RDB=/jffs/scripts/ntpdstats_rrd.rrd
 	
@@ -463,59 +481,66 @@ Generate_NTPStats(){
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-ntp-offset.png \
 		$COMMON $D_COMMON \
-		--title "Offset (s) - $DATE" \
+		--title "Offset - $DATE" \
+		--vertical-label "Seconds" \
 		DEF:offset="$RDB":offset:LAST \
 		CDEF:noffset=offset,1000,/ \
-		LINE1.5:noffset#fc8500:"offset" \
-		GPRINT:noffset:MIN:"Min\: %3.1lf %s" \
-		GPRINT:noffset:MAX:"Max\: %3.1lf %s" \
-		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
+		LINE1.5:noffset#fc8500:"offset (s)" \
+		GPRINT:noffset:MIN:"Min\: %3.3lf %s" \
+		GPRINT:noffset:MAX:"Max\: %3.3lf %s" \
+		GPRINT:noffset:AVERAGE:"Avg\: %3.3lf %s" \
+		GPRINT:noffset:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-ntp-sysjit.png \
 		$COMMON $D_COMMON \
-		--title "Jitter (s) - $DATE" \
+		--title "Jitter - $DATE" \
+		--vertical-label "Seconds" \
 		DEF:sjit=$RDB:sjit:LAST \
 		CDEF:nsjit=sjit,1000,/ \
-		AREA:nsjit#778787:"jitter" \
-		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
-		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
-		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
+		AREA:nsjit#778787:"jitter (s)" \
+		GPRINT:nsjit:MIN:"Min\: %3.3lf %s" \
+		GPRINT:nsjit:MAX:"Max\: %3.3lf %s" \
+		GPRINT:nsjit:AVERAGE:"Avg\: %3.3lf %s" \
+		GPRINT:nsjit:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-offset.png \
 		$COMMON $W_COMMON \
-		--title "Offset (s) - $DATE" \
+		--title "Offset - $DATE" \
+		--vertical-label "Seconds" \
 		DEF:offset=$RDB:offset:LAST \
 		CDEF:noffset=offset,1000,/ \
-		LINE1.5:noffset#fc8500:"offset" \
-		GPRINT:noffset:MIN:"Min\: %3.1lf %s" \
-		GPRINT:noffset:MAX:"Max\: %3.1lf %s" \
-		GPRINT:noffset:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
+		LINE1.5:noffset#fc8500:"offset (s)" \
+		GPRINT:noffset:MIN:"Min\: %3.3lf %s" \
+		GPRINT:noffset:MAX:"Max\: %3.3lf %s" \
+		GPRINT:noffset:AVERAGE:"Avg\: %3.3lf %s" \
+		GPRINT:noffset:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-sysjit.png \
 		$COMMON $W_COMMON --alt-autoscale-max \
-		--title "Jitter (s) - $DATE" \
+		--title "Jitter - $DATE" \
+		--vertical-label "Seconds" \
 		DEF:sjit=$RDB:sjit:LAST \
 		CDEF:nsjit=sjit,1000,/ \
-		AREA:nsjit#778787:"jitter" \
-		GPRINT:nsjit:MIN:"Min\: %3.1lf %s" \
-		GPRINT:nsjit:MAX:"Max\: %3.1lf %s" \
-		GPRINT:nsjit:AVERAGE:"Avg\: %3.1lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.1lf %s\n" >/dev/null 2>&1
+		AREA:nsjit#778787:"jitter (s)" \
+		GPRINT:nsjit:MIN:"Min\: %3.3lf %s" \
+		GPRINT:nsjit:MAX:"Max\: %3.3lf %s" \
+		GPRINT:nsjit:AVERAGE:"Avg\: %3.3lf %s" \
+		GPRINT:nsjit:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-freq.png \
 		$COMMON $W_COMMON --alt-autoscale --alt-y-grid \
-		--title "Drift (ppm) - $DATE" \
+		--title "Drift - $DATE" \
+		--vertical-label "ppm" \
 		DEF:freq=$RDB:freq:LAST \
 		LINE1.5:freq#778787:"drift (ppm)" \
-		GPRINT:freq:MIN:"Min\: %2.2lf" \
-		GPRINT:freq:MAX:"Max\: %2.2lf" \
-		GPRINT:freq:AVERAGE:"Avg\: %2.2lf" \
-		GPRINT:freq:LAST:"Curr\: %2.2lf\n" >/dev/null 2>&1
+		GPRINT:freq:MIN:"Min\: %3.3lf" \
+		GPRINT:freq:MAX:"Max\: %3.3lf" \
+		GPRINT:freq:AVERAGE:"Avg\: %3.3lf" \
+		GPRINT:freq:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
 }
 
 Shortcut_ntpMerlin(){
@@ -738,8 +763,6 @@ Menu_Startup(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	Auto_Startup deleteold 2>/dev/null
-	Auto_Cron deleteold 2>/dev/null
 	Mount_NTPD_WebUI
 	Modify_WebUI_File
 	RRD_Initialise
@@ -827,8 +850,6 @@ Menu_Uninstall(){
 	Auto_Startup delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
 	Auto_ServiceEvent delete 2>/dev/null
-	Auto_Startup deleteold 2>/dev/null
-	Auto_Cron deleteold 2>/dev/null
 	Auto_NAT delete
 	NTP_Redirect delete
 	while true; do
@@ -851,13 +872,15 @@ Menu_Uninstall(){
 	opkg remove --autoremove ntp-utils
 	umount /www/Feedback_Info.asp 2>/dev/null
 	sed -i '/{url: "Feedback_Info.asp", tabName: "NTP Daemon"}/d' "/jffs/scripts/custom_menuTree.js"
-	rm -f "/jffs/scripts/ntpd_menuTree.js" 2>/dev/null
 	umount /www/require/modules/menuTree.js 2>/dev/null
-	if [ ! -f "/jffs/scripts/spdmerlin" ]; then
+	umount /www/start_apply.htm 2>/dev/null
+	if [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
 		opkg remove --autoremove rrdtool
 		rm -f "/jffs/scripts/custom_menuTree.js" 2>/dev/null
+		rm -f "/jffs/scripts/custom_start_apply.htm" 2>/dev/null
 	else
 		mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
+		mount -o bind "/jffs/scripts/custom_start_apply.htm" "/www/start_apply.htm"
 	fi
 	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
 	rm -f "/jffs/scripts/$NTPD_NAME_LOWER" 2>/dev/null
@@ -870,8 +893,6 @@ if [ -z "$1" ]; then
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	Auto_Startup deleteold 2>/dev/null
-	Auto_Cron deleteold 2>/dev/null
 	Shortcut_ntpMerlin create
 	Update_File "S77ntpd"
 	Clear_Lock
