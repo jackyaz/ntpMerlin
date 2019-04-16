@@ -20,7 +20,7 @@ readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
 readonly NTPD_VERSION="v1.2.4"
-readonly NTPD_BRANCH="develop"
+readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
@@ -161,7 +161,7 @@ Update_File(){
 		Download_File "$NTPD_REPO/$1" "$tmpfile"
 		if ! diff -q "$tmpfile" "/jffs/scripts/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			rm -f "/jffs/scripts/$1"
+			mv "/jffs/scripts/$1" "/jffs/scripts/$1.old"
 			Mount_NTPD_WebUI
 		fi
 		rm -f "$tmpfile"
