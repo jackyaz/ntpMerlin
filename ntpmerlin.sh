@@ -19,7 +19,7 @@ readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.2.4"
+readonly NTPD_VERSION="v1.2.5"
 readonly NTPD_BRANCH="develop"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
@@ -218,6 +218,43 @@ Auto_ServiceEvent(){
 	esac
 }
 
+Auto_DNSMASQ(){
+	case $1 in
+		create)
+			if [ -f /jffs/configs/dnsmasq.conf.add ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/configs/dnsmasq.conf.add)
+				# shellcheck disable=SC2016
+				STARTUPLINECOUNTEX=$(grep -cx "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$NTPD_NAME" /jffs/configs/dnsmasq.conf.add)
+				
+				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
+					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/configs/dnsmasq.conf.add
+				fi
+				
+				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
+					# shellcheck disable=SC2016
+					echo "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$NTPD_NAME" >> /jffs/configs/dnsmasq.conf.add
+				fi
+			else
+				echo "" >> /jffs/configs/dnsmasq.conf.add
+				# shellcheck disable=SC2016
+				echo "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$NTPD_NAME" >> /jffs/configs/dnsmasq.conf.add
+				chmod 0644 /jffs/configs/dnsmasq.conf.add
+			fi
+		;;
+		delete)
+			if [ -f /jffs/configs/dnsmasq.conf.add ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/configs/dnsmasq.conf.add)
+				
+				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/configs/dnsmasq.conf.add
+				fi
+			fi
+		;;
+	esac
+	
+	service restart_dnsmasq >/dev/null 2>&1
+}
+
 Auto_Startup(){
 	case $1 in
 		create)
@@ -325,9 +362,11 @@ NTP_Redirect(){
 		create)
 			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 			iptables -t nat -A PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			Auto_DNSMASQ create 2>/dev/null
 		;;
 		delete)
 			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			Auto_DNSMASQ delete 2>/dev/null
 		;;
 	esac
 }
