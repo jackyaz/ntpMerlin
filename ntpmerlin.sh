@@ -20,7 +20,7 @@ readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
 readonly NTPD_VERSION="v1.2.5"
-readonly NTPD_BRANCH="develop"
+readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
@@ -379,6 +379,14 @@ RRD_Initialise(){
 	fi
 }
 
+Get_CONNMON_UI(){
+	if [ -f /www/AdaptiveQoS_ROG.asp ]; then
+		echo "AdaptiveQoS_ROG.asp"
+	else
+		echo "AiMesh_Node_FirmwareUpgrade.asp"
+	fi
+}
+
 Mount_NTPD_WebUI(){
 	umount /www/Feedback_Info.asp 2>/dev/null
 	if [ ! -f /jffs/scripts/ntpdstats_www.asp ]; then
@@ -400,9 +408,9 @@ Modify_WebUI_File(){
 		fi
 		
 		if [ -f "/jffs/scripts/connmon" ]; then
-			sed -i '/{url: "AdaptiveQoS_ROG.asp", tabName: /d' "$tmpfile"
-			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "AdaptiveQoS_ROG.asp", tabName: "Uptime Monitoring"},' "$tmpfile"
-			sed -i '/retArray.push("AdaptiveQoS_ROG.asp");/d' "$tmpfile"
+			sed -i '/{url: "'"$(Get_CONNMON_UI)"'", tabName: /d' "$tmpfile"
+			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "'"$(Get_CONNMON_UI)"'", tabName: "Uptime Monitoring"},' "$tmpfile"
+			sed -i '/retArray.push("'"$(Get_CONNMON_UI)"'");/d' "$tmpfile"
 		fi
 		
 		if [ -f "/jffs/scripts/spdmerlin" ]; then
@@ -431,13 +439,13 @@ Modify_WebUI_File(){
 		
 		if [ -f "/jffs/scripts/spdmerlin" ] && [ -f "/jffs/scripts/connmon" ]; then
 			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "SpeedTest", "Uptime Monitoring");/' "$tmpfile"
-			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp", "AdaptiveQoS_ROG.asp");/' "$tmpfile"
+			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp", "'"$(Get_CONNMON_UI)"'");/' "$tmpfile"
 		elif [ -f "/jffs/scripts/spdmerlin" ]; then
 			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "SpeedTest");/' "$tmpfile"
 			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp");/' "$tmpfile"
 		elif [ -f "/jffs/scripts/connmon" ]; then
 			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "Uptime Monitoring");/' "$tmpfile"
-			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "AdaptiveQoS_ROG.asp");/' "$tmpfile"
+			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "'"$(Get_CONNMON_UI)"'");/' "$tmpfile"
 		fi
 		
 		if [ -f "/jffs/scripts/spdmerlin" ]; then
@@ -459,17 +467,21 @@ Modify_WebUI_File(){
 	tmpfile=/tmp/start_apply.htm
 	cp "/www/start_apply.htm" "$tmpfile"
 	sed -i -e 's/setTimeout("parent.redirect();", action_wait\*1000);/parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time\*1000);/' "$tmpfile"
-
+	
+	if [ -f /jffs/scripts/connmon ]; then
+		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("'"$(Get_CONNMON_UI)"'") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+	fi
+	
 	if [ ! -f /jffs/scripts/custom_start_apply.htm ]; then
 		cp "/www/start_apply.htm" "/jffs/scripts/custom_start_apply.htm"
 	fi
-
+	
 	if ! diff -q "$tmpfile" "/jffs/scripts/custom_start_apply.htm" >/dev/null 2>&1; then
 		cp "$tmpfile" "/jffs/scripts/custom_start_apply.htm"
 	fi
-
+	
 	rm -f "$tmpfile"
-
+	
 	mount -o bind /jffs/scripts/custom_start_apply.htm /www/start_apply.htm
 	### ###
 }
