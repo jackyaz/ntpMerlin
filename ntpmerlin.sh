@@ -19,7 +19,7 @@ readonly NTPD_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.2.4"
+readonly NTPD_VERSION="v1.2.5"
 readonly NTPD_BRANCH="master"
 readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
@@ -218,6 +218,43 @@ Auto_ServiceEvent(){
 	esac
 }
 
+Auto_DNSMASQ(){
+	case $1 in
+		create)
+			if [ -f /jffs/configs/dnsmasq.conf.add ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/configs/dnsmasq.conf.add)
+				# shellcheck disable=SC2016
+				STARTUPLINECOUNTEX=$(grep -cx "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$NTPD_NAME" /jffs/configs/dnsmasq.conf.add)
+				
+				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
+					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/configs/dnsmasq.conf.add
+				fi
+				
+				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
+					# shellcheck disable=SC2016
+					echo "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$NTPD_NAME" >> /jffs/configs/dnsmasq.conf.add
+				fi
+			else
+				echo "" >> /jffs/configs/dnsmasq.conf.add
+				# shellcheck disable=SC2016
+				echo "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$NTPD_NAME" >> /jffs/configs/dnsmasq.conf.add
+				chmod 0644 /jffs/configs/dnsmasq.conf.add
+			fi
+		;;
+		delete)
+			if [ -f /jffs/configs/dnsmasq.conf.add ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/configs/dnsmasq.conf.add)
+				
+				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/configs/dnsmasq.conf.add
+				fi
+			fi
+		;;
+	esac
+	
+	service restart_dnsmasq >/dev/null 2>&1
+}
+
 Auto_Startup(){
 	case $1 in
 		create)
@@ -325,9 +362,11 @@ NTP_Redirect(){
 		create)
 			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 			iptables -t nat -A PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			Auto_DNSMASQ create 2>/dev/null
 		;;
 		delete)
 			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			Auto_DNSMASQ delete 2>/dev/null
 		;;
 	esac
 }
@@ -337,6 +376,14 @@ RRD_Initialise(){
 		Download_File "$NTPD_REPO/ntpdstats_xml.xml" "/jffs/scripts/ntpdstats_xml.xml"
 		rrdtool restore -f /jffs/scripts/ntpdstats_xml.xml /jffs/scripts/ntpdstats_rrd.rrd
 		rm -f /jffs/scripts/ntpdstats_xml.xml
+	fi
+}
+
+Get_CONNMON_UI(){
+	if [ -f /www/AdaptiveQoS_ROG.asp ]; then
+		echo "AdaptiveQoS_ROG.asp"
+	else
+		echo "AiMesh_Node_FirmwareUpgrade.asp"
 	fi
 }
 
@@ -361,9 +408,9 @@ Modify_WebUI_File(){
 		fi
 		
 		if [ -f "/jffs/scripts/connmon" ]; then
-			sed -i '/{url: "AdaptiveQoS_ROG.asp", tabName: /d' "$tmpfile"
-			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "AdaptiveQoS_ROG.asp", tabName: "Uptime Monitoring"},' "$tmpfile"
-			sed -i '/retArray.push("AdaptiveQoS_ROG.asp");/d' "$tmpfile"
+			sed -i '/{url: "'"$(Get_CONNMON_UI)"'", tabName: /d' "$tmpfile"
+			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "'"$(Get_CONNMON_UI)"'", tabName: "Uptime Monitoring"},' "$tmpfile"
+			sed -i '/retArray.push("'"$(Get_CONNMON_UI)"'");/d' "$tmpfile"
 		fi
 		
 		if [ -f "/jffs/scripts/spdmerlin" ]; then
@@ -392,13 +439,13 @@ Modify_WebUI_File(){
 		
 		if [ -f "/jffs/scripts/spdmerlin" ] && [ -f "/jffs/scripts/connmon" ]; then
 			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "SpeedTest", "Uptime Monitoring");/' "$tmpfile"
-			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp", "AdaptiveQoS_ROG.asp");/' "$tmpfile"
+			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp", "'"$(Get_CONNMON_UI)"'");/' "$tmpfile"
 		elif [ -f "/jffs/scripts/spdmerlin" ]; then
 			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "SpeedTest");/' "$tmpfile"
 			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp");/' "$tmpfile"
 		elif [ -f "/jffs/scripts/connmon" ]; then
 			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "Uptime Monitoring");/' "$tmpfile"
-			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "AdaptiveQoS_ROG.asp");/' "$tmpfile"
+			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "'"$(Get_CONNMON_UI)"'");/' "$tmpfile"
 		fi
 		
 		if [ -f "/jffs/scripts/spdmerlin" ]; then
@@ -420,17 +467,21 @@ Modify_WebUI_File(){
 	tmpfile=/tmp/start_apply.htm
 	cp "/www/start_apply.htm" "$tmpfile"
 	sed -i -e 's/setTimeout("parent.redirect();", action_wait\*1000);/parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time\*1000);/' "$tmpfile"
-
+	
+	if [ -f /jffs/scripts/connmon ]; then
+		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("'"$(Get_CONNMON_UI)"'") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+	fi
+	
 	if [ ! -f /jffs/scripts/custom_start_apply.htm ]; then
 		cp "/www/start_apply.htm" "/jffs/scripts/custom_start_apply.htm"
 	fi
-
+	
 	if ! diff -q "$tmpfile" "/jffs/scripts/custom_start_apply.htm" >/dev/null 2>&1; then
 		cp "$tmpfile" "/jffs/scripts/custom_start_apply.htm"
 	fi
-
+	
 	rm -f "$tmpfile"
-
+	
 	mount -o bind /jffs/scripts/custom_start_apply.htm /www/start_apply.htm
 	### ###
 }
