@@ -25,6 +25,7 @@ All modes supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Mod
 *   RT-AC86U
 *   RT-AC88U
 *   RT-AX88U
+*   RT-AC3100
 
 ### Firmware versions
 You must be running firmware no older than:
