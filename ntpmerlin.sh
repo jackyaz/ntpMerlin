@@ -405,8 +405,12 @@ Mount_NTPD_WebUI(){
 		Download_File "$NTPD_REPO/ntpdstats_www.asp" "/jffs/scripts/ntpdstats_www.asp"
 	fi
 	
+	if [ ! -f /jffs/scripts/moment.min.js ]; then
+		Download_File "$NTPD_REPO/moment.min.js" "/jffs/scripts/moment.min.js"
+		cp "/jffs/scripts/moment.min.js" "/www/ext/moment.min.js"
+	fi
+	
 	if [ ! -f /www/ext/moment.min.js ]; then
-		Update_File "moment.min.js"
 		cp "/jffs/scripts/moment.min.js" "/www/ext/moment.min.js"
 	fi
 	
