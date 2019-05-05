@@ -499,7 +499,7 @@ WriteData_ToJS(){
 	echo 'function GenChartDataJitter() {' > "$2"
 	contents="$contents"'lineDataOffset.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
-		datapoint="{ x: moment.unix(""$(echo "$line" | awk 'BEGIN{FS=","}{ print $1 }' | awk '{$1=$1};1')"", y: ""$(echo "$line" | awk 'BEGIN{FS=","}{ print $2 }' | awk '{$1=$1};1')"" }"
+		datapoint="{ x: moment.unix(""$(echo "$line" | awk 'BEGIN{FS=","}{ print $1 }' | awk '{$1=$1};1')""), y: ""$(echo "$line" | awk 'BEGIN{FS=","}{ print $2 }' | awk '{$1=$1};1')"" }"
 		contents="$contents""$datapoint"","
 	done < "$1"
 	contents=$(echo "$contents" | sed 's/.$//')
