@@ -516,12 +516,18 @@ Generate_NTPStats(){
 	NWANDER=$(grep clk_wander /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
 	NDISPER=$(grep rootdisp /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
 	
-	rrdtool update $RDB N:"$NOFFSET":"$NSJIT":"$NCJIT":"$NWANDER":"$NFREQ":"$NDISPER"
-	rm /tmp/ntp-rrdstats.$$
-	
 	TZ=$(cat /etc/TZ)
 	export TZ
 	DATE=$(date "+%a %b %e %H:%M %Y")
+	
+	rrdtool update $RDB N:"$NOFFSET":"$NSJIT":"$NCJIT":"$NWANDER":"$NFREQ":"$NDISPER"
+	
+	if [ ! -f "/jffs/scripts/ntpdstats_csv.csv" ]; then
+		echo "time,NOFFSET,NSJIT,NCJIT,NWANDER,NFREQ,NDISPER" > /jffs/scripts/ntpdstats_csv.csv
+	fi
+	echo "$(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER" >> /jffs/scripts/ntpdstats_csv.csv
+	
+	rm /tmp/ntp-rrdstats.$$
 	
 	COMMON="-c SHADEA#475A5F -c SHADEB#475A5F -c BACK#475A5F -c CANVAS#92A0A520 -c AXIS#92a0a520 -c FONT#ffffff -c ARROW#475A5F -n TITLE:9 -n AXIS:8 -n LEGEND:9 -w 650 -h 200"
 	
