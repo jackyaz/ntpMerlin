@@ -102,6 +102,7 @@ Update_Version(){
 		Update_File "S77ntpd"
 		Update_File "ntp.conf"
 		Update_File "ntpdstats_www.asp"
+		Update_File "moment.min.js"
 		Modify_WebUI_File
 		
 		if [ "$doupdate" != "false" ]; then
@@ -123,6 +124,7 @@ Update_Version(){
 			Update_File "S77ntpd"
 			Update_File "ntp.conf"
 			Update_File "ntpdstats_www.asp"
+			Update_File "moment.min.js"
 			Modify_WebUI_File
 			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
@@ -163,6 +165,16 @@ Update_File(){
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
 			mv "/jffs/scripts/$1" "/jffs/scripts/$1.old"
 			Mount_NTPD_WebUI
+		fi
+		rm -f "$tmpfile"
+	elif [ "$1" = "moment.min.js" ]; then
+		tmpfile="/tmp/$1"
+		Download_File "$NTPD_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "/jffs/scripts/$1" >/dev/null 2>&1; then
+			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			mv "/jffs/scripts/$1" "/jffs/scripts/$1.old"
+			mkdir -p "$(readlink /www/ext)"
+			cp "/jffs/scripts/$1" "/www/ext/$1"
 		fi
 		rm -f "$tmpfile"
 	else
@@ -391,6 +403,11 @@ Mount_NTPD_WebUI(){
 	umount /www/Feedback_Info.asp 2>/dev/null
 	if [ ! -f /jffs/scripts/ntpdstats_www.asp ]; then
 		Download_File "$NTPD_REPO/ntpdstats_www.asp" "/jffs/scripts/ntpdstats_www.asp"
+	fi
+	
+	if [ ! -f /www/ext/moment.min.js ]; then
+		Update_File "moment.min.js"
+		cp "/jffs/scripts/moment.min.js" "/www/ext/moment.min.js"
 	fi
 	
 	mount -o bind /jffs/scripts/ntpdstats_www.asp /www/Feedback_Info.asp
