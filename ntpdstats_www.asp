@@ -17,6 +17,7 @@ font-weight: bolder;
 }
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/moment.min.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
@@ -27,25 +28,18 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script>
-var lineDataOffset, lineLabels;
+var lineDataOffset;
 var myLineChart;
 Chart.defaults.global.defaultFontColor = "#CCC";
-
-function GenChartData() {
-lineDataOffset.unshift(2,3,-2,6,1);
-lineLabels.unshift("1","2","3","4","5");
-}
 
 function redraw()
 {
 	lineDataOffset = [];
-	lineLabels = [];
-	GenChartData();
+	GenChartDataJitter();
 	draw_chart();
 }
 
 function draw_chart(){
-	if (lineLabels.length == 0) return;
 	if (myLineChart != undefined) myLineChart.destroy();
 	var ctx = document.getElementById("chart").getContext("2d");
 	var lineOptions = {
@@ -56,16 +50,12 @@ function draw_chart(){
 		animateScale : true,
 		legend: { display: false, position: "bottom", onClick: null },
 		title: { display: true, text: "Offset" },
-		tooltips: {
-			callbacks: {
-				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
-				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
-			}
-		},
 		scales: {
 			xAxes: [{
+				type: "time",
 				gridLines: { display: true, color: "#282828" },
-				ticks: { display: true }
+				ticks: { display: true },
+				time: { min: moment().subtract(24, "hours"), unit: "hour", stepsize: 2 }
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
@@ -74,9 +64,8 @@ function draw_chart(){
 		}
 	};
 	var lineDataset = {
-		labels: lineLabels,
 		datasets: [{data: lineDataOffset,
-			label: "test",
+			label: "Offset",
 			borderWidth: 1,
 			fill: false,
 			backgroundColor: "#fc8500",

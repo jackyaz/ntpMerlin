@@ -495,6 +495,19 @@ NTPD_Customise(){
 	/opt/etc/init.d/S77ntpd start
 }
 
+WriteData_ToJS(){
+	echo 'function GenChartDataJitter() {' > "$2"
+	contents="$contents"'lineDataOffset.unshift('
+	while IFS='' read -r line || [ -n "$line" ]; do
+		datapoint="{ x: moment.unix(""$(echo "$line" | awk 'BEGIN{FS=","}{ print $1 }' | awk '{$1=$1};1')"", y: ""$(echo "$line" | awk 'BEGIN{FS=","}{ print $2 }' | awk '{$1=$1};1')"" }"
+		contents="$contents""$datapoint"","
+	done < "$1"
+	contents=$(echo "$contents" | sed 's/.$//')
+	contents="$contents"");"
+	echo "$contents" >> "$2"
+	echo "}" >> "$2"
+}
+
 Generate_NTPStats(){
 	# This function originally written by kvic, updated by Jack Yaz
 	# This script is adapted from http://www.wraith.sf.ca.us/ntp
@@ -522,10 +535,9 @@ Generate_NTPStats(){
 	
 	rrdtool update $RDB N:"$NOFFSET":"$NSJIT":"$NCJIT":"$NWANDER":"$NFREQ":"$NDISPER"
 	
-	if [ ! -f "/jffs/scripts/ntpdstats_csv.csv" ]; then
-		echo "time,NOFFSET,NSJIT,NCJIT,NWANDER,NFREQ,NDISPER" > /jffs/scripts/ntpdstats_csv.csv
-	fi
 	echo "$(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER" >> /jffs/scripts/ntpdstats_csv.csv
+	
+	WriteData_ToJS "/jffs/scripts/ntpdstats_csv.csv" "/www/ext/ntpjitter.js"
 	
 	rm /tmp/ntp-rrdstats.$$
 	
