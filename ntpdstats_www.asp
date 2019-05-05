@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
@@ -32,8 +32,8 @@ var myLineChart;
 Chart.defaults.global.defaultFontColor = "#CCC";
 
 function GenChartData() {
-lineDataOffset.unshift({x:1,y:2},{x:2,y:3},{x:3,y:-2},{x:4,y:8},{x:5,y:-1});
-lineLabels.unshift(1,2,3,4,5);
+lineDataOffset.unshift(2,3,-2,6,1);
+lineLabels.unshift("1","2","3","4","5");
 }
 
 function redraw()
@@ -76,10 +76,11 @@ function draw_chart(){
 	var lineDataset = {
 		labels: lineLabels,
 		datasets: [{data: lineDataOffset,
-			//label: lineLabels,
+			label: "test",
 			borderWidth: 1,
-			//backgroundColor: poolColors(lineDataOffset.length),
-			borderColor: "#000000",
+			fill: false,
+			backgroundColor: "#fc8500",
+			borderColor: "#fc8500",
 		}]
 	};
 	myLineChart = new Chart(ctx, {
@@ -160,7 +161,7 @@ return pool;
 </thead>
 <tr>
 <td colspan="2" align="center">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="chart" height="240"></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="chart" height="120"></div>
 <img src="/ext/stats-ntp-offset.png">
 <img src="/ext/stats-ntp-sysjit.png">
 </td>
