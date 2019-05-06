@@ -56,7 +56,7 @@ function draw_chart(){
 				type: "time",
 				gridLines: { display: true, color: "#282828" },
 				ticks: { display: true },
-				time: { min: moment().subtract(24, "hours"), unit: "hour", stepsize: 2 }
+				time: { min: moment().subtract(24, "hours"), unit: "hour", stepSize: 1 }
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
