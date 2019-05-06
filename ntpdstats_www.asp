@@ -68,6 +68,7 @@ function draw_chart(){
 		datasets: [{data: lineDataOffset,
 			label: "Offset",
 			borderWidth: 1,
+			pointRadius: 1,
 			fill: false,
 			backgroundColor: "#fc8500",
 			borderColor: "#fc8500",
