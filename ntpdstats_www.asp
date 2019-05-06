@@ -55,7 +55,13 @@ function draw_chart(){
 			xAxes: [{
 				type: "time",
 				gridLines: { display: true, color: "#282828" },
-				ticks: { display: true },
+				ticks: {
+					display: true,
+					callback: function (value, index, values) {
+						if ( value >= 0.1) return value + 'm';
+						if ( value >= 0.01 && value < 0.1 ) return value * 100 + 'u';
+					}
+				},
 				time: { min: moment().subtract(24, "hours"), unit: "hour", stepSize: 1 }
 			}],
 			yAxes: [{
