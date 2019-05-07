@@ -51,22 +51,30 @@ function draw_chart(){
 		animateScale : true,
 		legend: { display: false, position: "bottom", onClick: null },
 		title: { display: true, text: "Offset" },
+		tooltips: {
+			callbacks: {
+					//title: function (tooltipItem, data) { return tooltipItem[0].yLabel + " " + "ms"; }, // },//.x.format('YYYY-MM-DD HH:mm').toString(); },
+					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString();} 
+				}
+		},
 		scales: {
 			xAxes: [{
 				type: "time",
 				gridLines: { display: true, color: "#282828" },
 				ticks: {
-					display: true,
-					callback: function (value, index, values) {
-						if ( value >= 0.1) return value + 'm';
-						if ( value >= 0.01 && value < 0.1 ) return value * 100 + 'u';
-					}
+					display: true
 				},
 				time: { min: moment().subtract(24, "hours"), unit: "hour", stepSize: 1 }
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
-				scaleLabel: { display: false, labelString: "Offset" }
+				scaleLabel: { display: false, labelString: "Offset" },
+				ticks: {
+					display: true,
+					callback: function (value, index, values) {
+						return value + ' ms';
+					}
+				},
 			}]
 		}
 	};
