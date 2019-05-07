@@ -53,8 +53,8 @@ function draw_chart(){
 		title: { display: true, text: "Offset" },
 		tooltips: {
 			callbacks: {
-					//title: function (tooltipItem, data) { return tooltipItem[0].yLabel + " " + "ms"; }, // },//.x.format('YYYY-MM-DD HH:mm').toString(); },
-					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString();} 
+					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel).format('YYYY-MM-DD HH:mm')); },
+					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString() + ' ms';}
 				}
 		},
 		scales: {
