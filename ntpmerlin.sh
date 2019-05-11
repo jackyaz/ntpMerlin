@@ -15,13 +15,17 @@
 ##########################################################
 
 ### Start of script variables ###
-readonly NTPD_NAME="ntpMerlin"
+readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
-readonly NTPD_NAME_LOWER=$(echo $NTPD_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly NTPD_VERSION="v1.2.5"
-readonly NTPD_BRANCH="master"
-readonly NTPD_REPO="https://raw.githubusercontent.com/jackyaz/ntpMerlin/""$NTPD_BRANCH"
+readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
+readonly SCRIPT_VERSION="v1.3.0"
+readonly NTPD_VERSION="v1.3.0"
+readonly SCRIPT_BRANCH="develop"
+readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
+readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
+readonly SCRIPT_WEB_DIR="$(readlink /www/ext)/$SCRIPT_NAME_LOWER"
+readonly SHARED_DIR="/jffs/scripts/shared-jy"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
 
@@ -35,10 +39,10 @@ readonly PASS="\\e[32m"
 # $1 = print to syslog, $2 = message to print, $3 = log level
 Print_Output(){
 	if [ "$1" = "true" ]; then
-		logger -t "$NTPD_NAME" "$2"
-		printf "\\e[1m$3%s: $2\\e[0m\\n\\n" "$NTPD_NAME"
+		logger -t "$SCRIPT_NAME" "$2"
+		printf "\\e[1m$3%s: $2\\e[0m\\n\\n" "$SCRIPT_NAME"
 	else
-		printf "\\e[1m$3%s: $2\\e[0m\\n\\n" "$NTPD_NAME"
+		printf "\\e[1m$3%s: $2\\e[0m\\n\\n" "$SCRIPT_NAME"
 	fi
 }
 
@@ -50,65 +54,66 @@ Firmware_Version_Check(){
 
 ### Code for these functions inspired by https://github.com/Adamm00 - credit to @Adamm ###
 Check_Lock(){
-	if [ -f "/tmp/$NTPD_NAME.lock" ]; then
-		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$NTPD_NAME.lock)))
+	if [ -f "/tmp/$SCRIPT_NAME.lock" ]; then
+		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$SCRIPT_NAME.lock)))
 		if [ "$ageoflock" -gt 120 ]; then
 			Print_Output "true" "Stale lock file found (>120 seconds old) - purging lock" "$ERR"
-			kill "$(sed -n '1p' /tmp/$NTPD_NAME.lock)" >/dev/null 2>&1
+			kill "$(sed -n '1p' /tmp/$SCRIPT_NAME.lock)" >/dev/null 2>&1
 			Clear_Lock
-			echo "$$" > "/tmp/$NTPD_NAME.lock"
+			echo "$$" > "/tmp/$SCRIPT_NAME.lock"
 			return 0
 		else
 			Print_Output "true" "Lock file found (age: $ageoflock seconds) - stopping to prevent duplicate runs" "$ERR"
-			#if [ -z "$1" ]; then
+			if [ -z "$1" ]; then
 				exit 1
-			#else
-			#	return 1
-			#fi
+			else
+				return 1
+			fi
 		fi
 	else
-		echo "$$" > "/tmp/$NTPD_NAME.lock"
+		echo "$$" > "/tmp/$SCRIPT_NAME.lock"
 		return 0
 	fi
 }
 
 Clear_Lock(){
-	rm -f "/tmp/$NTPD_NAME.lock" 2>/dev/null
+	rm -f "/tmp/$SCRIPT_NAME.lock" 2>/dev/null
 	return 0
 }
 
 Update_Version(){
 	if [ -z "$1" ]; then
 		doupdate="false"
-		localver=$(grep "NTPD_VERSION=" /jffs/scripts/"$NTPD_NAME_LOWER" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
-		/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" | grep -qF "jackyaz" || { Print_Output "true" "404 error detected - stopping update" "$ERR"; return 1; }
-		serverver=$(/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" | grep "NTPD_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
+		localver=$(grep "SCRIPT_VERSION=" /jffs/scripts/"$SCRIPT_NAME_LOWER" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
+		/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | grep -qF "jackyaz" || { Print_Output "true" "404 error detected - stopping update" "$ERR"; return 1; }
+		serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 		if [ "$localver" != "$serverver" ]; then
 			doupdate="version"
 		else
-			localmd5="$(md5sum "/jffs/scripts/$NTPD_NAME_LOWER" | awk '{print $1}')"
-			remotemd5="$(curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" | md5sum | awk '{print $1}')"
+			localmd5="$(md5sum "/jffs/scripts/$SCRIPT_NAME_LOWER" | awk '{print $1}')"
+			remotemd5="$(curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | md5sum | awk '{print $1}')"
 			if [ "$localmd5" != "$remotemd5" ]; then
 				doupdate="md5"
 			fi
 		fi
 		
 		if [ "$doupdate" = "version" ]; then
-			Print_Output "true" "New version of $NTPD_NAME available - updating to $serverver" "$PASS"
+			Print_Output "true" "New version of $SCRIPT_NAME available - updating to $serverver" "$PASS"
 		elif [ "$doupdate" = "md5" ]; then
-			Print_Output "true" "MD5 hash of $NTPD_NAME does not match - downloading updated $serverver" "$PASS"
+			Print_Output "true" "MD5 hash of $SCRIPT_NAME does not match - downloading updated $serverver" "$PASS"
 		fi
 			
 		Update_File "S77ntpd"
 		Update_File "ntp.conf"
 		Update_File "ntpdstats_www.asp"
+		#Update_File "moment.min.js"
 		Modify_WebUI_File
 		
 		if [ "$doupdate" != "false" ]; then
-			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
-			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
+			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
+			chmod 0755 "/jffs/scripts/$SCRIPT_NAME_LOWER"
 			Clear_Lock
-			/jffs/scripts/"$NTPD_NAME_LOWER" generate
+			/jffs/scripts/"$SCRIPT_NAME_LOWER" generate
 			exit 0
 		else
 			Print_Output "true" "No new version - latest is $localver" "$WARN"
@@ -118,16 +123,17 @@ Update_Version(){
 	
 	case "$1" in
 		force)
-			serverver=$(/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" | grep "NTPD_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
-			Print_Output "true" "Downloading latest version ($serverver) of $NTPD_NAME" "$PASS"
+			serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
+			Print_Output "true" "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
 			Update_File "S77ntpd"
 			Update_File "ntp.conf"
 			Update_File "ntpdstats_www.asp"
+			#Update_File "moment.min.js"
 			Modify_WebUI_File
-			/usr/sbin/curl -fsL --retry 3 "$NTPD_REPO/$NTPD_NAME_LOWER.sh" -o "/jffs/scripts/$NTPD_NAME_LOWER" && Print_Output "true" "$NTPD_NAME successfully updated"
-			chmod 0755 "/jffs/scripts/$NTPD_NAME_LOWER"
+			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
+			chmod 0755 "/jffs/scripts/$SCRIPT_NAME_LOWER"
 			Clear_Lock
-			/jffs/scripts/"$NTPD_NAME_LOWER" generate
+			/jffs/scripts/"$SCRIPT_NAME_LOWER" generate
 			exit 0
 		;;
 	esac
@@ -137,7 +143,7 @@ Update_Version(){
 Update_File(){
 	if [ "$1" = "S77ntpd" ]; then
 		tmpfile="/tmp/$1"
-		Download_File "$NTPD_REPO/$1" "$tmpfile"
+		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
 		if ! diff -q "$tmpfile" "/opt/etc/init.d/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
 			NTPD_Customise
@@ -145,24 +151,33 @@ Update_File(){
 		rm -f "$tmpfile"
 	elif [ "$1" = "ntp.conf" ]; then
 		tmpfile="/tmp/$1"
-		Download_File "$NTPD_REPO/$1" "$tmpfile"
+		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
 		if [ -f "/jffs/configs/$1.default" ]; then
 			if ! diff -q "$tmpfile" "/jffs/configs/$1.default" >/dev/null 2>&1; then
-				Download_File "$NTPD_REPO/$1" "/jffs/configs/$1.default"
+				Download_File "$SCRIPT_REPO/$1" "/jffs/configs/$1.default"
 				Print_Output "true" "New default version of $1 downloaded to /jffs/configs/$1.default, please compare against your /jffs/configs/$1" "$PASS"
 			fi
 		else
-			Download_File "$NTPD_REPO/$1" "/jffs/configs/$1.default"
+			Download_File "$SCRIPT_REPO/$1" "/jffs/configs/$1.default"
 			Print_Output "true" "/jffs/configs/$1.default does not exist, downloading now. Please compare against your /jffs/configs/$1" "$PASS"
 		fi
 		rm -f "$tmpfile"
 	elif [ "$1" = "ntpdstats_www.asp" ]; then
 		tmpfile="/tmp/$1"
-		Download_File "$NTPD_REPO/$1" "$tmpfile"
-		if ! diff -q "$tmpfile" "/jffs/scripts/$1" >/dev/null 2>&1; then
+		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			mv "/jffs/scripts/$1" "/jffs/scripts/$1.old"
+			mv "$SCRIPT_DIR/$1" "$SCRIPT_DIR/$1.old"
 			Mount_NTPD_WebUI
+		fi
+		rm -f "$tmpfile"
+	elif [ "$1" = "moment.min.js" ]; then
+		tmpfile="/tmp/$1"
+		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
+			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			mv "$SCRIPT_DIR/$1" "$SCRIPT_DIR/$1.old"
+			#cp "/jffs/scripts/$1" "/www/ext/$1"
 		fi
 		rm -f "$tmpfile"
 	else
@@ -182,36 +197,50 @@ Validate_Number(){
 	fi
 }
 
+Create_Dirs(){
+	if [ ! -d "$SCRIPT_DIR" ]; then
+		mkdir -p "$SCRIPT_DIR"
+	fi
+	
+	if [ ! -d "$SHARED_DIR" ]; then
+		mkdir -p "$SHARED_DIR"
+	fi
+	
+	if [ ! -d "$SCRIPT_WEB_DIR" ]; then
+		mkdir -p "$SCRIPT_WEB_DIR"
+	fi
+}
+
 Auto_ServiceEvent(){
 	case $1 in
 		create)
 			if [ -f /jffs/scripts/service-event ]; then
-				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/service-event)
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/service-event)
 				# shellcheck disable=SC2016
-				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$NTPD_NAME_LOWER generate"' "$1" "$2" &'' # '"$NTPD_NAME" /jffs/scripts/service-event)
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME_LOWER generate"' "$1" "$2" &'' # '"$SCRIPT_NAME" /jffs/scripts/service-event)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
-					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/scripts/service-event
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/service-event
 				fi
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
 					# shellcheck disable=SC2016
-					echo "/jffs/scripts/$NTPD_NAME_LOWER generate"' "$1" "$2" &'' # '"$NTPD_NAME" >> /jffs/scripts/service-event
+					echo "/jffs/scripts/$SCRIPT_NAME_LOWER generate"' "$1" "$2" &'' # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
 				fi
 			else
 				echo "#!/bin/sh" > /jffs/scripts/service-event
 				echo "" >> /jffs/scripts/service-event
 				# shellcheck disable=SC2016
-				echo "/jffs/scripts/$NTPD_NAME_LOWER generate"' "$1" "$2" &'' # '"$NTPD_NAME" >> /jffs/scripts/service-event
+				echo "/jffs/scripts/$SCRIPT_NAME_LOWER generate"' "$1" "$2" &'' # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
 				chmod 0755 /jffs/scripts/service-event
 			fi
 		;;
 		delete)
 			if [ -f /jffs/scripts/service-event ]; then
-				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/service-event)
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/service-event)
 				
 				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
-					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/scripts/service-event
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/service-event
 				fi
 			fi
 		;;
@@ -222,31 +251,31 @@ Auto_DNSMASQ(){
 	case $1 in
 		create)
 			if [ -f /jffs/configs/dnsmasq.conf.add ]; then
-				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/configs/dnsmasq.conf.add)
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/configs/dnsmasq.conf.add)
 				# shellcheck disable=SC2016
-				STARTUPLINECOUNTEX=$(grep -cx "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$NTPD_NAME" /jffs/configs/dnsmasq.conf.add)
+				STARTUPLINECOUNTEX=$(grep -cx "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$SCRIPT_NAME" /jffs/configs/dnsmasq.conf.add)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
-					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/configs/dnsmasq.conf.add
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/configs/dnsmasq.conf.add
 				fi
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
 					# shellcheck disable=SC2016
-					echo "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$NTPD_NAME" >> /jffs/configs/dnsmasq.conf.add
+					echo "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$SCRIPT_NAME" >> /jffs/configs/dnsmasq.conf.add
 				fi
 			else
 				echo "" >> /jffs/configs/dnsmasq.conf.add
 				# shellcheck disable=SC2016
-				echo "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$NTPD_NAME" >> /jffs/configs/dnsmasq.conf.add
+				echo "dhcp-option=lan,42,$(nvram get lan_ipaddr)"' # '"$SCRIPT_NAME" >> /jffs/configs/dnsmasq.conf.add
 				chmod 0644 /jffs/configs/dnsmasq.conf.add
 			fi
 		;;
 		delete)
 			if [ -f /jffs/configs/dnsmasq.conf.add ]; then
-				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/configs/dnsmasq.conf.add)
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/configs/dnsmasq.conf.add)
 				
 				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
-					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/configs/dnsmasq.conf.add
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/configs/dnsmasq.conf.add
 				fi
 			fi
 		;;
@@ -259,29 +288,29 @@ Auto_Startup(){
 	case $1 in
 		create)
 			if [ -f /jffs/scripts/services-start ]; then
-				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/services-start)
-				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$NTPD_NAME_LOWER startup"' # '"$NTPD_NAME" /jffs/scripts/services-start)
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/services-start)
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME_LOWER startup"' # '"$SCRIPT_NAME" /jffs/scripts/services-start)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
-					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/scripts/services-start
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/services-start
 				fi
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
-					echo "/jffs/scripts/$NTPD_NAME_LOWER startup"' # '"$NTPD_NAME" >> /jffs/scripts/services-start
+					echo "/jffs/scripts/$SCRIPT_NAME_LOWER startup"' # '"$SCRIPT_NAME" >> /jffs/scripts/services-start
 				fi
 			else
 				echo "#!/bin/sh" > /jffs/scripts/services-start
 				echo "" >> /jffs/scripts/services-start
-				echo "/jffs/scripts/$NTPD_NAME_LOWER startup"' # '"$NTPD_NAME" >> /jffs/scripts/services-start
+				echo "/jffs/scripts/$SCRIPT_NAME_LOWER startup"' # '"$SCRIPT_NAME" >> /jffs/scripts/services-start
 				chmod 0755 /jffs/scripts/services-start
 			fi
 		;;
 		delete)
 			if [ -f /jffs/scripts/services-start ]; then
-				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/services-start)
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/services-start)
 				
 				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
-					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/scripts/services-start
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/services-start
 				fi
 			fi
 		;;
@@ -292,35 +321,35 @@ Auto_NAT(){
 	case $1 in
 		create)
 			if [ -f /jffs/scripts/nat-start ]; then
-				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/nat-start)
-				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$NTPD_NAME_LOWER ntpredirect"' # '"$NTPD_NAME" /jffs/scripts/nat-start)
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/nat-start)
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME_LOWER ntpredirect"' # '"$SCRIPT_NAME" /jffs/scripts/nat-start)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
-					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/scripts/nat-start
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/nat-start
 				fi
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
-					echo "/jffs/scripts/$NTPD_NAME_LOWER ntpredirect"' # '"$NTPD_NAME" >> /jffs/scripts/nat-start
+					echo "/jffs/scripts/$SCRIPT_NAME_LOWER ntpredirect"' # '"$SCRIPT_NAME" >> /jffs/scripts/nat-start
 				fi
 			else
 				echo "#!/bin/sh" > /jffs/scripts/nat-start
 				echo "" >> /jffs/scripts/nat-start
-				echo "/jffs/scripts/$NTPD_NAME_LOWER ntpredirect"' # '"$NTPD_NAME" >> /jffs/scripts/nat-start
+				echo "/jffs/scripts/$SCRIPT_NAME_LOWER ntpredirect"' # '"$SCRIPT_NAME" >> /jffs/scripts/nat-start
 				chmod 0755 /jffs/scripts/nat-start
 			fi
 		;;
 		delete)
 			if [ -f /jffs/scripts/nat-start ]; then
-				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/nat-start)
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/nat-start)
 				
 				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
-					sed -i -e '/# '"$NTPD_NAME"'/d' /jffs/scripts/nat-start
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/nat-start
 				fi
 			fi
 		;;
 		check)
 			if [ -f /jffs/scripts/nat-start ]; then
-				STARTUPLINECOUNT=$(grep -c '# '"$NTPD_NAME" /jffs/scripts/nat-start)
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/nat-start)
 				
 				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
 					return 0
@@ -337,17 +366,17 @@ Auto_NAT(){
 Auto_Cron(){
 	case $1 in
 		create)
-			STARTUPLINECOUNT=$(cru l | grep -c "$NTPD_NAME")
+			STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME")
 			
 			if [ "$STARTUPLINECOUNT" -eq 0 ]; then
-				cru a "$NTPD_NAME" "*/5 * * * * /jffs/scripts/$NTPD_NAME_LOWER generate"
+				cru a "$SCRIPT_NAME" "*/5 * * * * /jffs/scripts/$SCRIPT_NAME_LOWER generate"
 			fi
 		;;
 		delete)
-			STARTUPLINECOUNT=$(cru l | grep -c "$NTPD_NAME")
+			STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME")
 			
 			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
-				cru d "$NTPD_NAME"
+				cru d "$SCRIPT_NAME"
 			fi
 		;;
 	esac
@@ -372,10 +401,14 @@ NTP_Redirect(){
 }
 
 RRD_Initialise(){
-	if [ ! -f /jffs/scripts/ntpdstats_rrd.rrd ]; then
-		Download_File "$NTPD_REPO/ntpdstats_xml.xml" "/jffs/scripts/ntpdstats_xml.xml"
-		rrdtool restore -f /jffs/scripts/ntpdstats_xml.xml /jffs/scripts/ntpdstats_rrd.rrd
-		rm -f /jffs/scripts/ntpdstats_xml.xml
+	if [ -f "/jffs/scripts/ntpdstats_rrd.rrd" ]; then
+		mv "/jffs/scripts/ntpdstats_rrd.rrd" "$SCRIPT_DIR/ntpdstats_rrd.rrd"
+	fi
+	
+	if [ ! -f "$SCRIPT_DIR/ntpdstats_rrd.rrd" ]; then
+		Download_File "$SCRIPT_REPO/ntpdstats_xml.xml" "$SCRIPT_DIR/ntpdstats_xml.xml"
+		rrdtool restore -f "$SCRIPT_DIR/ntpdstats_xml.xml" "$SCRIPT_DIR/ntpdstats_rrd.rrd"
+		rm -f "$SCRIPT_DIR/ntpdstats_xml.xml"
 	fi
 }
 
@@ -389,11 +422,25 @@ Get_CONNMON_UI(){
 
 Mount_NTPD_WebUI(){
 	umount /www/Feedback_Info.asp 2>/dev/null
-	if [ ! -f /jffs/scripts/ntpdstats_www.asp ]; then
-		Download_File "$NTPD_REPO/ntpdstats_www.asp" "/jffs/scripts/ntpdstats_www.asp"
+	
+	if [ -f "/jffs/scripts/ntpdstats_www.asp" ]; then
+		mv "/jffs/scripts/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
 	fi
 	
-	mount -o bind /jffs/scripts/ntpdstats_www.asp /www/Feedback_Info.asp
+	if [ ! -f "$SCRIPT_DIR/ntpdstats_www.asp" ]; then
+		Download_File "$SCRIPT_REPO/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
+	fi
+	
+	#if [ ! -f /jffs/scripts/moment.min.js ]; then
+	#	Download_File "$SCRIPT_REPO/moment.min.js" "/jffs/scripts/moment.min.js"
+	#	cp "/jffs/scripts/moment.min.js" "/www/ext/moment.min.js"
+	#fi
+	
+	#if [ ! -f /www/ext/moment.min.js ]; then
+	#cp "/jffs/scripts/moment.min.js" "/www/ext/moment.min.js"
+	#fi
+	
+	mount -o bind "$SCRIPT_DIR/ntpdstats_www.asp" /www/Feedback_Info.asp
 }
 
 Modify_WebUI_File(){
@@ -403,8 +450,10 @@ Modify_WebUI_File(){
 		tmpfile=/tmp/menuTree.js
 		cp "/www/require/modules/menuTree.js" "$tmpfile"
 		
-		if [ ! -f /jffs/scripts/custom_menuTree.js ]; then
-			cp "/www/require/modules/menuTree.js" "/jffs/scripts/custom_menuTree.js"
+		if [ -f "/jffs/scripts/uiDivStats" ]; then
+			sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: /d' "$tmpfile"
+			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"},' "$tmpfile"
+			sed -i '/retArray.push("Advanced_MultiSubnet_Content.asp");/d' "$tmpfile"
 		fi
 		
 		if [ -f "/jffs/scripts/connmon" ]; then
@@ -419,23 +468,28 @@ Modify_WebUI_File(){
 			sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
 		fi
 		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
-		if ! diff -q "$tmpfile" "/jffs/scripts/custom_menuTree.js" >/dev/null 2>&1; then
-			cp "$tmpfile" "/jffs/scripts/custom_menuTree.js"
+		
+		if [ -f /jffs/scripts/custom_menuTree.js ]; then
+			mv /jffs/scripts/custom_menuTree.js "$SHARED_DIR/custom_menuTree.js"
+		fi
+		
+		if [ ! -f "$SHARED_DIR/custom_menuTree.js" ]; then
+			cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
+		fi
+		
+		if ! diff -q "$tmpfile" "$SHARED_DIR/custom_menuTree.js" >/dev/null 2>&1; then
+			cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
 		fi
 		
 		rm -f "$tmpfile"
 		
-		mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
+		mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
 		### ###
 	else
 		### state.js ###
 		umount /www/state.js 2>/dev/null
 		tmpfile=/tmp/state.js
 		cp "/www/state.js" "$tmpfile"
-		
-		if [ ! -f /jffs/scripts/custom_state.js ]; then
-			cp "/www/state.js" "/jffs/scripts/custom_state.js"
-		fi
 		
 		if [ -f "/jffs/scripts/spdmerlin" ] && [ -f "/jffs/scripts/connmon" ]; then
 			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "SpeedTest", "Uptime Monitoring");/' "$tmpfile"
@@ -452,13 +506,21 @@ Modify_WebUI_File(){
 			sed -i -e '/else if(location.pathname == "\/Advanced_Feedback.asp") {/,+4d' "$tmpfile"
 		fi
 		
-		if ! diff -q "$tmpfile" "/jffs/scripts/custom_state.js" >/dev/null 2>&1; then
-			cp "$tmpfile" "/jffs/scripts/custom_state.js"
+		if [ -f /jffs/scripts/custom_state.js ]; then
+			mv /jffs/scripts/custom_state.js "$SHARED_DIR/custom_state.js"
+		fi
+		
+		if [ ! -f "$SHARED_DIR/custom_state.js" ]; then
+			cp "$tmpfile" "$SHARED_DIR/custom_state.js"
+		fi
+		
+		if ! diff -q "$tmpfile" "$SHARED_DIR/custom_state.js" >/dev/null 2>&1; then
+			cp "$tmpfile" "$SHARED_DIR/custom_state.js"
 		fi
 		
 		rm -f "$tmpfile"
 		
-		mount -o bind /jffs/scripts/custom_state.js /www/state.js
+		mount -o bind "$SHARED_DIR/custom_state.js" /www/state.js
 		### ###
 	fi
 	
@@ -466,33 +528,58 @@ Modify_WebUI_File(){
 	umount /www/start_apply.htm 2>/dev/null
 	tmpfile=/tmp/start_apply.htm
 	cp "/www/start_apply.htm" "$tmpfile"
-	#sed -i -e 's/setTimeout("parent.redirect();", action_wait\*1000);/parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time\*1000);/' "$tmpfile"
-	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Feedback_Info.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+	
+	if [ -f "/jffs/scripts/uiDivStats" ]; then
+		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_MultiSubnet_Content.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+	fi
 	
 	if [ -f /jffs/scripts/connmon ]; then
 		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("'"$(Get_CONNMON_UI)"'") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	fi
 	
-	if [ ! -f /jffs/scripts/custom_start_apply.htm ]; then
-		cp "/www/start_apply.htm" "/jffs/scripts/custom_start_apply.htm"
+	if [ -f /jffs/scripts/spdmerlin ]; then
+	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_Feedback.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	fi
 	
-	if ! diff -q "$tmpfile" "/jffs/scripts/custom_start_apply.htm" >/dev/null 2>&1; then
-		cp "$tmpfile" "/jffs/scripts/custom_start_apply.htm"
+	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Feedback_Info.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+	
+	if [ -f /jffs/scripts/custom_start_apply.htm ]; then
+		mv /jffs/scripts/custom_start_apply.htm "$SHARED_DIR/custom_start_apply.htm"
+	fi
+	
+	if [ ! -f "$SHARED_DIR/custom_start_apply.htm" ]; then
+		cp "/www/start_apply.htm" "$SHARED_DIR/custom_start_apply.htm"
+	fi
+	
+	if ! diff -q "$tmpfile" "$SHARED_DIR/custom_start_apply.htm" >/dev/null 2>&1; then
+		cp "$tmpfile" "$SHARED_DIR/custom_start_apply.htm"
 	fi
 	
 	rm -f "$tmpfile"
 	
-	mount -o bind /jffs/scripts/custom_start_apply.htm /www/start_apply.htm
+	mount -o bind "$SHARED_DIR/custom_start_apply.htm" /www/start_apply.htm
 	### ###
 }
 
 NTPD_Customise(){
 	/opt/etc/init.d/S77ntpd stop
 	rm -f /opt/etc/init.d/S77ntpd
-	Download_File "$NTPD_REPO/S77ntpd" "/opt/etc/init.d/S77ntpd"
+	Download_File "$SCRIPT_REPO/S77ntpd" "/opt/etc/init.d/S77ntpd"
 	chmod +x /opt/etc/init.d/S77ntpd
 	/opt/etc/init.d/S77ntpd start
+}
+
+WriteData_ToJS(){
+	echo 'function GenChartDataJitter() {' > "$2"
+	contents="$contents"'lineDataOffset.unshift('
+	while IFS='' read -r line || [ -n "$line" ]; do
+		datapoint="{ x: moment.unix(""$(echo "$line" | awk 'BEGIN{FS=","}{ print $1 }' | awk '{$1=$1};1')""), y: ""$(echo "$line" | awk 'BEGIN{FS=","}{ print $2 }' | awk '{$1=$1};1')"" }"
+		contents="$contents""$datapoint"","
+	done < "$1"
+	contents=$(echo "$contents" | sed 's/.$//')
+	contents="$contents"");"
+	echo "$contents" >> "$2"
+	echo "}" >> "$2"
 }
 
 Generate_NTPStats(){
@@ -502,36 +589,42 @@ Generate_NTPStats(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
+	Create_Dirs
 	
-	RDB=/jffs/scripts/ntpdstats_rrd.rrd
+	RDB="$SCRIPT_DIR/ntpdstats_rrd.rrd"
 	
 	#shellcheck disable=SC2086
 	killall ntp 2>/dev/null
 	ntpq -4 -c rv | awk 'BEGIN{ RS=","}{ print }' >> /tmp/ntp-rrdstats.$$
 	
-	NOFFSET=$(grep offset /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
-	NFREQ=$(grep frequency /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
-	NSJIT=$(grep sys_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
-	NCJIT=$(grep clk_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
-	NWANDER=$(grep clk_wander /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
-	NDISPER=$(grep rootdisp /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')
-	
-	rrdtool update $RDB N:"$NOFFSET":"$NSJIT":"$NCJIT":"$NWANDER":"$NFREQ":"$NDISPER"
-	rm /tmp/ntp-rrdstats.$$
+	[ ! -z "$(grep offset /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NOFFSET=$(grep offset /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NOFFSET=0
+	[ ! -z "$(grep frequency /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NFREQ=$(grep frequency /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NFREQ=0
+	[ ! -z "$(grep sys_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NSJIT=$(grep sys_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NSJIT=0
+	[ ! -z "$(grep clk_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NCJIT=$(grep clk_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NCJIT=0
+	[ ! -z "$(grep clk_wander /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NWANDER=$(grep clk_wander /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NWANDER=0
+	[ ! -z "$(grep rootdisp /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] &&  NDISPER=$(grep rootdisp /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NDISPER=0
 	
 	TZ=$(cat /etc/TZ)
 	export TZ
 	DATE=$(date "+%a %b %e %H:%M %Y")
+	
+	rrdtool update "$RDB" N:"$NOFFSET":"$NSJIT":"$NCJIT":"$NWANDER":"$NFREQ":"$NDISPER"
+	
+	#echo "$(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER" >> /jffs/scripts/ntpdstats_csv.csv
+	
+	#WriteData_ToJS "/jffs/scripts/ntpdstats_csv.csv" "/www/ext/ntpjitter.js"
+	
+	rm /tmp/ntp-rrdstats.$$
 	
 	COMMON="-c SHADEA#475A5F -c SHADEB#475A5F -c BACK#475A5F -c CANVAS#92A0A520 -c AXIS#92a0a520 -c FONT#ffffff -c ARROW#475A5F -n TITLE:9 -n AXIS:8 -n LEGEND:9 -w 650 -h 200"
 	
 	D_COMMON='--start -86400 --x-grid MINUTE:20:HOUR:2:HOUR:2:0:%H:%M'
 	W_COMMON='--start -604800 --x-grid HOUR:3:DAY:1:DAY:1:0:%Y-%m-%d'
 	
-	mkdir -p "$(readlink /www/ext)"
+	rm -f /www/ext/*-ntp-*
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/stats-ntp-offset.png \
+	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/offset.png" \
 		$COMMON $D_COMMON \
 		--title "Offset - $DATE" \
 		--vertical-label "Seconds" \
@@ -544,7 +637,7 @@ Generate_NTPStats(){
 		GPRINT:noffset:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/stats-ntp-sysjit.png \
+	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/sysjit.png" \
 		$COMMON $D_COMMON \
 		--title "Jitter - $DATE" \
 		--vertical-label "Seconds" \
@@ -557,7 +650,7 @@ Generate_NTPStats(){
 		GPRINT:nsjit:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-offset.png \
+	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/week-offset.png" \
 		$COMMON $W_COMMON \
 		--title "Offset - $DATE" \
 		--vertical-label "Seconds" \
@@ -570,7 +663,7 @@ Generate_NTPStats(){
 		GPRINT:noffset:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-sysjit.png \
+	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/week-sysjit.png" \
 		$COMMON $W_COMMON --alt-autoscale-max \
 		--title "Jitter - $DATE" \
 		--vertical-label "Seconds" \
@@ -583,7 +676,7 @@ Generate_NTPStats(){
 		GPRINT:nsjit:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/stats-week-ntp-freq.png \
+	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/week-freq.png" \
 		$COMMON $W_COMMON --alt-autoscale --alt-y-grid \
 		--title "Drift - $DATE" \
 		--vertical-label "ppm" \
@@ -598,14 +691,14 @@ Generate_NTPStats(){
 Shortcut_ntpMerlin(){
 	case $1 in
 		create)
-			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/$NTPD_NAME_LOWER" ] && [ -f "/jffs/scripts/$NTPD_NAME_LOWER" ]; then
-				ln -s /jffs/scripts/"$NTPD_NAME_LOWER" /opt/bin
-				chmod 0755 /opt/bin/"$NTPD_NAME_LOWER"
+			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/$SCRIPT_NAME_LOWER" ] && [ -f "/jffs/scripts/$SCRIPT_NAME_LOWER" ]; then
+				ln -s /jffs/scripts/"$SCRIPT_NAME_LOWER" /opt/bin
+				chmod 0755 /opt/bin/"$SCRIPT_NAME_LOWER"
 			fi
 		;;
 		delete)
-			if [ -f "/opt/bin/$NTPD_NAME_LOWER" ]; then
-				rm -f /opt/bin/"$NTPD_NAME_LOWER"
+			if [ -f "/opt/bin/$SCRIPT_NAME_LOWER" ]; then
+				rm -f /opt/bin/"$SCRIPT_NAME_LOWER"
 			fi
 		;;
 	esac
@@ -653,7 +746,7 @@ ScriptHeader(){
 	printf "\\e[1m##             | |                                      ##\\e[0m\\n"
 	printf "\\e[1m##             |_|                                      ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
-	printf "\\e[1m##                  %s on %-9s                 ##\\e[0m\\n" "$NTPD_VERSION" "$ROUTER_MODEL"
+	printf "\\e[1m##                  %s on %-9s                 ##\\e[0m\\n" "$SCRIPT_VERSION" "$ROUTER_MODEL"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##       https://github.com/jackyaz/ntpMerlin           ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
@@ -674,13 +767,13 @@ MainMenu(){
 	else
 		NTP_REDIRECT_ENABLED="Disabled"
 	fi
-	printf "1.    Generate updated %s graphs now\\n\\n" "$NTPD_NAME"
-	printf "2.    Toggle redirect of all NTP traffic to %s\\n      (currently %s)\\n\\n" "$NTPD_NAME" "$NTP_REDIRECT_ENABLED"
-	printf "3.    Edit %s config\\n\\n" "$NTPD_NAME"
+	printf "1.    Generate updated %s graphs now\\n\\n" "$SCRIPT_NAME"
+	printf "2.    Toggle redirect of all NTP traffic to %s\\n      (currently %s)\\n\\n" "$SCRIPT_NAME" "$NTP_REDIRECT_ENABLED"
+	printf "3.    Edit %s config\\n\\n" "$SCRIPT_NAME"
 	printf "u.    Check for updates\\n"
-	printf "uf.   Update %s with latest version (force update)\\n\\n" "$NTPD_NAME"
-	printf "e.    Exit %s\\n\\n" "$NTPD_NAME"
-	printf "z.    Uninstall %s\\n" "$NTPD_NAME"
+	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
+	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
+	printf "z.    Uninstall %s\\n" "$SCRIPT_NAME"
 	printf "\\n"
 	printf "\\e[1m##########################################################\\e[0m\\n"
 	printf "\\n"
@@ -691,7 +784,9 @@ MainMenu(){
 		case "$menu" in
 			1)
 				printf "\\n"
-				Menu_GenerateStats
+				if Check_Lock "menu"; then
+					Menu_GenerateStats
+				fi
 				PressEnter
 				break
 			;;
@@ -703,29 +798,35 @@ MainMenu(){
 			;;
 			3)
 				printf "\\n"
-				Menu_Edit
+				if Check_Lock "menu"; then
+					Menu_Edit
+				fi
 				break
 			;;
 			u)
 				printf "\\n"
-				Menu_Update
+				if Check_Lock "menu"; then
+					Menu_Update
+				fi
 				PressEnter
 				break
 			;;
 			uf)
 				printf "\\n"
-				Menu_ForceUpdate
+				if Check_Lock "menu"; then
+					Menu_ForceUpdate
+				fi
 				PressEnter
 				break
 			;;
 			e)
 				ScriptHeader
-				printf "\\n\\e[1mThanks for using %s!\\e[0m\\n\\n\\n" "$NTPD_NAME"
+				printf "\\n\\e[1mThanks for using %s!\\e[0m\\n\\n\\n" "$SCRIPT_NAME"
 				exit 0
 			;;
 			z)
 				while true; do
-					printf "\\n\\e[1mAre you sure you want to uninstall %s? (y/n)\\e[0m\\n" "$NTPD_NAME"
+					printf "\\n\\e[1mAre you sure you want to uninstall %s? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
 					read -r "confirm"
 					case "$confirm" in
 						y|Y)
@@ -764,10 +865,10 @@ Check_Requirements(){
 	
 	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -lt "$(Firmware_Version_Check 384.5)" ] && [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ne "$(Firmware_Version_Check 374.43)" ]; then
 		Print_Output "true" "Older Merlin firmware detected - service-event requires 384.5 or later" "$WARN"
-		Print_Output "true" "Please update to benefit from $NTPD_NAME stats generation in WebUI" "$WARN"
+		Print_Output "true" "Please update to benefit from $SCRIPT_NAME stats generation in WebUI" "$WARN"
 	elif [ "$(Firmware_Version_Check "$(nvram get buildno)")" -eq "$(Firmware_Version_Check 374.43)" ]; then
 		Print_Output "true" "John's fork detected - service-event requires 374.43_32D6j9527 or later" "$WARN"
-		Print_Output "true" "Please update to benefit from $NTPD_NAME stats generation in WebUI" "$WARN"
+		Print_Output "true" "Please update to benefit from $SCRIPT_NAME stats generation in WebUI" "$WARN"
 	fi
 	
 	if [ "$CHECKSFAILED" = "false" ]; then
@@ -778,15 +879,16 @@ Check_Requirements(){
 }
 
 Menu_Install(){
-	Print_Output "true" "Welcome to $NTPD_NAME $NTPD_VERSION, a script by JackYaz"
+	Print_Output "true" "Welcome to $SCRIPT_NAME $SCRIPT_VERSION, a script by JackYaz"
 	sleep 1
 	
-	Print_Output "true" "Checking your router meets the requirements for $NTPD_NAME"
+	Print_Output "true" "Checking your router meets the requirements for $SCRIPT_NAME"
 	
 	if ! Check_Requirements; then
-		Print_Output "true" "Requirements for $NTPD_NAME not met, please see above for the reason(s)" "$CRIT"
+		Print_Output "true" "Requirements for $SCRIPT_NAME not met, please see above for the reason(s)" "$CRIT"
 		PressEnter
 		Clear_Lock
+		rm -f "/jffs/scripts/$SCRIPT_NAME_LOWER" 2>/dev/null
 		exit 1
 	fi
 	
@@ -795,26 +897,27 @@ Menu_Install(){
 	opkg install ntpd
 	opkg install rrdtool
 	
-	Download_File "$NTPD_REPO/ntp.conf" "/jffs/configs/ntp.conf"
+	Create_Dirs
 	
-	Mount_NTPD_WebUI
+	Download_File "$SCRIPT_REPO/ntp.conf" "/jffs/configs/ntp.conf"
 	
-	Modify_WebUI_File
-	
-	RRD_Initialise
-	
-	NTPD_Customise
-	
+	Auto_Startup create 2>/dev/null
+	Auto_Cron create 2>/dev/null
+	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_ntpMerlin create
-	
+	Mount_NTPD_WebUI
+	Modify_WebUI_File
+	RRD_Initialise
+	NTPD_Customise
 	Generate_NTPStats
 }
 
 Menu_Startup(){
-	Check_Lock
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
+	Shortcut_ntpMerlin create
+	Create_Dirs
 	Mount_NTPD_WebUI
 	Modify_WebUI_File
 	RRD_Initialise
@@ -822,13 +925,11 @@ Menu_Startup(){
 }
 
 Menu_GenerateStats(){
-	Check_Lock
 	Generate_NTPStats
 	Clear_Lock
 }
 
 Menu_Edit(){
-	Check_Lock
 	texteditor=""
 	exitmenu="false"
 	
@@ -871,7 +972,6 @@ Menu_Edit(){
 }
 
 Menu_ToggleNTPRedirect(){
-	Check_Lock
 	if Auto_NAT check; then
 		Auto_NAT delete
 		NTP_Redirect delete
@@ -881,36 +981,32 @@ Menu_ToggleNTPRedirect(){
 		NTP_Redirect create
 		printf "\\e[1mNTP Redirect has been enabled\\e[0m\\n\\n"
 	fi
-	Clear_Lock
 }
 
 Menu_Update(){
-	Check_Lock
 	Update_Version
 	Clear_Lock
 }
 
 Menu_ForceUpdate(){
-	Check_Lock
 	Update_Version force
 	Clear_Lock
 }
 
 Menu_Uninstall(){
-	Check_Lock
-	Print_Output "true" "Removing $NTPD_NAME..." "$PASS"
+	Print_Output "true" "Removing $SCRIPT_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
 	Auto_ServiceEvent delete 2>/dev/null
 	Auto_NAT delete
 	NTP_Redirect delete
 	while true; do
-		printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m\\n" "$NTPD_NAME"
+		printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
 		read -r "confirm"
 		case "$confirm" in
 			y|Y)
 				rm -f "/jffs/configs/ntp.conf" 2>/dev/null
-				rm -f "/jffs/scripts/ntpdstats_rrd.rrd" 2>/dev/null
+				rm -f "$SCRIPT_DIR/ntpdstats_rrd.rrd" 2>/dev/null
 				break
 			;;
 			*)
@@ -923,25 +1019,25 @@ Menu_Uninstall(){
 	opkg remove --autoremove ntpd
 	opkg remove --autoremove ntp-utils
 	umount /www/Feedback_Info.asp 2>/dev/null
-	sed -i '/{url: "Feedback_Info.asp", tabName: "NTP Daemon"}/d' "/jffs/scripts/custom_menuTree.js"
+	sed -i '/{url: "Feedback_Info.asp", tabName: "NTP Daemon"}/d' "$SHARED_DIR/custom_menuTree.js"
 	umount /www/require/modules/menuTree.js 2>/dev/null
 	umount /www/start_apply.htm 2>/dev/null
 	if [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
 		opkg remove --autoremove rrdtool
-		rm -f "/jffs/scripts/custom_menuTree.js" 2>/dev/null
-		rm -f "/jffs/scripts/custom_start_apply.htm" 2>/dev/null
+		rm -f "$SHARED_DIR/custom_menuTree.js" 2>/dev/null
+		rm -f "$SHARED_DIR/custom_start_apply.htm" 2>/dev/null
 	else
-		mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
-		mount -o bind "/jffs/scripts/custom_start_apply.htm" "/www/start_apply.htm"
+		mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
+		mount -o bind "$SHARED_DIR/custom_start_apply.htm" "/www/start_apply.htm"
 	fi
-	rm -f "/jffs/scripts/ntpdstats_www.asp" 2>/dev/null
-	rm -f "/jffs/scripts/$NTPD_NAME_LOWER" 2>/dev/null
+	rm -f "$SHARED_DIR/ntpdstats_www.asp" 2>/dev/null
+	rm -f "/jffs/scripts/$SCRIPT_NAME_LOWER" 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"
 }
 
 if [ -z "$1" ]; then
-	Check_Lock
+	Create_Dirs
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
@@ -955,35 +1051,43 @@ fi
 
 case "$1" in
 	install)
+		Check_Lock
 		Menu_Install
 		exit 0
 	;;
 	startup)
+		Check_Lock
 		Menu_Startup
 		exit 0
 	;;
 	generate)
 		if [ -z "$2" ] && [ -z "$3" ]; then
+			Check_Lock
 			Menu_GenerateStats
-		elif [ "$2" = "start" ] && [ "$3" = "$NTPD_NAME_LOWER" ]; then
+		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME_LOWER" ]; then
+			Check_Lock
 			Menu_GenerateStats
 		fi
 		exit 0
 	;;
 	ntpredirect)
+		Check_Lock
 		Auto_NAT create
 		NTP_Redirect create
 		exit 0
 	;;
 	update)
+		Check_Lock
 		Menu_Update
 		exit 0
 	;;
 	forceupdate)
+		Check_Lock
 		Menu_ForceUpdate
 		exit 0
 	;;
 	uninstall)
+		Check_Lock
 		Menu_Uninstall
 		exit 0
 	;;

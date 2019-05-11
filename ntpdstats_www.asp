@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
@@ -16,6 +16,9 @@ p{
 font-weight: bolder;
 }
 </style>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<!--<script language="JavaScript" type="text/javascript" src="/jffs/scripts/moment.min.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>-->
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -24,31 +27,101 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<!--<script language="JavaScript" type="text/javascript" src="/ext/ntpjitter.js"></script>
+<script>
+var lineDataOffset;
+var myLineChart;
+Chart.defaults.global.defaultFontColor = "#CCC";
+
+function redraw()
+{
+	lineDataOffset = [];
+	GenChartDataJitter();
+	draw_chart();
+}
+
+function draw_chart(){
+	if (myLineChart != undefined) myLineChart.destroy();
+	var ctx = document.getElementById("chart").getContext("2d");
+	var lineOptions = {
+		segmentShowStroke : false,
+		segmentStrokeColor : "#000",
+		animationEasing : "easeOutQuart",
+		animationSteps : 100,
+		animateScale : true,
+		legend: { display: false, position: "bottom", onClick: null },
+		title: { display: true, text: "Offset" },
+		tooltips: {
+			callbacks: {
+					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel).format('YYYY-MM-DD HH:mm')); },
+					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString() + ' ms';}
+				}
+		},
+		scales: {
+			xAxes: [{
+				type: "time",
+				gridLines: { display: true, color: "#282828" },
+				ticks: {
+					display: true
+				},
+				time: { min: moment().subtract(24, "hours"), unit: "hour", stepSize: 1 }
+			}],
+			yAxes: [{
+				gridLines: { display: false, color: "#282828" },
+				scaleLabel: { display: false, labelString: "Offset" },
+				ticks: {
+					display: true,
+					callback: function (value, index, values) {
+						return value + ' ms';
+					}
+				},
+			}]
+		}
+	};
+	var lineDataset = {
+		datasets: [{data: lineDataOffset,
+			label: "Offset",
+			borderWidth: 1,
+			pointRadius: 1,
+			fill: false,
+			backgroundColor: "#fc8500",
+			borderColor: "#fc8500",
+		}]
+	};
+	myLineChart = new Chart(ctx, {
+		type: 'line',
+		options: lineOptions,
+		data: lineDataset
+	});
+}
+function initial(){
+show_menu();
+redraw();
+}
+function reload() {
+location.reload(true);
+}
+function applyRule() {
+var action_script_tmp = "start_ntpmerlin";
+document.form.action_script.value = action_script_tmp;
+document.form.submit();
+}
+function getRandomColor() {
+var r = Math.floor(Math.random() * 255);
+var g = Math.floor(Math.random() * 255);
+var b = Math.floor(Math.random() * 255);
+return "rgba(" + r + "," + g + "," + b + ", 1)";
+}
+function poolColors(a) {
+var pool = [];
+for(i = 0; i < a; i++) {
+	pool.push(getRandomColor());
+}
+return pool;
+}-->
 <script>
 function initial(){
 show_menu();
-if (wl_info.band5g_2_support) {
-document.getElementById("wifi5_1_clients_tr").style.display = "";
-document.getElementById("wifi5_2_clients_tr").style.display = "";
-} else if (based_modelid == "RT-AC87U") {
-document.getElementById("wifi5_clients_tr_qtn").style.display = "";
-document.getElementById("qtn_version").style.display = "";
-} else if (band5g_support) {
-document.getElementById("wifi5_clients_tr").style.display = "";
-}
-showbootTime();
-if (odmpid != "")
-document.getElementById("model_id").innerHTML = odmpid;
-else
-document.getElementById("model_id").innerHTML = productid;
-var buildno = '<% nvram_get("buildno"); %>';
-var firmver = '<% nvram_get("firmver"); %>'
-var extendno = '<% nvram_get("extendno"); %>';
-if ((extendno == "") || (extendno == "0"))
-document.getElementById("fwver").innerHTML = buildno;
-else
-document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
 }
 function reload() {
 location.reload(true);
@@ -105,8 +178,9 @@ document.form.submit();
 </thead>
 <tr>
 <td colspan="2" align="center">
-<img src="/ext/stats-ntp-offset.png">
-<img src="/ext/stats-ntp-sysjit.png">
+<!--<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="chart" height="120"></div>-->
+<img src="/ext/ntpmerlin/offset.png">
+<img src="/ext/ntpmerlin/sysjit.png">
 </td>
 </tr>
 </table>
@@ -118,9 +192,9 @@ document.form.submit();
 </thead>
 <tr>
 <td colspan="2" align="center">
-<img src="/ext/stats-week-ntp-offset.png">
-<img src="/ext/stats-week-ntp-sysjit.png">
-<img src="/ext/stats-week-ntp-freq.png">
+<img src="/ext/ntpmerlin/week-offset.png">
+<img src="/ext/ntpmerlin/week-sysjit.png">
+<img src="/ext/ntpmerlin/week-freq.png">
 </td>
 </tr>
 </table>

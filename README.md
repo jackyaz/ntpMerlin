@@ -2,7 +2,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bc89c12c4bf44b49b28161f328e49b0)](https://www.codacy.com/app/jackyaz/ntpMerlin?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/ntpMerlin&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.com/jackyaz/ntpMerlin.svg?branch=master)](https://travis-ci.com/jackyaz/ntpMerlin)
 
-## v1.2.5
+## v1.3.0
 ### Updated on 2019-04-20
 ## About
 Run an NTP server for your network. Graphs available for NTP accuracy on the Tools page of the WebUI.
@@ -25,6 +25,7 @@ All modes supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Mod
 *   RT-AC86U
 *   RT-AC88U
 *   RT-AX88U
+*   RT-AC3100
 
 ### Firmware versions
 You must be running firmware no older than:
