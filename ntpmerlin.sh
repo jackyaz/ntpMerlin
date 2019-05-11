@@ -597,7 +597,7 @@ Generate_NTPStats(){
 	export TZ
 	DATE=$(date "+%a %b %e %H:%M %Y")
 	
-	rrdtool update $RDB N:"$NOFFSET":"$NSJIT":"$NCJIT":"$NWANDER":"$NFREQ":"$NDISPER"
+	rrdtool update "$RDB" N:"$NOFFSET":"$NSJIT":"$NCJIT":"$NWANDER":"$NFREQ":"$NDISPER"
 	
 	#echo "$(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER" >> /jffs/scripts/ntpdstats_csv.csv
 	
