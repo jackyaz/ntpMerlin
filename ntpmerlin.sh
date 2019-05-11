@@ -649,7 +649,7 @@ Generate_NTPStats(){
 		GPRINT:nsjit:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG"$SCRIPT_WEB_DIR/week-offset.png" \
+	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/week-offset.png" \
 		$COMMON $W_COMMON \
 		--title "Offset - $DATE" \
 		--vertical-label "Seconds" \
