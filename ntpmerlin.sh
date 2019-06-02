@@ -406,6 +406,21 @@ NTP_Redirect(){
 	esac
 }
 
+NTP_Firmware_Check(){
+	ENABLED_NTPD="$(nvram get ntpd_enable)"
+	if ! Validate_Number "" "$ENABLED_NTPD" "silent"; then ENABLED_NTPD=0; fi
+	
+	if [ "$ENABLED_NTPD" -eq 1 ]; then
+		Print_Output "true" "Built-in ntpd is enabled and will conflict, it will be disabled" "$WARN"
+		nvram set ntpd_enable=0
+		nvram set ntpd_server_redir=0
+		nvram commit
+		return 1
+	else
+		return 0
+	fi
+}
+
 RRD_Initialise(){
 	if [ -f "/jffs/scripts/ntpdstats_rrd.rrd" ]; then
 		mv "/jffs/scripts/ntpdstats_rrd.rrd" "$SCRIPT_DIR/ntpdstats_rrd.rrd"
@@ -592,6 +607,7 @@ Generate_NTPStats(){
 	# This function originally written by kvic, updated by Jack Yaz
 	# This script is adapted from http://www.wraith.sf.ca.us/ntp
 	# The original is part of a set of scripts written by Steven Bjork
+	NTP_Firmware_Check
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
@@ -877,6 +893,8 @@ Check_Requirements(){
 		Print_Output "true" "Please update to benefit from $SCRIPT_NAME stats generation in WebUI" "$WARN"
 	fi
 	
+	NTP_Firmware_Check
+	
 	if [ "$CHECKSFAILED" = "false" ]; then
 		return 0
 	else
@@ -919,6 +937,7 @@ Menu_Install(){
 }
 
 Menu_Startup(){
+	NTP_Firmware_Check
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
