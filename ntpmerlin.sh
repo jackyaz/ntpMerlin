@@ -1074,6 +1074,8 @@ case "$1" in
 		exit 0
 	;;
 	ntpredirect)
+		Print_Output "true" "Sleeping for 5s to allow firewall/nat startup to be completed..." "$PASS"
+		sleep 5
 		Check_Lock
 		Auto_NAT create
 		NTP_Redirect create
