@@ -21,7 +21,7 @@ readonly SCRIPT_NAME="ntpMerlin"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
 readonly SCRIPT_VERSION="v1.3.0"
 readonly NTPD_VERSION="v1.3.0"
-readonly SCRIPT_BRANCH="develop"
+readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
 readonly SCRIPT_WEB_DIR="$(readlink /www/ext)/$SCRIPT_NAME_LOWER"
@@ -1074,6 +1074,8 @@ case "$1" in
 		exit 0
 	;;
 	ntpredirect)
+		Print_Output "true" "Sleeping for 5s to allow firewall/nat startup to be completed..." "$PASS"
+		sleep 5
 		Check_Lock
 		Auto_NAT create
 		NTP_Redirect create
