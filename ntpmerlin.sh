@@ -1108,10 +1108,11 @@ case "$1" in
 		exit 0
 	;;
 	auto_redirect)
-                    if iptables -t nat -S | grep 123 < /dev/null 2>&1; then
-                       /jffs/scripts/ntpmerlin ntpredirect
-                       logger -t "SCRIPT_$(basename $0)" "REACTIVATING NTPMERLIN"
-                    fi
+                if iptables -t nat -S | grep 123 > /dev/null 1>&2; then
+                   /jffs/scripts/ntpmerlin ntpredirect
+                   logger -t "SCRIPT_$(basename $0)" "REACTIVATING NTPMERLIN"
+                fi
+
 	;;
 	uninstall)
 		Check_Lock
