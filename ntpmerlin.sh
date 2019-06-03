@@ -1111,7 +1111,6 @@ case "$1" in
 	        if iptables -t nat -S | grep 123 > /dev/null 2>&1; then
 		   logger -t "$SCRIPT_NAME" "$SCRIPT_NAME IS ACTIVE"
                 else
-		   Check_Lock
                    /jffs/scripts/ntpmerlin ntpredirect
                    logger -t "$SCRIPT_NAME" "REACTIVATING $SCRIPT_NAME"
                 fi
