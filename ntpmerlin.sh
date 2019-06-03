@@ -1079,6 +1079,7 @@ case "$1" in
 		Check_Lock
 		Auto_NAT create
 		NTP_Redirect create
+		Clear_Lock
 		exit 0
 	;;
 	update)
