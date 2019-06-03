@@ -1111,7 +1111,7 @@ case "$1" in
 	auto_redirect)
                 if iptables -t nat -S | grep 123 > /dev/null 1>&2; then
                    /jffs/scripts/ntpmerlin ntpredirect
-                   logger -t "SCRIPT_$(basename $0)" "REACTIVATING NTPMERLIN"
+                   logger -t "$SCRIPT_NAME" "REACTIVATING $SCRIPT_NAME"
                 fi
 	;;
 	uninstall)
