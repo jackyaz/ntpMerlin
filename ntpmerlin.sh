@@ -1112,7 +1112,6 @@ case "$1" in
                    /jffs/scripts/ntpmerlin ntpredirect
                    logger -t "SCRIPT_$(basename $0)" "REACTIVATING NTPMERLIN"
                 fi
-
 	;;
 	uninstall)
 		Check_Lock
