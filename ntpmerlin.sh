@@ -374,6 +374,20 @@ Auto_Cron(){
 			if [ "$STARTUPLINECOUNT" -eq 0 ]; then
 				cru a "$SCRIPT_NAME" "*/5 * * * * /jffs/scripts/$SCRIPT_NAME_LOWER generate"
 			fi
+		;;	
+	cru_a_redirect)	
+	                STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME REDIRECT")
+			
+			if [ "$STARTUPLINECOUNT" -eq 0 ]; then
+				cru a "$SCRIPT_NAME REDIRECT" "*/5 * * * * /jffs/scripts/$SCRIPT_NAME_LOWER auto_redirect"
+			fi
+		;;	
+	del_a_redirect)
+                        STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME REDIRECT")
+			
+			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+				cru d "$SCRIPT_NAME REDIRECT" "*/5 * * * * /jffs/scripts/$SCRIPT_NAME_LOWER auto_redirect"
+			fi
 		;;
 		delete)
 			STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME")
@@ -395,10 +409,12 @@ NTP_Redirect(){
 			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 			iptables -t nat -A PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
 			Auto_DNSMASQ create 2>/dev/null
+			Auto_Cron cru_a_redirect 2>/dev/null
 		;;
 		delete)
 			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
 			Auto_DNSMASQ delete 2>/dev/null
+			Auto_Cron del_a_redirect 2>/dev/null
 		;;
 	esac
 }
@@ -1090,6 +1106,15 @@ case "$1" in
 		Check_Lock
 		Menu_ForceUpdate
 		exit 0
+	;;
+	auto_redirect)
+	        if iptables -t nat -S | grep 123 > /dev/null 2>&1; then
+		   logger -t "$SCRIPT_NAME" "$SCRIPT_NAME IS ACTIVE"
+                else
+		   Check_Lock
+                   /jffs/scripts/ntpmerlin ntpredirect
+                   logger -t "$SCRIPT_NAME" "REACTIVATING $SCRIPT_NAME"
+                fi
 	;;
 	uninstall)
 		Check_Lock
