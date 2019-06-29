@@ -26,6 +26,7 @@ readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SC
 readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
 readonly SCRIPT_WEB_DIR="$(readlink /www/ext)/$SCRIPT_NAME_LOWER"
 readonly SHARED_DIR="/jffs/scripts/shared-jy"
+readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
 
@@ -106,7 +107,7 @@ Update_Version(){
 		Update_File "S77ntpd"
 		Update_File "ntp.conf"
 		Update_File "ntpdstats_www.asp"
-		Update_File "moment.min.js"
+		Update_File "moment.js"
 		Modify_WebUI_File
 		
 		if [ "$doupdate" != "false" ]; then
@@ -128,7 +129,7 @@ Update_Version(){
 			Update_File "S77ntpd"
 			Update_File "ntp.conf"
 			Update_File "ntpdstats_www.asp"
-			#Update_File "moment.min.js"
+			Update_File "moment.js"
 			Modify_WebUI_File
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$SCRIPT_NAME_LOWER"
@@ -174,13 +175,13 @@ Update_File(){
 			Mount_NTPD_WebUI
 		fi
 		rm -f "$tmpfile"
-	elif [ "$1" = "moment.min.js" ]; then
+	elif [ "$1" = "moment.js" ]; then
 		tmpfile="/tmp/$1"
-		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
+		Download_File "$SHARED_REPO/$1" "$tmpfile"
 		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
 			mv "$SCRIPT_DIR/$1" "$SCRIPT_DIR/$1.old"
-			#cp "/jffs/scripts/$1" "/www/ext/$1"
+			Mount_NTPD_WebUI
 		fi
 		rm -f "$tmpfile"
 	else
@@ -434,16 +435,12 @@ Get_CONNMON_UI(){
 Mount_NTPD_WebUI(){
 	umount /www/Feedback_Info.asp 2>/dev/null
 	
-	if [ -f "/jffs/scripts/ntpdstats_www.asp" ]; then
-		mv "/jffs/scripts/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
-	fi
-	
 	if [ ! -f "$SCRIPT_DIR/ntpdstats_www.asp" ]; then
 		Download_File "$SCRIPT_REPO/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
 	fi
 	
-	if [ ! -f /jffs/scripts/moment.min.js ]; then
-		Download_File "$SCRIPT_REPO/moment.min.js" "/jffs/scripts/moment.min.js"
+	if [ ! -f /jffs/scripts/moment.js ]; then
+		Download_File "$SHARED_REPO/moment.js" "$SHARED_DIR/moment.js"
 	fi
 		
 	mount -o bind "$SCRIPT_DIR/ntpdstats_www.asp" /www/Feedback_Info.asp
