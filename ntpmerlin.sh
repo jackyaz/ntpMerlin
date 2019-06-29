@@ -415,21 +415,11 @@ NTP_Firmware_Check(){
 		nvram set ntpd_enable=0
 		nvram set ntpd_server_redir=0
 		nvram commit
+		service restart_time
+		service restart_firewall
 		return 1
 	else
 		return 0
-	fi
-}
-
-RRD_Initialise(){
-	if [ -f "/jffs/scripts/ntpdstats_rrd.rrd" ]; then
-		mv "/jffs/scripts/ntpdstats_rrd.rrd" "$SCRIPT_DIR/ntpdstats_rrd.rrd"
-	fi
-	
-	if [ ! -f "$SCRIPT_DIR/ntpdstats_rrd.rrd" ]; then
-		Download_File "$SCRIPT_REPO/ntpdstats_xml.xml" "$SCRIPT_DIR/ntpdstats_xml.xml"
-		rrdtool restore -f "$SCRIPT_DIR/ntpdstats_xml.xml" "$SCRIPT_DIR/ntpdstats_rrd.rrd"
-		rm -f "$SCRIPT_DIR/ntpdstats_xml.xml"
 	fi
 }
 
