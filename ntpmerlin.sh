@@ -579,6 +579,7 @@ Generate_NTPStats(){
 		echo "select * from ntpstats;"
 	} > /tmp/test.sql
 	
+	/usr/sbin/sqlite3 < /tmp/test.sql
 	#WriteData_ToJS "/jffs/scripts/ntpdstats_csv.csv" "/www/ext/ntpjitter.js"
 	
 	rm -f "$tmpfile"
