@@ -556,8 +556,6 @@ Generate_NTPStats(){
 	NTP_Firmware_Check
 	Create_Dirs
 	
-	RDB="$SCRIPT_DIR/ntpdstats_rrd.rrd"
-	
 	#shellcheck disable=SC2086
 	killall ntp 2>/dev/null
 	ntpq -4 -c rv | awk 'BEGIN{ RS=","}{ print }' >> /tmp/ntp-rrdstats.$$
@@ -571,84 +569,17 @@ Generate_NTPStats(){
 	
 	TZ=$(cat /etc/TZ)
 	export TZ
-	DATE=$(date "+%a %b %e %H:%M %Y")
 	
-	rrdtool update "$RDB" N:"$NOFFSET":"$NSJIT":"$NCJIT":"$NWANDER":"$NFREQ":"$NDISPER"
-	
-	#echo "$(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER" >> /jffs/scripts/ntpdstats_csv.csv
+	{
+		echo ".open $SCRIPT_DIR/stats.db";
+		echo "CREATE TABLE [ntpstats] ([Timestamp] NUMERIC NOT NULL PRIMARY KEY, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
+		echo "INSERT INTO ntpstats values($(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
+		echo "select * from ntpstats;"
+	} > /tmp/test.sql
 	
 	#WriteData_ToJS "/jffs/scripts/ntpdstats_csv.csv" "/www/ext/ntpjitter.js"
 	
 	rm /tmp/ntp-rrdstats.$$
-	
-	COMMON="-c SHADEA#475A5F -c SHADEB#475A5F -c BACK#475A5F -c CANVAS#92A0A520 -c AXIS#92a0a520 -c FONT#ffffff -c ARROW#475A5F -n TITLE:9 -n AXIS:8 -n LEGEND:9 -w 650 -h 200"
-	
-	D_COMMON='--start -86400 --x-grid MINUTE:20:HOUR:2:HOUR:2:0:%H:%M'
-	W_COMMON='--start -604800 --x-grid HOUR:3:DAY:1:DAY:1:0:%Y-%m-%d'
-	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/offset.png" \
-		$COMMON $D_COMMON \
-		--title "Offset - $DATE" \
-		--vertical-label "Seconds" \
-		DEF:offset="$RDB":offset:LAST \
-		CDEF:noffset=offset,1000,/ \
-		LINE1.5:noffset#fc8500:"offset (s)" \
-		GPRINT:noffset:MIN:"Min\: %3.3lf %s" \
-		GPRINT:noffset:MAX:"Max\: %3.3lf %s" \
-		GPRINT:noffset:AVERAGE:"Avg\: %3.3lf %s" \
-		GPRINT:noffset:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
-	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/sysjit.png" \
-		$COMMON $D_COMMON \
-		--title "Jitter - $DATE" \
-		--vertical-label "Seconds" \
-		DEF:sjit=$RDB:sjit:LAST \
-		CDEF:nsjit=sjit,1000,/ \
-		AREA:nsjit#778787:"jitter (s)" \
-		GPRINT:nsjit:MIN:"Min\: %3.3lf %s" \
-		GPRINT:nsjit:MAX:"Max\: %3.3lf %s" \
-		GPRINT:nsjit:AVERAGE:"Avg\: %3.3lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
-	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/week-offset.png" \
-		$COMMON $W_COMMON \
-		--title "Offset - $DATE" \
-		--vertical-label "Seconds" \
-		DEF:offset=$RDB:offset:LAST \
-		CDEF:noffset=offset,1000,/ \
-		LINE1.5:noffset#fc8500:"offset (s)" \
-		GPRINT:noffset:MIN:"Min\: %3.3lf %s" \
-		GPRINT:noffset:MAX:"Max\: %3.3lf %s" \
-		GPRINT:noffset:AVERAGE:"Avg\: %3.3lf %s" \
-		GPRINT:noffset:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
-	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/week-sysjit.png" \
-		$COMMON $W_COMMON --alt-autoscale-max \
-		--title "Jitter - $DATE" \
-		--vertical-label "Seconds" \
-		DEF:sjit=$RDB:sjit:LAST \
-		CDEF:nsjit=sjit,1000,/ \
-		AREA:nsjit#778787:"jitter (s)" \
-		GPRINT:nsjit:MIN:"Min\: %3.3lf %s" \
-		GPRINT:nsjit:MAX:"Max\: %3.3lf %s" \
-		GPRINT:nsjit:AVERAGE:"Avg\: %3.3lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
-	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/week-freq.png" \
-		$COMMON $W_COMMON --alt-autoscale --alt-y-grid \
-		--title "Drift - $DATE" \
-		--vertical-label "ppm" \
-		DEF:freq=$RDB:freq:LAST \
-		LINE1.5:freq#778787:"drift (ppm)" \
-		GPRINT:freq:MIN:"Min\: %3.3lf" \
-		GPRINT:freq:MAX:"Max\: %3.3lf" \
-		GPRINT:freq:AVERAGE:"Avg\: %3.3lf" \
-		GPRINT:freq:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
 }
 
 Shortcut_ntpMerlin(){
