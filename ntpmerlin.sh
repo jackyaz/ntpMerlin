@@ -178,10 +178,9 @@ Update_File(){
 	elif [ "$1" = "moment.js" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SHARED_REPO/$1" "$tmpfile"
-		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
+		if ! diff -q "$tmpfile" "$SHARED_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			mv "$SCRIPT_DIR/$1" "$SCRIPT_DIR/$1.old"
-			Mount_NTPD_WebUI
+			Download_File "$SHARED_REPO/moment.js" "$SHARED_DIR/moment.js"
 		fi
 		rm -f "$tmpfile"
 	else
@@ -439,10 +438,6 @@ Mount_NTPD_WebUI(){
 		Download_File "$SCRIPT_REPO/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
 	fi
 	
-	if [ ! -f /jffs/scripts/moment.js ]; then
-		Download_File "$SHARED_REPO/moment.js" "$SHARED_DIR/moment.js"
-	fi
-		
 	mount -o bind "$SCRIPT_DIR/ntpdstats_www.asp" /www/Feedback_Info.asp
 }
 
