@@ -442,98 +442,54 @@ Mount_NTPD_WebUI(){
 		Download_File "$SCRIPT_REPO/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
 	fi
 	
-	#if [ ! -f /jffs/scripts/moment.min.js ]; then
-	#	Download_File "$SCRIPT_REPO/moment.min.js" "/jffs/scripts/moment.min.js"
-	#	cp "/jffs/scripts/moment.min.js" "/www/ext/moment.min.js"
-	#fi
-	
-	#if [ ! -f /www/ext/moment.min.js ]; then
-	#cp "/jffs/scripts/moment.min.js" "/www/ext/moment.min.js"
-	#fi
-	
+	if [ ! -f /jffs/scripts/moment.min.js ]; then
+		Download_File "$SCRIPT_REPO/moment.min.js" "/jffs/scripts/moment.min.js"
+	fi
+		
 	mount -o bind "$SCRIPT_DIR/ntpdstats_www.asp" /www/Feedback_Info.asp
 }
 
 Modify_WebUI_File(){
-	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -gt "$(Firmware_Version_Check 380.67)" ]; then
-		### menuTree.js ###
-		umount /www/require/modules/menuTree.js 2>/dev/null
-		tmpfile=/tmp/menuTree.js
-		cp "/www/require/modules/menuTree.js" "$tmpfile"
-		
-		if [ -f "/jffs/scripts/uiDivStats" ]; then
-			sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: /d' "$tmpfile"
-			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"},' "$tmpfile"
-			sed -i '/retArray.push("Advanced_MultiSubnet_Content.asp");/d' "$tmpfile"
-		fi
-		
-		if [ -f "/jffs/scripts/connmon" ]; then
-			sed -i '/{url: "'"$(Get_CONNMON_UI)"'", tabName: /d' "$tmpfile"
-			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "'"$(Get_CONNMON_UI)"'", tabName: "Uptime Monitoring"},' "$tmpfile"
-			sed -i '/retArray.push("'"$(Get_CONNMON_UI)"'");/d' "$tmpfile"
-		fi
-		
-		if [ -f "/jffs/scripts/spdmerlin" ]; then
-			sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
-			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
-			sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
-		fi
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
-		
-		if [ -f /jffs/scripts/custom_menuTree.js ]; then
-			mv /jffs/scripts/custom_menuTree.js "$SHARED_DIR/custom_menuTree.js"
-		fi
-		
-		if [ ! -f "$SHARED_DIR/custom_menuTree.js" ]; then
-			cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
-		fi
-		
-		if ! diff -q "$tmpfile" "$SHARED_DIR/custom_menuTree.js" >/dev/null 2>&1; then
-			cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
-		fi
-		
-		rm -f "$tmpfile"
-		
-		mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
-		### ###
-	else
-		### state.js ###
-		umount /www/state.js 2>/dev/null
-		tmpfile=/tmp/state.js
-		cp "/www/state.js" "$tmpfile"
-		
-		if [ -f "/jffs/scripts/spdmerlin" ] && [ -f "/jffs/scripts/connmon" ]; then
-			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "SpeedTest", "Uptime Monitoring");/' "$tmpfile"
-			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp", "'"$(Get_CONNMON_UI)"'");/' "$tmpfile"
-		elif [ -f "/jffs/scripts/spdmerlin" ]; then
-			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "SpeedTest");/' "$tmpfile"
-			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp");/' "$tmpfile"
-		elif [ -f "/jffs/scripts/connmon" ]; then
-			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "Uptime Monitoring");/' "$tmpfile"
-			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "'"$(Get_CONNMON_UI)"'");/' "$tmpfile"
-		fi
-		
-		if [ -f "/jffs/scripts/spdmerlin" ]; then
-			sed -i -e '/else if(location.pathname == "\/Advanced_Feedback.asp") {/,+4d' "$tmpfile"
-		fi
-		
-		if [ -f /jffs/scripts/custom_state.js ]; then
-			mv /jffs/scripts/custom_state.js "$SHARED_DIR/custom_state.js"
-		fi
-		
-		if [ ! -f "$SHARED_DIR/custom_state.js" ]; then
-			cp "$tmpfile" "$SHARED_DIR/custom_state.js"
-		fi
-		
-		if ! diff -q "$tmpfile" "$SHARED_DIR/custom_state.js" >/dev/null 2>&1; then
-			cp "$tmpfile" "$SHARED_DIR/custom_state.js"
-		fi
-		
-		rm -f "$tmpfile"
-		
-		mount -o bind "$SHARED_DIR/custom_state.js" /www/state.js
-		### ###
+	### menuTree.js ###
+	umount /www/require/modules/menuTree.js 2>/dev/null
+	tmpfile=/tmp/menuTree.js
+	cp "/www/require/modules/menuTree.js" "$tmpfile"
+	
+	if [ -f "/jffs/scripts/uiDivStats" ]; then
+		sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: /d' "$tmpfile"
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"},' "$tmpfile"
+		sed -i '/retArray.push("Advanced_MultiSubnet_Content.asp");/d' "$tmpfile"
 	fi
+	
+	if [ -f "/jffs/scripts/connmon" ]; then
+		sed -i '/{url: "'"$(Get_CONNMON_UI)"'", tabName: /d' "$tmpfile"
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "'"$(Get_CONNMON_UI)"'", tabName: "Uptime Monitoring"},' "$tmpfile"
+		sed -i '/retArray.push("'"$(Get_CONNMON_UI)"'");/d' "$tmpfile"
+	fi
+	
+	if [ -f "/jffs/scripts/spdmerlin" ]; then
+		sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
+		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
+	fi
+	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
+	
+	if [ -f /jffs/scripts/custom_menuTree.js ]; then
+		mv /jffs/scripts/custom_menuTree.js "$SHARED_DIR/custom_menuTree.js"
+	fi
+	
+	if [ ! -f "$SHARED_DIR/custom_menuTree.js" ]; then
+		cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
+	fi
+	
+	if ! diff -q "$tmpfile" "$SHARED_DIR/custom_menuTree.js" >/dev/null 2>&1; then
+		cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
+	fi
+	
+	rm -f "$tmpfile"
+	
+	mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
+	### ###
 	
 	### start_apply.htm ###
 	umount /www/start_apply.htm 2>/dev/null
