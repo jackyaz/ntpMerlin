@@ -106,7 +106,7 @@ Update_Version(){
 		Update_File "S77ntpd"
 		Update_File "ntp.conf"
 		Update_File "ntpdstats_www.asp"
-		#Update_File "moment.min.js"
+		Update_File "moment.min.js"
 		Modify_WebUI_File
 		
 		if [ "$doupdate" != "false" ]; then
@@ -550,13 +550,10 @@ WriteData_ToJS(){
 }
 
 Generate_NTPStats(){
-	# This function originally written by kvic, updated by Jack Yaz
-	# This script is adapted from http://www.wraith.sf.ca.us/ntp
-	# The original is part of a set of scripts written by Steven Bjork
-	NTP_Firmware_Check
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
+	NTP_Firmware_Check
 	Create_Dirs
 	
 	RDB="$SCRIPT_DIR/ntpdstats_rrd.rrd"
@@ -588,8 +585,6 @@ Generate_NTPStats(){
 	
 	D_COMMON='--start -86400 --x-grid MINUTE:20:HOUR:2:HOUR:2:0:%H:%M'
 	W_COMMON='--start -604800 --x-grid HOUR:3:DAY:1:DAY:1:0:%Y-%m-%d'
-	
-	rm -f /www/ext/*-ntp-*
 	
 	#shellcheck disable=SC2086
 	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/offset.png" \
@@ -835,8 +830,8 @@ Check_Requirements(){
 		Print_Output "true" "Older Merlin firmware detected - service-event requires 384.5 or later" "$WARN"
 		Print_Output "true" "Please update to benefit from $SCRIPT_NAME stats generation in WebUI" "$WARN"
 	elif [ "$(Firmware_Version_Check "$(nvram get buildno)")" -eq "$(Firmware_Version_Check 374.43)" ]; then
-		Print_Output "true" "John's fork detected - service-event requires 374.43_32D6j9527 or later" "$WARN"
-		Print_Output "true" "Please update to benefit from $SCRIPT_NAME stats generation in WebUI" "$WARN"
+		Print_Output "true" "John's fork detected - unsupported" "$ERR"
+		CHECKSFAILED="true"
 	fi
 	
 	NTP_Firmware_Check
@@ -883,10 +878,10 @@ Menu_Install(){
 }
 
 Menu_Startup(){
-	NTP_Firmware_Check
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
+	NTP_Firmware_Check
 	Shortcut_ntpMerlin create
 	Create_Dirs
 	Mount_NTPD_WebUI
