@@ -572,14 +572,15 @@ Generate_NTPStats(){
 	
 	{
 		echo ".open $SCRIPT_DIR/stats.db";
-		echo "CREATE TABLE [ntpstats] ([Timestamp] NUMERIC NOT NULL PRIMARY KEY, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
+		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([Timestamp] NUMERIC NOT NULL PRIMARY KEY, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
 		echo "INSERT INTO ntpstats values($(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
 		echo "select * from ntpstats;"
 	} > /tmp/test.sql
 	
 	#WriteData_ToJS "/jffs/scripts/ntpdstats_csv.csv" "/www/ext/ntpjitter.js"
 	
-	rm /tmp/ntp-rrdstats.$$
+	rm -f /tmp/ntp-rrdstats.$$
+	rm -f /tmp/test.sql
 }
 
 Shortcut_ntpMerlin(){
