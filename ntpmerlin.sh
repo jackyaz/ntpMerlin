@@ -571,7 +571,7 @@ Generate_NTPStats(){
 	export TZ
 	
 	{
-		echo ".open $SCRIPT_DIR/stats.db";
+		echo ".open $SCRIPT_DIR/ntpdstats.db";
 		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([Timestamp] NUMERIC NOT NULL PRIMARY KEY, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
 		echo "INSERT INTO ntpstats values($(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
 		echo "select * from ntpstats;"
