@@ -214,6 +214,14 @@ Create_Dirs(){
 	fi
 }
 
+Create_Symlinks(){
+	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
+	
+	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SCRIPT_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
+	ln -s "$SHARED_DIR/hammerjs.js" "$SCRIPT_WEB_DIR/hammerjs.js" 2>/dev/null
+	ln -s "$SHARED_DIR/moment.js" "$SCRIPT_WEB_DIR/moment.js" 2>/dev/null
+}
+
 Auto_ServiceEvent(){
 	case $1 in
 		create)
@@ -547,6 +555,7 @@ Generate_NTPStats(){
 	Auto_ServiceEvent create 2>/dev/null
 	NTP_Firmware_Check
 	Create_Dirs
+	Create_Symlinks
 	
 	#shellcheck disable=SC2086
 	killall ntp 2>/dev/null
@@ -787,6 +796,7 @@ Menu_Install(){
 	opkg install rrdtool
 	
 	Create_Dirs
+	Create_Symlinks
 	
 	Download_File "$SCRIPT_REPO/ntp.conf" "/jffs/configs/ntp.conf"
 	
@@ -808,6 +818,7 @@ Menu_Startup(){
 	NTP_Firmware_Check
 	Shortcut_ntpMerlin create
 	Create_Dirs
+	Create_Symlinks
 	Mount_NTPD_WebUI
 	Modify_WebUI_File
 	RRD_Initialise
@@ -928,6 +939,7 @@ Menu_Uninstall(){
 
 if [ -z "$1" ]; then
 	Create_Dirs
+	Create_Symlinks
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
