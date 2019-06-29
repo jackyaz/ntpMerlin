@@ -559,14 +559,15 @@ Generate_NTPStats(){
 	
 	#shellcheck disable=SC2086
 	killall ntp 2>/dev/null
-	ntpq -4 -c rv | awk 'BEGIN{ RS=","}{ print }' >> /tmp/ntp-rrdstats.$$
+	tmpfile=/tmp/ntp-stats.$$
+	ntpq -4 -c rv | awk 'BEGIN{ RS=","}{ print }' >> "$tmpfile"
 	
-	[ ! -z "$(grep offset /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NOFFSET=$(grep offset /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NOFFSET=0
-	[ ! -z "$(grep frequency /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NFREQ=$(grep frequency /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NFREQ=0
-	[ ! -z "$(grep sys_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NSJIT=$(grep sys_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NSJIT=0
-	[ ! -z "$(grep clk_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NCJIT=$(grep clk_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NCJIT=0
-	[ ! -z "$(grep clk_wander /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NWANDER=$(grep clk_wander /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NWANDER=0
-	[ ! -z "$(grep rootdisp /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] &&  NDISPER=$(grep rootdisp /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NDISPER=0
+	[ ! -z "$(grep offset "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NOFFSET=$(grep offset "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NOFFSET=0
+	[ ! -z "$(grep frequency "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NFREQ=$(grep frequency "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NFREQ=0
+	[ ! -z "$(grep sys_jitter "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NSJIT=$(grep sys_jitter "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NSJIT=0
+	[ ! -z "$(grep clk_jitter "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NCJIT=$(grep clk_jitter "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NCJIT=0
+	[ ! -z "$(grep clk_wander "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NWANDER=$(grep clk_wander "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NWANDER=0
+	[ ! -z "$(grep rootdisp "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] &&  NDISPER=$(grep rootdisp "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NDISPER=0
 	
 	TZ=$(cat /etc/TZ)
 	export TZ
@@ -580,7 +581,7 @@ Generate_NTPStats(){
 	
 	#WriteData_ToJS "/jffs/scripts/ntpdstats_csv.csv" "/www/ext/ntpjitter.js"
 	
-	rm -f /tmp/ntp-rrdstats.$$
+	rm -f "$tmpfile"
 	rm -f /tmp/test.sql
 }
 
@@ -793,7 +794,6 @@ Menu_Install(){
 	opkg update
 	opkg install ntp-utils
 	opkg install ntpd
-	opkg install rrdtool
 	
 	Create_Dirs
 	Create_Symlinks
@@ -806,7 +806,6 @@ Menu_Install(){
 	Shortcut_ntpMerlin create
 	Mount_NTPD_WebUI
 	Modify_WebUI_File
-	RRD_Initialise
 	NTPD_Customise
 	Generate_NTPStats
 }
@@ -821,7 +820,6 @@ Menu_Startup(){
 	Create_Symlinks
 	Mount_NTPD_WebUI
 	Modify_WebUI_File
-	RRD_Initialise
 	Clear_Lock
 }
 
@@ -907,7 +905,6 @@ Menu_Uninstall(){
 		case "$confirm" in
 			y|Y)
 				rm -f "/jffs/configs/ntp.conf" 2>/dev/null
-				rm -f "$SCRIPT_DIR/ntpdstats_rrd.rrd" 2>/dev/null
 				break
 			;;
 			*)
@@ -924,7 +921,6 @@ Menu_Uninstall(){
 	umount /www/require/modules/menuTree.js 2>/dev/null
 	umount /www/start_apply.htm 2>/dev/null
 	if [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
-		opkg remove --autoremove rrdtool
 		rm -f "$SHARED_DIR/custom_menuTree.js" 2>/dev/null
 		rm -f "$SHARED_DIR/custom_start_apply.htm" 2>/dev/null
 	else
