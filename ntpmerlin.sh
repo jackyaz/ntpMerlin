@@ -576,7 +576,6 @@ Generate_NTPStats(){
 	{
 		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([Timestamp] NUMERIC NOT NULL PRIMARY KEY, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
 		echo "INSERT INTO ntpstats values($(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
-		echo "select * from ntpstats;"
 	} > /tmp/ntp-stats.sql
 	
 	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
@@ -587,6 +586,7 @@ Generate_NTPStats(){
 		echo "select [Timestamp],[Offset] from ntpstats WHERE [Timestamp] > (strftime('%s','now') - 86400);"
 	} > /tmp/ntp-offsetdaily.sql
 	
+	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-offsetdaily.sql
 	WriteData_ToJS "/tmp/ntp-offsetdaily.csv" "$SCRIPT_DIR/ntpjitter.js" "DataOffsetDaily"
 	
 	rm -f "$tmpfile"
