@@ -81,41 +81,29 @@ function Draw_Chart_OffsetDaily(){
 		plugins: {
 			zoom: {
 				pan: {
-					// Boolean to enable panning
 					enabled: true,
-					// Panning directions. Remove the appropriate direction to disable
-					// Eg. 'y' would only allow panning in the y direction
 					mode: 'xy',
 					rangeMin: {
-						// Format of min pan range depends on scale type
 						x: new Date().getTime() - 86400000,
 						y: getLimit("DataOffsetDaily","y","min") - Math.sqrt(Math.pow(getLimit("DataOffsetDaily","y","min"),2))*0.1,
 					},
 					rangeMax: {
-						// Format of max pan range depends on scale type
 						x: new Date().getTime(),
 						y: getLimit("DataOffsetDaily","y","max") + getLimit("DataOffsetDaily","y","max")*0.1,
-						//y: ZoomPanMax(charttypead,"y",barDataBlockedAds)
 					},
 				},
 				zoom: {
 					// Boolean to enable zooming
 					enabled: true,
-					// Zooming directions. Remove the appropriate direction to disable
-					// Eg. 'y' would only allow zooming in the y direction
 					mode: 'xy',
 					rangeMin: {
-						// Format of min pan range depends on scale type
 						x: new Date().getTime() - 86400000,
 						y: getLimit("DataOffsetDaily","y","min") - Math.sqrt(Math.pow(getLimit("DataOffsetDaily","y","min"),2))*0.1,
 					},
 					rangeMax: {
-						// Format of max pan range depends on scale type
 						x: new Date().getTime(),
 						y: getLimit("DataOffsetDaily","y","max") + getLimit("DataOffsetDaily","y","max")*0.1,
 					},
-					// Speed of zoom via mouse wheel
-					// (percentage of zoom on a wheel event)
 					speed: 0.1
 				}
 			}
@@ -159,6 +147,7 @@ function applyRule() {
 	document.form.action_script.value = action_script_tmp;
 	document.form.submit();
 }
+
 </script>
 </head>
 <body onload="initial();" onunLoad="return unload_body();">
