@@ -29,17 +29,17 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/offsetdaily.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatsdata.js"></script>
 <script>
-var LineChartOffsetDaily;
+var LineChartOffsetDaily,LineChartJitterDaily,LineChartDriftDaily;
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
   return coordinates;
 };
 
-function Draw_Chart_OffsetDaily(){
-	if (LineChartOffsetDaily != undefined) LineChartOffsetDaily.destroy();
-	var ctx = document.getElementById("ChartOffsetDaily").getContext("2d");
+function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,txtunit,colourname){
+	if (objchartname != undefined) objchartname.destroy();
+	var ctx = document.getElementById("div"+txtchartname).getContext("2d");
 	var lineOptions = {
 		segmentShowStroke : false,
 		segmentStrokeColor : "#000",
@@ -48,11 +48,11 @@ function Draw_Chart_OffsetDaily(){
 		maintainAspectRatio: false,
 		animateScale : true,
 		legend: { display: false, position: "bottom", onClick: null },
-		title: { display: true, text: "Offset" },
+		title: { display: true, text: txttitle },
 		tooltips: {
 			callbacks: {
 					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel).format('YYYY-MM-DD HH:mm:ss')); },
-					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString() + ' ms';}
+					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString() + ' ' + txtunit;}
 				},
 				mode: 'point',
 				position: 'cursor',
@@ -69,11 +69,11 @@ function Draw_Chart_OffsetDaily(){
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
-				scaleLabel: { display: false, labelString: "Offset" },
+				scaleLabel: { display: false, labelString: txttitle },
 				ticks: {
 					display: true,
 					callback: function (value, index, values) {
-						return value + ' ms';
+						return value + ' ' + txtunit;
 					}
 				},
 			}]
@@ -85,11 +85,11 @@ function Draw_Chart_OffsetDaily(){
 					mode: 'xy',
 					rangeMin: {
 						x: new Date().getTime() - 86400000,
-						y: getLimit("DataOffsetDaily","y","min") - Math.sqrt(Math.pow(getLimit("DataOffsetDaily","y","min"),2))*0.1,
+						y: getLimit(txtdataname,"y","min") - Math.sqrt(Math.pow(getLimit(txtdataname,"y","min"),2))*0.1,
 					},
 					rangeMax: {
 						x: new Date().getTime(),
-						y: getLimit("DataOffsetDaily","y","max") + getLimit("DataOffsetDaily","y","max")*0.1,
+						y: getLimit(txtdataname,"y","max") + getLimit(txtdataname,"y","max")*0.1,
 					},
 				},
 				zoom: {
@@ -98,11 +98,11 @@ function Draw_Chart_OffsetDaily(){
 					mode: 'xy',
 					rangeMin: {
 						x: new Date().getTime() - 86400000,
-						y: getLimit("DataOffsetDaily","y","min") - Math.sqrt(Math.pow(getLimit("DataOffsetDaily","y","min"),2))*0.1,
+						y: getLimit(txtdataname,"y","min") - Math.sqrt(Math.pow(getLimit(txtdataname,"y","min"),2))*0.1,
 					},
 					rangeMax: {
 						x: new Date().getTime(),
-						y: getLimit("DataOffsetDaily","y","max") + getLimit("DataOffsetDaily","y","max")*0.1,
+						y: getLimit(txtdataname,"y","max") + getLimit(txtdataname,"y","max")*0.1,
 					},
 					speed: 0.1
 				}
@@ -110,17 +110,17 @@ function Draw_Chart_OffsetDaily(){
 		}
 	};
 	var lineDataset = {
-		datasets: [{data: DataOffsetDaily,
-			label: "Offset",
+		datasets: [{data: objdataname,
+			label: txttitle,
 			borderWidth: 1,
 			pointRadius: 1,
 			lineTension: 0,
 			fill: false,
-			backgroundColor: "#fc8500",
-			borderColor: "#fc8500",
+			backgroundColor: colourname,
+			borderColor: colourname,
 		}]
 	};
-	LineChartOffsetDaily = new Chart(ctx, {
+	objchartname = new Chart(ctx, {
 		type: 'line',
 		options: lineOptions,
 		data: lineDataset
@@ -133,9 +133,15 @@ function getLimit(datasetname,axis,maxmin) {
 	return limit;
 }
 
+function RedrawAllCharts() {
+	Draw_Chart("LineChartOffsetDaily",LineChartOffsetDaily,"DataOffsetDaily",DataOffsetDaily,"Offset","ms","#fc8500");
+	Draw_Chart("LineChartJitterDaily",LineChartJitterDaily,"DataJitterDaily",DataJitterDaily,"Jitter","ms","#42ecf5");
+	Draw_Chart("LineChartDriftDaily",LineChartDriftDaily,"DataDriftDaily",DataDriftDaily,"Drift","ppm","#ffffff");
+}
+
 function initial(){
 	show_menu();
-	Draw_Chart_OffsetDaily();
+	RedrawAllCharts();
 }
 
 function reload() {
@@ -186,7 +192,7 @@ function applyRule() {
 <tr class="apply_gen" valign="top" height="35px">
 <td>
 <input type="button" onClick="applyRule();" value="Update stats" class="button_gen" name="button">
-<input type="button" onClick="Draw_Chart_OffsetDaily();" value="Reset Zoom" class="button_gen" name="button">
+<input type="button" onClick="RedrawAllCharts();" value="Reset Zoom" class="button_gen" name="button">
 </td>
 </tr>
 <thead>
@@ -196,7 +202,11 @@ function applyRule() {
 </thead>
 <tr>
 <td colspan="2" align="center">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartOffsetDaily" height="360"></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartOffsetDaily" height="300"></div>
+<div style="line-height:10px;">&nbsp;</div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartJitterDaily" height="300"></div>
+<div style="line-height:10px;">&nbsp;</div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftDaily" height="300"></div>
 </td>
 </tr>
 </table>

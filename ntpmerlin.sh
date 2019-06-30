@@ -217,7 +217,7 @@ Create_Dirs(){
 Create_Symlinks(){
 	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
 	
-	ln -s "$SCRIPT_DIR/offsetdaily.js" "$SCRIPT_WEB_DIR/offsetdaily.js" 2>/dev/null
+	ln -s "$SCRIPT_DIR/ntpstatsdata.js" "$SCRIPT_WEB_DIR/ntpstatsdata.js" 2>/dev/null
 	
 	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SCRIPT_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
 	ln -s "$SHARED_DIR/hammerjs.js" "$SCRIPT_WEB_DIR/hammerjs.js" 2>/dev/null
@@ -541,8 +541,8 @@ NTPD_Customise(){
 WriteData_ToJS(){
 	{
 	echo "var $3;"
-	echo "$3 = [];"; } > "$2"
-	contents="$contents""$3"'.unshift('
+	echo "$3 = [];"; } >> "$2"
+	contents="$3"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		datapoint="{ x: moment.unix(""$(echo "$line" | awk 'BEGIN{FS=","}{ print $1 }' | awk '{$1=$1};1')""), y: ""$(echo "$line" | awk 'BEGIN{FS=","}{ print $2 }' | awk '{$1=$1};1')"" }"
 		contents="$contents""$datapoint"","
@@ -598,14 +598,24 @@ Generate_NTPStats(){
 		echo ".mode csv"
 		echo ".output /tmp/ntp-offsetdaily.csv"
 		echo "select [Timestamp],[Offset] from ntpstats WHERE [Timestamp] > (strftime('%s','now') - 86400);"
-	} > /tmp/ntp-offsetdaily.sql
+		echo ".output /tmp/ntp-jitterdaily.csv"
+		echo "select [Timestamp],[Sys_Jitter] from ntpstats WHERE [Timestamp] > (strftime('%s','now') - 86400);"
+		echo ".output /tmp/ntp-driftdaily.csv"
+		echo "select [Timestamp],[Frequency] from ntpstats WHERE [Timestamp] > (strftime('%s','now') - 86400);"
+	} > /tmp/ntp-stats.sql
 	
-	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-offsetdaily.sql
-	WriteData_ToJS "/tmp/ntp-offsetdaily.csv" "$SCRIPT_DIR/offsetdaily.js" "DataOffsetDaily"
+	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+	
+	rm -f "$SCRIPT_DIR/offsetdaily.js"
+	
+	rm -f "$SCRIPT_DIR/ntpstatsdata.js"
+	WriteData_ToJS "/tmp/ntp-offsetdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataOffsetDaily"
+	WriteData_ToJS "/tmp/ntp-jitterdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterDaily"
+	WriteData_ToJS "/tmp/ntp-driftdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftDaily"
 	
 	rm -f "$tmpfile"
 	rm -f "/tmp/ntp-"*".csv"
-	rm -f "/tmp/ntp-"*".sql"
+	rm -f "/tmp/ntp-stats.sql"
 }
 
 Shortcut_ntpMerlin(){
