@@ -541,7 +541,7 @@ NTPD_Customise(){
 WriteData_ToJS(){
 	{
 	echo "var $3;"
-	echo "$3 = [];"; } >> "$2"
+	echo "$3 = [];"; } > "$2"
 	contents="$contents""$3"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		datapoint="{ x: moment.unix(""$(echo "$line" | awk 'BEGIN{FS=","}{ print $1 }' | awk '{$1=$1};1')""), y: ""$(echo "$line" | awk 'BEGIN{FS=","}{ print $2 }' | awk '{$1=$1};1')"" }"
