@@ -537,16 +537,17 @@ NTPD_Customise(){
 }
 
 WriteData_ToJS(){
-	echo 'function GenChartDataJitter() {' > "$2"
-	contents="$contents"'lineDataOffset.unshift('
+	{
+	echo "var $3;"
+	echo "$3 = [];"; } >> "$2"
+	contents="$contents""$3"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		datapoint="{ x: moment.unix(""$(echo "$line" | awk 'BEGIN{FS=","}{ print $1 }' | awk '{$1=$1};1')""), y: ""$(echo "$line" | awk 'BEGIN{FS=","}{ print $2 }' | awk '{$1=$1};1')"" }"
 		contents="$contents""$datapoint"","
 	done < "$1"
 	contents=$(echo "$contents" | sed 's/.$//')
 	contents="$contents"");"
-	echo "$contents" >> "$2"
-	echo "}" >> "$2"
+	printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
 }
 
 Generate_NTPStats(){
@@ -576,13 +577,21 @@ Generate_NTPStats(){
 		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([Timestamp] NUMERIC NOT NULL PRIMARY KEY, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
 		echo "INSERT INTO ntpstats values($(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
 		echo "select * from ntpstats;"
-	} > /tmp/test.sql
+	} > /tmp/ntp-stats.sql
 	
-	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/test.sql
-	#WriteData_ToJS "/jffs/scripts/ntpdstats_csv.csv" "/www/ext/ntpjitter.js"
+	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+	
+	{
+		echo ".mode csv;"
+		echo ".output /tmp/ntp-offsetdaily.csv;"
+		echo "select [Timestamp],[Offset] from ntpstats WHERE [Timestamp] > (strftime('%s','now') - 86400);"
+	} > /tmp/ntp-offsetdaily.sql
+	
+	WriteData_ToJS "/tmp/ntp-offsetdaily.csv" "$SCRIPT_DIR/ntpjitter.js" "DataOffsetDaily"
 	
 	rm -f "$tmpfile"
-	rm -f /tmp/test.sql
+	rm -f "/tmp/ntp-"*".csv"
+	rm -f "/tmp/ntp-"*".sql"
 }
 
 Shortcut_ntpMerlin(){
