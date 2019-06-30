@@ -217,6 +217,8 @@ Create_Dirs(){
 Create_Symlinks(){
 	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
 	
+	ln -s "$SCRIPT_DIR/offsetdaily.js" "$SCRIPT_WEB_DIR/offsetdaily.js" 2>/dev/null
+	
 	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SCRIPT_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
 	ln -s "$SHARED_DIR/hammerjs.js" "$SCRIPT_WEB_DIR/hammerjs.js" 2>/dev/null
 	ln -s "$SHARED_DIR/moment.js" "$SCRIPT_WEB_DIR/moment.js" 2>/dev/null
@@ -587,7 +589,7 @@ Generate_NTPStats(){
 	} > /tmp/ntp-offsetdaily.sql
 	
 	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-offsetdaily.sql
-	WriteData_ToJS "/tmp/ntp-offsetdaily.csv" "$SCRIPT_DIR/ntpjitter.js" "DataOffsetDaily"
+	WriteData_ToJS "/tmp/ntp-offsetdaily.csv" "$SCRIPT_DIR/offsetdaily.js" "DataOffsetDaily"
 	
 	rm -f "$tmpfile"
 	rm -f "/tmp/ntp-"*".csv"
