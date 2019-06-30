@@ -563,7 +563,7 @@ Generate_NTPStats(){
 	#shellcheck disable=SC2086
 	killall ntp 2>/dev/null
 	tmpfile=/tmp/ntp-stats.$$
-	ntpq -4 -c rv | awk 'BEGIN{ RS=","}{ print }' >> "$tmpfile"
+	ntpq -4 -c rv | awk 'BEGIN{ RS=","}{ print }' > "$tmpfile"
 	
 	[ ! -z "$(grep offset "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NOFFSET=$(grep offset "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NOFFSET=0
 	[ ! -z "$(grep frequency "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NFREQ=$(grep frequency "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NFREQ=0
