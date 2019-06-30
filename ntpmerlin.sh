@@ -581,8 +581,8 @@ Generate_NTPStats(){
 	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
 	{
-		echo ".mode csv;"
-		echo ".output /tmp/ntp-offsetdaily.csv;"
+		echo ".mode csv"
+		echo ".output /tmp/ntp-offsetdaily.csv"
 		echo "select [Timestamp],[Offset] from ntpstats WHERE [Timestamp] > (strftime('%s','now') - 86400);"
 	} > /tmp/ntp-offsetdaily.sql
 	
