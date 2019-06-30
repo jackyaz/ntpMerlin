@@ -19,6 +19,8 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/moment.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/hammerjs.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/chartjs-plugin-zoom.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -28,35 +30,33 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/offsetdaily.js"></script>
-<!--
 <script>
-var lineDataOffset;
-var myLineChart;
+var LineChartOffsetDaily;
 Chart.defaults.global.defaultFontColor = "#CCC";
+Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
+  return coordinates;
+};
 
-function redraw()
-{
-	lineDataOffset = [];
-	GenChartDataJitter();
-	draw_chart();
-}
-
-function draw_chart(){
-	if (myLineChart != undefined) myLineChart.destroy();
-	var ctx = document.getElementById("chart").getContext("2d");
+function Draw_Chart_OffsetDaily(){
+	if (LineChartOffsetDaily != undefined) LineChartOffsetDaily.destroy();
+	var ctx = document.getElementById("ChartOffsetDaily").getContext("2d");
 	var lineOptions = {
 		segmentShowStroke : false,
 		segmentStrokeColor : "#000",
 		animationEasing : "easeOutQuart",
 		animationSteps : 100,
+		maintainAspectRatio: false,
 		animateScale : true,
 		legend: { display: false, position: "bottom", onClick: null },
 		title: { display: true, text: "Offset" },
 		tooltips: {
 			callbacks: {
-					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel).format('YYYY-MM-DD HH:mm')); },
+					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel).format('YYYY-MM-DD HH:mm:ss')); },
 					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString() + ' ms';}
-				}
+				},
+				mode: 'point',
+				position: 'cursor',
+				intersect: true
 		},
 		scales: {
 			xAxes: [{
@@ -77,60 +77,87 @@ function draw_chart(){
 					}
 				},
 			}]
+		},
+		plugins: {
+			zoom: {
+				pan: {
+					// Boolean to enable panning
+					enabled: true,
+					// Panning directions. Remove the appropriate direction to disable
+					// Eg. 'y' would only allow panning in the y direction
+					mode: 'xy',
+					rangeMin: {
+						// Format of min pan range depends on scale type
+						x: new Date().getTime() - 86400000,
+						y: getLimit("DataOffsetDaily","y","min") - Math.sqrt(Math.pow(getLimit("DataOffsetDaily","y","min"),2))*0.1,
+					},
+					rangeMax: {
+						// Format of max pan range depends on scale type
+						x: new Date().getTime(),
+						y: getLimit("DataOffsetDaily","y","max") + getLimit("DataOffsetDaily","y","max")*0.1,
+						//y: ZoomPanMax(charttypead,"y",barDataBlockedAds)
+					},
+				},
+				zoom: {
+					// Boolean to enable zooming
+					enabled: true,
+					// Zooming directions. Remove the appropriate direction to disable
+					// Eg. 'y' would only allow zooming in the y direction
+					mode: 'xy',
+					rangeMin: {
+						// Format of min pan range depends on scale type
+						x: new Date().getTime() - 86400000,
+						y: getLimit("DataOffsetDaily","y","min") - Math.sqrt(Math.pow(getLimit("DataOffsetDaily","y","min"),2))*0.1,
+					},
+					rangeMax: {
+						// Format of max pan range depends on scale type
+						x: new Date().getTime(),
+						y: getLimit("DataOffsetDaily","y","max") + getLimit("DataOffsetDaily","y","max")*0.1,
+					},
+					// Speed of zoom via mouse wheel
+					// (percentage of zoom on a wheel event)
+					speed: 0.1
+				}
+			}
 		}
 	};
 	var lineDataset = {
-		datasets: [{data: lineDataOffset,
+		datasets: [{data: DataOffsetDaily,
 			label: "Offset",
 			borderWidth: 1,
 			pointRadius: 1,
+			lineTension: 0,
 			fill: false,
 			backgroundColor: "#fc8500",
 			borderColor: "#fc8500",
 		}]
 	};
-	myLineChart = new Chart(ctx, {
+	LineChartOffsetDaily = new Chart(ctx, {
 		type: 'line',
 		options: lineOptions,
 		data: lineDataset
 	});
 }
+
+function getLimit(datasetname,axis,maxmin) {
+	limit=0;
+	eval("limit=Math."+maxmin+".apply(Math, "+datasetname+".map(function(o) { return o."+axis+";} ))");
+	return limit;
+}
+
 function initial(){
-show_menu();
-redraw();
+	show_menu();
+	Draw_Chart_OffsetDaily();
 }
+
 function reload() {
-location.reload(true);
+	location.reload(true);
 }
+
 function applyRule() {
-var action_script_tmp = "start_ntpmerlin";
-document.form.action_script.value = action_script_tmp;
-document.form.submit();
-}
-function getRandomColor() {
-var r = Math.floor(Math.random() * 255);
-var g = Math.floor(Math.random() * 255);
-var b = Math.floor(Math.random() * 255);
-return "rgba(" + r + "," + g + "," + b + ", 1)";
-}
-function poolColors(a) {
-var pool = [];
-for(i = 0; i < a; i++) {
-	pool.push(getRandomColor());
-}
-return pool;
-}-->
-<script>
-function initial(){
-show_menu();
-}
-function reload() {
-location.reload(true);
-}
-function applyRule() {
-var action_script_tmp = "start_ntpmerlin";
-document.form.action_script.value = action_script_tmp;
-document.form.submit();
+	var action_script_tmp = "start_ntpmerlin";
+	document.form.action_script.value = action_script_tmp;
+	document.form.submit();
 }
 </script>
 </head>
@@ -170,6 +197,7 @@ document.form.submit();
 <tr class="apply_gen" valign="top" height="35px">
 <td>
 <input type="button" onClick="applyRule();" value="Update stats" class="button_gen" name="button">
+<input type="button" onClick="Draw_Chart_OffsetDaily();" value="Reset Zoom" class="button_gen" name="button">
 </td>
 </tr>
 <thead>
@@ -179,23 +207,7 @@ document.form.submit();
 </thead>
 <tr>
 <td colspan="2" align="center">
-<!--<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="chart" height="120"></div>-->
-<img src="/ext/ntpmerlin/offset.png">
-<img src="/ext/ntpmerlin/sysjit.png">
-</td>
-</tr>
-</table>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead>
-<tr>
-<td colspan="2">Last 7 Days</td>
-</tr>
-</thead>
-<tr>
-<td colspan="2" align="center">
-<img src="/ext/ntpmerlin/week-offset.png">
-<img src="/ext/ntpmerlin/week-sysjit.png">
-<img src="/ext/ntpmerlin/week-freq.png">
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartOffsetDaily" height="360"></div>
 </td>
 </tr>
 </table>
