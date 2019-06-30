@@ -575,9 +575,21 @@ Generate_NTPStats(){
 	TZ=$(cat /etc/TZ)
 	export TZ
 	
+	if [ -f "$SCRIPT_DIR/ntpdstats.db" ] && [ ! -f "$SCRIPT_DIR/.dbconverted" ]; then
+		{
+			echo "CREATE TABLE IF NOT EXISTS [ntpstats_new] ([StatID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
+			echo "INSERT INTO ntpstats_new ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) SELECT [Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp] FROM ntpstats ORDER BY [Timestamp];"
+			echo "DROP TABLE ntpstats;"
+			echo "ALTER TABLE [ntpstats_new] RENAME TO [ntpstats];"
+		} > /tmp/ntp-convert.sql
+		/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-convert.sql
+		touch "$SCRIPT_DIR/.dbconverted"
+		rm -f /tmp/ntp-convert.sql
+	fi
+	
 	{
-		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([Timestamp] NUMERIC NOT NULL PRIMARY KEY, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
-		echo "INSERT INTO ntpstats values($(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
+		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([StatID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
+		echo "INSERT INTO ntpstats ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) values($(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
 	} > /tmp/ntp-stats.sql
 	
 	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
