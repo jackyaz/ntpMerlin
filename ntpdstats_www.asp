@@ -17,8 +17,8 @@ font-weight: bolder;
 }
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
-<!--<script language="JavaScript" type="text/javascript" src="/jffs/scripts/moment.min.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>-->
+<script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/moment.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
