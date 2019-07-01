@@ -597,11 +597,11 @@ Generate_NTPStats(){
 	{
 		echo ".mode csv"
 		echo ".output /tmp/ntp-offsetdaily.csv"
-		echo "select [Timestamp],[Offset] from ntpstats WHERE [Timestamp] > (strftime('%s','now') - 86400);"
+		echo "select [Timestamp],[Offset] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
 		echo ".output /tmp/ntp-jitterdaily.csv"
-		echo "select [Timestamp],[Sys_Jitter] from ntpstats WHERE [Timestamp] > (strftime('%s','now') - 86400);"
+		echo "select [Timestamp],[Sys_Jitter] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
 		echo ".output /tmp/ntp-driftdaily.csv"
-		echo "select [Timestamp],[Frequency] from ntpstats WHERE [Timestamp] > (strftime('%s','now') - 86400);"
+		echo "select [Timestamp],[Frequency] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
 	} > /tmp/ntp-stats.sql
 	
 	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
@@ -615,7 +615,7 @@ Generate_NTPStats(){
 	COUNTER=0
 	timenow="$(date '+%s')"
 	until [ $COUNTER -gt 168 ]; do
-		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Offset]),0) from ntpstats WHERE ([Timestamp] > $timenow - (3600*($COUNTER+1))) AND ([Timestamp] < $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
+		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Offset]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
 		COUNTER=$((COUNTER + 1))
 	done
 	
@@ -626,7 +626,7 @@ Generate_NTPStats(){
 	COUNTER=0
 	timenow="$(date '+%s')"
 	until [ $COUNTER -gt 168 ]; do
-		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Sys_Jitter]),0) from ntpstats WHERE ([Timestamp] > $timenow - (3600*($COUNTER+1))) AND ([Timestamp] < $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
+		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Sys_Jitter]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
 		COUNTER=$((COUNTER + 1))
 	done
 	
@@ -637,7 +637,7 @@ Generate_NTPStats(){
 	COUNTER=0
 	timenow="$(date '+%s')"
 	until [ $COUNTER -gt 168 ]; do
-		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Frequency]),0) from ntpstats WHERE ([Timestamp] > $timenow - (3600*($COUNTER+1))) AND ([Timestamp] < $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
+		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Frequency]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
 		COUNTER=$((COUNTER + 1))
 	done
 	
