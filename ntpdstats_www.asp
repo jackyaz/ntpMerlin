@@ -73,7 +73,7 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 				ticks: {
 					display: true,
 					callback: function (value, index, values) {
-						return value + ' ' + txtunit;
+						return round(value,2) + ' ' + txtunit;
 					}
 				},
 			}]
@@ -93,7 +93,6 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 					},
 				},
 				zoom: {
-					// Boolean to enable zooming
 					enabled: true,
 					mode: 'xy',
 					rangeMin: {
@@ -131,6 +130,10 @@ function getLimit(datasetname,axis,maxmin) {
 	limit=0;
 	eval("limit=Math."+maxmin+".apply(Math, "+datasetname+".map(function(o) { return o."+axis+";} ))");
 	return limit;
+}
+
+function round(value, decimals) {
+	return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
 }
 
 function RedrawAllCharts() {
