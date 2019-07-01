@@ -606,12 +606,51 @@ Generate_NTPStats(){
 	
 	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
-	rm -f "$SCRIPT_DIR/offsetdaily.js"
+	rm -f /tmp/ntp-stats.sql
+	
+	{
+		echo ".mode csv"
+		echo ".output /tmp/ntp-offsetweekly.csv"
+	} >> /tmp/ntp-stats.sql
+	COUNTER=0
+	timenow="$(date '+%s')"
+	until [ $COUNTER -gt 168 ]; do
+		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Offset]),0) from ntpstats WHERE ([Timestamp] > $timenow - (3600*($COUNTER+1))) AND ([Timestamp] < $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
+		COUNTER=$((COUNTER + 1))
+	done
+	
+	{
+		echo ".mode csv"
+		echo ".output /tmp/ntp-jitterweekly.csv"
+	} >> /tmp/ntp-stats.sql
+	COUNTER=0
+	timenow="$(date '+%s')"
+	until [ $COUNTER -gt 168 ]; do
+		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Sys_Jitter]),0) from ntpstats WHERE ([Timestamp] > $timenow - (3600*($COUNTER+1))) AND ([Timestamp] < $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
+		COUNTER=$((COUNTER + 1))
+	done
+	
+	{
+		echo ".mode csv"
+		echo ".output /tmp/ntp-driftweekly.csv"
+	} >> /tmp/ntp-stats.sql
+	COUNTER=0
+	timenow="$(date '+%s')"
+	until [ $COUNTER -gt 168 ]; do
+		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Frequency]),0) from ntpstats WHERE ([Timestamp] > $timenow - (3600*($COUNTER+1))) AND ([Timestamp] < $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
+		COUNTER=$((COUNTER + 1))
+	done
+	
+	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
 	rm -f "$SCRIPT_DIR/ntpstatsdata.js"
 	WriteData_ToJS "/tmp/ntp-offsetdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataOffsetDaily"
 	WriteData_ToJS "/tmp/ntp-jitterdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterDaily"
 	WriteData_ToJS "/tmp/ntp-driftdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftDaily"
+	
+	WriteData_ToJS "/tmp/ntp-offsetweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataOffsetWeekly"
+	WriteData_ToJS "/tmp/ntp-jitterweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterWeekly"
+	WriteData_ToJS "/tmp/ntp-driftweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftWeekly"
 	
 	rm -f "$tmpfile"
 	rm -f "/tmp/ntp-"*".csv"

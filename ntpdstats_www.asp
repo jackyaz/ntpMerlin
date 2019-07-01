@@ -31,13 +31,20 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatsdata.js"></script>
 <script>
-var LineChartOffsetDaily,LineChartJitterDaily,LineChartDriftDaily;
+var LineChartOffsetDaily,LineChartJitterDaily,LineChartDriftDaily,LineChartOffsetWeekly,LineChartJitterWeekly,LineChartDriftWeekly;
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
   return coordinates;
 };
 
-function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,txtunit,colourname){
+function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,txtunity,txtunitx,numunitx,colourname){
+	factor=0;
+	if (txtunitx=="hour"){
+		factor=60*60*1000;
+	}
+	else if (txtunitx=="day"){
+		factor=60*60*24*1000;
+	}
 	if (objchartname != undefined) objchartname.destroy();
 	var ctx = document.getElementById("div"+txtchartname).getContext("2d");
 	var lineOptions = {
@@ -52,7 +59,7 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 		tooltips: {
 			callbacks: {
 					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel).format('YYYY-MM-DD HH:mm:ss')); },
-					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString() + ' ' + txtunit;}
+					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString() + ' ' + txtunity;}
 				},
 				mode: 'point',
 				position: 'cursor',
@@ -65,7 +72,7 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 				ticks: {
 					display: true
 				},
-				time: { min: moment().subtract(24, "hours"), unit: "hour", stepSize: 1 }
+				time: { min: moment().subtract(numunitx, txtunitx+"s"), unit: txtunitx, stepSize: 1 }
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
@@ -73,7 +80,7 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 				ticks: {
 					display: true,
 					callback: function (value, index, values) {
-						return round(value,2) + ' ' + txtunit;
+						return round(value,2) + ' ' + txtunity;
 					}
 				},
 			}]
@@ -84,7 +91,7 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 					enabled: true,
 					mode: 'xy',
 					rangeMin: {
-						x: new Date().getTime() - 86400000,
+						x: new Date().getTime() - (factor * numunitx),
 						y: getLimit(txtdataname,"y","min") - Math.sqrt(Math.pow(getLimit(txtdataname,"y","min"),2))*0.1,
 					},
 					rangeMax: {
@@ -96,7 +103,7 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 					enabled: true,
 					mode: 'xy',
 					rangeMin: {
-						x: new Date().getTime() - 86400000,
+						x: new Date().getTime() - (factor * numunitx),
 						y: getLimit(txtdataname,"y","min") - Math.sqrt(Math.pow(getLimit(txtdataname,"y","min"),2))*0.1,
 					},
 					rangeMax: {
@@ -137,9 +144,12 @@ function round(value, decimals) {
 }
 
 function RedrawAllCharts() {
-	Draw_Chart("LineChartOffsetDaily",LineChartOffsetDaily,"DataOffsetDaily",DataOffsetDaily,"Offset","ms","#fc8500");
-	Draw_Chart("LineChartJitterDaily",LineChartJitterDaily,"DataJitterDaily",DataJitterDaily,"Jitter","ms","#42ecf5");
-	Draw_Chart("LineChartDriftDaily",LineChartDriftDaily,"DataDriftDaily",DataDriftDaily,"Drift","ppm","#ffffff");
+	Draw_Chart("LineChartOffsetDaily",LineChartOffsetDaily,"DataOffsetDaily",DataOffsetDaily,"Offset","ms","hour",24,"#fc8500");
+	Draw_Chart("LineChartJitterDaily",LineChartJitterDaily,"DataJitterDaily",DataJitterDaily,"Jitter","ms","hour",24,"#42ecf5");
+	Draw_Chart("LineChartDriftDaily",LineChartDriftDaily,"DataDriftDaily",DataDriftDaily,"Drift","ppm","hour",24,"#ffffff");
+	Draw_Chart("LineChartOffsetWeekly",LineChartOffsetWeekly,"DataOffsetWeekly",DataOffsetWeekly,"Offset","ms","day",7,"#fc8500");
+	Draw_Chart("LineChartJitterWeekly",LineChartJitterWeekly,"DataJitterWeekly",DataJitterWeekly,"Jitter","ms","day",7,"#42ecf5");
+	Draw_Chart("LineChartDriftWeekly",LineChartDriftWeekly,"DataDriftWeekly",DataDriftWeekly,"Drift","ppm","day",7,"#ffffff");
 }
 
 function initial(){
@@ -198,6 +208,9 @@ function applyRule() {
 <input type="button" onClick="RedrawAllCharts();" value="Reset Zoom" class="button_gen" name="button">
 </td>
 </tr>
+</table>
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
 <td colspan="2">Last 24 Hours</td>
@@ -210,6 +223,23 @@ function applyRule() {
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartJitterDaily" height="300"></div>
 <div style="line-height:10px;">&nbsp;</div>
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftDaily" height="300"></div>
+</td>
+</tr>
+</table>
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+<thead>
+<tr>
+<td colspan="2">Last 7 days</td>
+</tr>
+</thead>
+<tr>
+<td colspan="2" align="center">
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartOffsetWeekly" height="300"></div>
+<div style="line-height:10px;">&nbsp;</div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartJitterWeekly" height="300"></div>
+<div style="line-height:10px;">&nbsp;</div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftWeekly" height="300"></div>
 </td>
 </tr>
 </table>
