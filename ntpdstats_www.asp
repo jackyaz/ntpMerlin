@@ -300,6 +300,7 @@ function applyRule() {
 <td valign="top">
 <div>&nbsp;</div>
 <div class="formfonttitle">NTP Daemon Performance Stats</div>
+<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <tr class="apply_gen" valign="top" height="35px">
 <td>
