@@ -33,6 +33,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatsdata.js"></script>
 <script>
 var LineChartOffsetDaily,LineChartJitterDaily,LineChartDriftDaily,LineChartOffsetWeekly,LineChartJitterWeekly,LineChartDriftWeekly;
+var ShowLines="line";
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
   return coordinates;
@@ -112,8 +113,86 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 						y: getLimit(txtdataname,"y","max") + getLimit(txtdataname,"y","max")*0.1,
 					},
 					speed: 0.1
+				},
+			},
+		},
+		annotation: {
+			drawTime: 'afterDatasetsDraw',
+			annotations: [{
+				id: 'avgline',
+				type: ShowLines,
+				mode: 'horizontal',
+				scaleID: 'y-axis-0',
+				value: getAverage(objdataname),
+				borderColor: colourname,
+				borderWidth: 1,
+				borderDash: [5, 5],
+				label: {
+					backgroundColor: 'rgba(0,0,0,0.3)',
+					fontFamily: "sans-serif",
+					fontSize: 10,
+					fontStyle: "bold",
+					fontColor: "#fff",
+					xPadding: 6,
+					yPadding: 6,
+					cornerRadius: 6,
+					position: "center",
+					enabled: true,
+					xAdjust: 0,
+					yAdjust: 0,
+					content: "Avg=" + round(getAverage(objdataname),3).toFixed(3)+txtunity,
 				}
-			}
+			},
+			{
+				id: 'maxline',
+				type: ShowLines,
+				mode: 'horizontal',
+				scaleID: 'y-axis-0',
+				value: getLimit(txtdataname,"y","max"),
+				borderColor: colourname,
+				borderWidth: 1,
+				borderDash: [5, 5],
+				label: {
+					backgroundColor: 'rgba(0,0,0,0.3)',
+					fontFamily: "sans-serif",
+					fontSize: 10,
+					fontStyle: "bold",
+					fontColor: "#fff",
+					xPadding: 6,
+					yPadding: 6,
+					cornerRadius: 6,
+					position: "center",
+					enabled: true,
+					xAdjust: 0,
+					yAdjust: 0,
+					content: "Max=" + round(getLimit(txtdataname,"y","max"),3).toFixed(3)+txtunity,
+				}
+			},
+			{
+				id: 'minline',
+				type: ShowLines,
+				mode: 'horizontal',
+				scaleID: 'y-axis-0',
+				value: getLimit(txtdataname,"y","min"),
+				borderColor: colourname,
+				borderWidth: 1,
+				borderDash: [5, 5],
+				label: {
+					backgroundColor: 'rgba(0,0,0,0.3)',
+					fontFamily: "sans-serif",
+					fontSize: 10,
+					fontStyle: "bold",
+					fontColor: "#fff",
+					xPadding: 6,
+					yPadding: 6,
+					cornerRadius: 6,
+					position: "center",
+					enabled: true,
+					xAdjust: 0,
+					yAdjust: 0,
+					content: "Min=" + round(getLimit(txtdataname,"y","min"),3).toFixed(3)+txtunity,
+				}
+			}]
 		}
 	};
 	var lineDataset = {
@@ -140,8 +219,27 @@ function getLimit(datasetname,axis,maxmin) {
 	return limit;
 }
 
+function getAverage(datasetname) {
+	var total = 0;
+	for(var i = 0; i < datasetname.length; i++) {
+		total += datasetname[i].y;
+	}
+	var avg = total / datasetname.length;
+	return avg;
+}
+
 function round(value, decimals) {
 	return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+}
+
+function ToggleLines() {
+	if(ShowLines == ""){
+		ShowLines = "line";
+	}
+	else {
+		ShowLines = "";
+	}
+	RedrawAllCharts();
 }
 
 function RedrawAllCharts() {
@@ -207,6 +305,7 @@ function applyRule() {
 <td>
 <input type="button" onClick="applyRule();" value="Update stats" class="button_gen" name="button">
 <input type="button" onClick="RedrawAllCharts();" value="Reset Zoom" class="button_gen" name="button">
+<input type="button" onClick="ToggleLines();" value="Toggle Lines" class="button_gen" name="button">
 </td>
 </tr>
 </table>
