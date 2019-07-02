@@ -27,6 +27,7 @@ readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
 readonly SCRIPT_WEB_DIR="$(readlink /www/ext)/$SCRIPT_NAME_LOWER"
 readonly SHARED_DIR="/jffs/scripts/shared-jy"
 readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
+readonly SHARED_WEB_DIR="$(readlink /www/ext)/shared-jy"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
 
@@ -107,6 +108,9 @@ Update_Version(){
 		Update_File "S77ntpd"
 		Update_File "ntp.conf"
 		Update_File "ntpdstats_www.asp"
+		Update_File "chartjs-plugin-zoom.js"
+		Update_File "chartjs-plugin-annotation.js"
+		Update_File "hammerjs.js"
 		Update_File "moment.js"
 		Modify_WebUI_File
 		
@@ -129,6 +133,9 @@ Update_Version(){
 			Update_File "S77ntpd"
 			Update_File "ntp.conf"
 			Update_File "ntpdstats_www.asp"
+			Update_File "chartjs-plugin-zoom.js"
+			Update_File "chartjs-plugin-annotation.js"
+			Update_File "hammerjs.js"
 			Update_File "moment.js"
 			Modify_WebUI_File
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
@@ -175,12 +182,12 @@ Update_File(){
 			Mount_NTPD_WebUI
 		fi
 		rm -f "$tmpfile"
-	elif [ "$1" = "moment.js" ]; then
+	elif [ "$1" = "chartjs-plugin-zoom.js" ] || [ "$1" = "chartjs-plugin-annotation.js" ] || [ "$1" = "moment.js" ] || [ "$1" =  "hammerjs.js" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SHARED_REPO/$1" "$tmpfile"
 		if ! diff -q "$tmpfile" "$SHARED_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			Download_File "$SHARED_REPO/moment.js" "$SHARED_DIR/moment.js"
+			Download_File "$SHARED_REPO/$1" "$SHARED_DIR/$1"
 		fi
 		rm -f "$tmpfile"
 	else
@@ -212,6 +219,10 @@ Create_Dirs(){
 	if [ ! -d "$SCRIPT_WEB_DIR" ]; then
 		mkdir -p "$SCRIPT_WEB_DIR"
 	fi
+	
+	if [ ! -d "$SHARED_WEB_DIR" ]; then
+		mkdir -p "$SHARED_WEB_DIR"
+	fi
 }
 
 Create_Symlinks(){
@@ -219,9 +230,10 @@ Create_Symlinks(){
 	
 	ln -s "$SCRIPT_DIR/ntpstatsdata.js" "$SCRIPT_WEB_DIR/ntpstatsdata.js" 2>/dev/null
 	
-	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SCRIPT_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
-	ln -s "$SHARED_DIR/hammerjs.js" "$SCRIPT_WEB_DIR/hammerjs.js" 2>/dev/null
-	ln -s "$SHARED_DIR/moment.js" "$SCRIPT_WEB_DIR/moment.js" 2>/dev/null
+	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SHARED_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
+	ln -s "$SHARED_DIR/chartjs-plugin-annotation.js" "$SHARED_WEB_DIR/chartjs-plugin-annotation.js" 2>/dev/null
+	ln -s "$SHARED_DIR/hammerjs.js" "$SHARED_WEB_DIR/hammerjs.js" 2>/dev/null
+	ln -s "$SHARED_DIR/moment.js" "$SHARED_WEB_DIR/moment.js" 2>/dev/null
 }
 
 Auto_ServiceEvent(){

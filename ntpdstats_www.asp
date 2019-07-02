@@ -17,10 +17,11 @@ font-weight: bolder;
 }
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/moment.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/moment.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/hammerjs.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/chartjs-plugin-zoom.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/hammerjs.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-zoom.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-annotation.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -80,7 +81,7 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 				ticks: {
 					display: true,
 					callback: function (value, index, values) {
-						return round(value,2) + ' ' + txtunity;
+						return round(value,3).toFixed(3) + ' ' + txtunity;
 					}
 				},
 			}]
