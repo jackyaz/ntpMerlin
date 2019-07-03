@@ -414,9 +414,9 @@ Download_File(){
 NTP_Redirect(){
 	case $1 in
 		create)
-			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" &>/dev/null     # fix the order and recommend &>/dev/null instead of 2>/dev/null order still needs to be fixed.
+			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" &> /dev/null     # fix the order and recommend &>/dev/null instead of 2>/dev/null order still needs to be fixed.
 			iptables -t nat -A PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
-			iptables -t nat -D PREROUTING -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" &>/dev/null     # fix the order and recommend &>/dev/null instead of 2>/dev/null order still needs to be fixed.
+			iptables -t nat -D PREROUTING -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" &> /dev/null     # fix the order and recommend &>/dev/null instead of 2>/dev/null order still needs to be fixed.
 			iptables -t nat -A PREROUTING -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
 			Auto_DNSMASQ create 2>/dev/null
 		;;
