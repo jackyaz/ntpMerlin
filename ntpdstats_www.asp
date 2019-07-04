@@ -305,7 +305,9 @@ function applyRule() {
 <tr class="apply_gen" valign="top" height="35px">
 <td style="background-color:rgb(77, 89, 93);border:0px;">
 <input type="button" onClick="applyRule();" value="Update stats" class="button_gen" name="button">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <input type="button" onClick="RedrawAllCharts();" value="Reset Zoom" class="button_gen" name="button">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <input type="button" onClick="ToggleLines();" value="Toggle Lines" class="button_gen" name="button">
 </td>
 </tr>
