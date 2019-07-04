@@ -35,6 +35,7 @@ font-weight: bolder;
 <script>
 var LineChartOffsetDaily,LineChartJitterDaily,LineChartDriftDaily,LineChartOffsetWeekly,LineChartJitterWeekly,LineChartDriftWeekly;
 var ShowLines="line";
+var ShowFill=false;
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
   return coordinates;
@@ -202,7 +203,7 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 			borderWidth: 1,
 			pointRadius: 1,
 			lineTension: 0,
-			fill: false,
+			fill: ShowFill,
 			backgroundColor: colourname,
 			borderColor: colourname,
 		}]
@@ -239,6 +240,16 @@ function ToggleLines() {
 	}
 	else {
 		ShowLines = "";
+	}
+	RedrawAllCharts();
+}
+
+function ToggleFill() {
+	if(ShowFill == false){
+		ShowFill = "origin";
+	}
+	else {
+		ShowFill = false;
 	}
 	RedrawAllCharts();
 }
@@ -309,6 +320,8 @@ function applyRule() {
 <input type="button" onClick="RedrawAllCharts();" value="Reset Zoom" class="button_gen" name="button">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <input type="button" onClick="ToggleLines();" value="Toggle Lines" class="button_gen" name="button">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="button" onClick="ToggleFill();" value="Toggle Fill" class="button_gen" name="button">
 </td>
 </tr>
 </table>
