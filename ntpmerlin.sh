@@ -862,6 +862,7 @@ Check_Requirements(){
 	
 	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -lt "$(Firmware_Version_Check 384.11)" ] && [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ne "$(Firmware_Version_Check 374.43)" ]; then
 		Print_Output "true" "Older Merlin firmware detected - $SCRIPT_NAME requires 384.11 or later" "$ERR"
+		CHECKSFAILED="true"
 	elif [ "$(Firmware_Version_Check "$(nvram get buildno)")" -eq "$(Firmware_Version_Check 374.43)" ]; then
 		Print_Output "true" "John's fork detected - unsupported" "$ERR"
 		CHECKSFAILED="true"
