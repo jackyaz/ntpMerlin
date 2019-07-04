@@ -448,7 +448,7 @@ NTP_Firmware_Check(){
 	fi
 }
 
-Get_CONNMON_UI(){
+Get_spdMerlin_UI(){
 	if [ -f /www/AdaptiveQoS_ROG.asp ]; then
 		echo "AdaptiveQoS_ROG.asp"
 	else
@@ -479,16 +479,17 @@ Modify_WebUI_File(){
 	fi
 	
 	if [ -f "/jffs/scripts/connmon" ]; then
-		sed -i '/{url: "'"$(Get_CONNMON_UI)"'", tabName: /d' "$tmpfile"
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "'"$(Get_CONNMON_UI)"'", tabName: "Uptime Monitoring"},' "$tmpfile"
-		sed -i '/retArray.push("'"$(Get_CONNMON_UI)"'");/d' "$tmpfile"
+		sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "Uptime Monitoring"},' "$tmpfile"
+		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
 	fi
 	
 	if [ -f "/jffs/scripts/spdmerlin" ]; then
-		sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
-		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
+		sed -i '/{url: "'"$(Get_spdMerlin_UI)"'", tabName: /d' "$tmpfile"
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "'"$(Get_spdMerlin_UI)"'", tabName: "SpeedTest"},' "$tmpfile"
+		sed -i '/retArray.push("'"$(Get_spdMerlin_UI)"'");/d' "$tmpfile"
 	fi
+	
 	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
 	
 	if [ -f /jffs/scripts/custom_menuTree.js ]; then
@@ -517,12 +518,12 @@ Modify_WebUI_File(){
 		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_MultiSubnet_Content.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	fi
 	
-	if [ -f /jffs/scripts/connmon ]; then
-		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("'"$(Get_CONNMON_UI)"'") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+	if [ -f /jffs/scripts/spdmerlin ]; then
+		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("'"$(Get_spdMerlin_UI)"'") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	fi
 	
-	if [ -f /jffs/scripts/spdmerlin ]; then
-	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_Feedback.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+	if [ -f /jffs/scripts/connmon ]; then
+		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_Feedback.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	fi
 	
 	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Feedback_Info.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect();}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
@@ -1005,7 +1006,7 @@ Menu_Uninstall(){
 		read -r "confirm"
 		case "$confirm" in
 			y|Y)
-				rm -f "/jffs/configs/ntp.conf" 2>/dev/null
+				rm -rf "$SCRIPT_DIR" 2>/dev/null
 				break
 			;;
 			*)
