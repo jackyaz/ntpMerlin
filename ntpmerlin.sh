@@ -926,7 +926,7 @@ Menu_Startup(){
 
 Menu_GenerateStats(){
 	Generate_NTPStats
-	Clear_Lock
+	Clear_Lock "menu"
 }
 
 Menu_Edit(){
@@ -968,7 +968,7 @@ Menu_Edit(){
 			/opt/etc/init.d/S77ntpd restart
 		fi
 	fi
-	Clear_Lock
+	Clear_Lock "menu"
 }
 
 Menu_ToggleNTPRedirect(){
@@ -985,12 +985,12 @@ Menu_ToggleNTPRedirect(){
 
 Menu_Update(){
 	Update_Version
-	Clear_Lock
+	Clear_Lock "menu"
 }
 
 Menu_ForceUpdate(){
 	Update_Version force
-	Clear_Lock
+	Clear_Lock "menu"
 }
 
 Menu_Uninstall(){
@@ -1062,10 +1062,12 @@ case "$1" in
 	generate)
 		if [ -z "$2" ] && [ -z "$3" ]; then
 			Check_Lock
-			Menu_GenerateStats
+			Generate_NTPStats
+			Clear_Lock
 		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME_LOWER" ]; then
 			Check_Lock
-			Menu_GenerateStats
+			Generate_NTPStats
+			Clear_Lock
 		fi
 		exit 0
 	;;
@@ -1080,12 +1082,14 @@ case "$1" in
 	;;
 	update)
 		Check_Lock
-		Menu_Update
+		Update_Version
+		Clear_Lock
 		exit 0
 	;;
 	forceupdate)
 		Check_Lock
-		Menu_ForceUpdate
+		Update_Version force
+		Clear_Lock
 		exit 0
 	;;
 	uninstall)
