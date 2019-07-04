@@ -54,7 +54,7 @@ If this does not work, you will need to use the full path:
 Launch ntpmerlin and select option u
 
 ## Help
-Please post about any issues and problems here: [ntpMerlin on SNBForums](https://www.snbforums.com/threads/ntpmerlin-installer-for-kvic-ntp-daemon.55756/)
+Please post about any issues and problems here: [ntpMerlin on SNBForums](https://www.snbforums.com/threads/ntpmerlin-ntp-daemon-for-asuswrt-merlin.55756/)
 
 ## FAQs
 ### I haven't used scripts before on AsusWRT-Merlin
