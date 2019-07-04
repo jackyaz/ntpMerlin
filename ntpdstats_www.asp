@@ -31,7 +31,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatsdata.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/ntpstatstext.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatstext.js"></script>
 <script>
 var LineChartOffsetDaily,LineChartJitterDaily,LineChartDriftDaily,LineChartOffsetWeekly,LineChartJitterWeekly,LineChartDriftWeekly;
 var ShowLines="line";
