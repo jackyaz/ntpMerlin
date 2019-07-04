@@ -171,9 +171,6 @@ Update_File(){
 	elif [ "$1" = "ntpdstats_www.asp" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
-		if [ -f "/jffs/scripts/ntpdstats_www.asp" ]; then
-			mv "/jffs/scripts/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
-		fi
 		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
 			mv "$SCRIPT_DIR/$1" "$SCRIPT_DIR/$1.old"
@@ -183,6 +180,9 @@ Update_File(){
 	elif [ "$1" = "chartjs-plugin-zoom.js" ] || [ "$1" = "chartjs-plugin-annotation.js" ] || [ "$1" = "moment.js" ] || [ "$1" =  "hammerjs.js" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SHARED_REPO/$1" "$tmpfile"
+		if [ ! -f "$SHARED_DIR/$1" ]; then
+			touch "$SHARED_DIR/$1"
+		fi
 		if ! diff -q "$tmpfile" "$SHARED_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
 			Download_File "$SHARED_REPO/$1" "$SHARED_DIR/$1"
@@ -860,9 +860,8 @@ Check_Requirements(){
 		CHECKSFAILED="true"
 	fi
 	
-	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -lt "$(Firmware_Version_Check 384.5)" ] && [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ne "$(Firmware_Version_Check 374.43)" ]; then
-		Print_Output "true" "Older Merlin firmware detected - service-event requires 384.5 or later" "$WARN"
-		Print_Output "true" "Please update to benefit from $SCRIPT_NAME stats generation in WebUI" "$WARN"
+	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -lt "$(Firmware_Version_Check 384.11)" ] && [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ne "$(Firmware_Version_Check 374.43)" ]; then
+		Print_Output "true" "Older Merlin firmware detected - $SCRIPT_NAME requires 384.11 or later" "$ERR"
 	elif [ "$(Firmware_Version_Check "$(nvram get buildno)")" -eq "$(Firmware_Version_Check 374.43)" ]; then
 		Print_Output "true" "John's fork detected - unsupported" "$ERR"
 		CHECKSFAILED="true"
@@ -899,7 +898,11 @@ Menu_Install(){
 	Create_Symlinks
 	
 	Download_File "$SCRIPT_REPO/ntp.conf" "/jffs/configs/ntp.conf"
-	
+	Update_File "chartjs-plugin-zoom.js"
+	Update_File "chartjs-plugin-annotation.js"
+	Update_File "hammerjs.js"
+	Update_File "moment.js"
+
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
