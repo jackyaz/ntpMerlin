@@ -30,7 +30,7 @@ All modes supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Mod
 *   RT-AC3100
 
 ### Firmware versions
-You must be running firmware on the 384.XX branch [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/)
+You must be running firmware no earlier than 384.11 [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/)
 
 ## Installation
 Using your preferred SSH client/terminal, copy and paste the following command, then press Enter:

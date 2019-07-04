@@ -171,9 +171,6 @@ Update_File(){
 	elif [ "$1" = "ntpdstats_www.asp" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
-		if [ -f "/jffs/scripts/ntpdstats_www.asp" ]; then
-			mv "/jffs/scripts/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
-		fi
 		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
 			mv "$SCRIPT_DIR/$1" "$SCRIPT_DIR/$1.old"
@@ -860,9 +857,8 @@ Check_Requirements(){
 		CHECKSFAILED="true"
 	fi
 	
-	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -lt "$(Firmware_Version_Check 384.5)" ] && [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ne "$(Firmware_Version_Check 374.43)" ]; then
-		Print_Output "true" "Older Merlin firmware detected - service-event requires 384.5 or later" "$WARN"
-		Print_Output "true" "Please update to benefit from $SCRIPT_NAME stats generation in WebUI" "$WARN"
+	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -lt "$(Firmware_Version_Check 384.11)" ] && [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ne "$(Firmware_Version_Check 374.43)" ]; then
+		Print_Output "true" "Older Merlin firmware detected - $SCRIPT_NAME requires 384.11 or later" "$ERR"
 	elif [ "$(Firmware_Version_Check "$(nvram get buildno)")" -eq "$(Firmware_Version_Check 374.43)" ]; then
 		Print_Output "true" "John's fork detected - unsupported" "$ERR"
 		CHECKSFAILED="true"
