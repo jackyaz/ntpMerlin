@@ -61,7 +61,7 @@ Check_Lock(){
 		if [ "$ageoflock" -gt 120 ]; then
 			Print_Output "true" "Stale lock file found (>120 seconds old) - purging lock" "$ERR"
 			kill "$(sed -n '1p' "/tmp/""$SCRIPT_NAME""$1"".lock")" >/dev/null 2>&1
-			Clear_Lock
+			Clear_Lock "$1"
 			echo "$$" > "/tmp/$SCRIPT_NAME$1.lock"
 			return 0
 		else
@@ -678,7 +678,7 @@ Generate_NTPStats(){
 	WriteData_ToJS "/tmp/ntp-driftweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftWeekly"
 	
 	echo "NTPD Performance Stats generated on $(date +"%c")" > "/tmp/ntpstatstitle.txt"
-	WriteStats_ToJS "/tmp/uidivtitle.txt" "$SCRIPT_DIR/ntpstatstext.js" "SetNTPDStatsTitle" "statstitle"
+	WriteStats_ToJS "/tmp/ntpstatstitle.txt" "$SCRIPT_DIR/ntpstatstext.js" "SetNTPDStatsTitle" "statstitle"
 	
 	rm -f "$tmpfile"
 	rm -f "/tmp/ntp-"*".csv"
