@@ -60,7 +60,7 @@ Check_Lock(){
 		ageoflock=$(($(date +%s) - $(date +%s -r "/tmp/""$SCRIPT_NAME""$1"".lock")))
 		if [ "$ageoflock" -gt 120 ]; then
 			Print_Output "true" "Stale lock file found (>120 seconds old) - purging lock" "$ERR"
-			kill $(sed -n '1p' "/tmp/""$SCRIPT_NAME""$1"".lock") >/dev/null 2>&1
+			kill "$(sed -n '1p' "/tmp/""$SCRIPT_NAME""$1"".lock")" >/dev/null 2>&1
 			Clear_Lock
 			echo "$$" > "/tmp/$SCRIPT_NAME$1.lock"
 			return 0
