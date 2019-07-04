@@ -414,9 +414,10 @@ Download_File(){
 NTP_Redirect(){
 	case $1 in
 		create)
-			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" &> /dev/null     # fix the order and recommend &>/dev/null instead of 2>/dev/null order still needs to be fixed.
+		        #fix the order and recommend &>/dev/null instead of 2>/dev/null order still needs to be fixed.
+			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" &>/dev/null
 			iptables -t nat -A PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
-			iptables -t nat -D PREROUTING -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" &> /dev/null     # fix the order and recommend &>/dev/null instead of 2>/dev/null order still needs to be fixed.
+			iptables -t nat -D PREROUTING -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" &>/dev/null 
 			iptables -t nat -A PREROUTING -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
 			Auto_DNSMASQ create 2>/dev/null
 		;;
@@ -1053,8 +1054,8 @@ case "$1" in
 		exit 0
 	;;
 	ntpredirect)
-		Print_Output "true" "Sleeping for 5s to allow firewall/nat startup to be completed..." "$PASS"
-		sleep 5
+		##Print_Output "true" "Sleeping for 5s to allow firewall/nat startup to be completed..." "$PASS"##
+		##sleep 5 remove these, since you clear lock now.
 		Check_Lock
 		Auto_NAT create
 		NTP_Redirect create
