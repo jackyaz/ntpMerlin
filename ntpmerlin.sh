@@ -180,6 +180,9 @@ Update_File(){
 	elif [ "$1" = "chartjs-plugin-zoom.js" ] || [ "$1" = "chartjs-plugin-annotation.js" ] || [ "$1" = "moment.js" ] || [ "$1" =  "hammerjs.js" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SHARED_REPO/$1" "$tmpfile"
+		if [ ! -f "$SHARED_DIR/$1" ]; then
+			touch "$SHARED_DIR/$1"
+		fi
 		if ! diff -q "$tmpfile" "$SHARED_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
 			Download_File "$SHARED_REPO/$1" "$SHARED_DIR/$1"
@@ -895,7 +898,11 @@ Menu_Install(){
 	Create_Symlinks
 	
 	Download_File "$SCRIPT_REPO/ntp.conf" "/jffs/configs/ntp.conf"
-	
+	Update_File "chartjs-plugin-zoom.js"
+	Update_File "chartjs-plugin-annotation.js"
+	Update_File "hammerjs.js"
+	Update_File "moment.js"
+
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
