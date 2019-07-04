@@ -31,6 +31,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatsdata.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/ntpstatstext.js"></script>
 <script>
 var LineChartOffsetDaily,LineChartJitterDaily,LineChartDriftDaily,LineChartOffsetWeekly,LineChartJitterWeekly,LineChartDriftWeekly;
 var ShowLines="line";
@@ -278,7 +279,7 @@ function applyRule() {
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="start_ntpmerlin">
-<input type="hidden" name="action_wait" value="5">
+<input type="hidden" name="action_wait" value="30">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="SystemCmd" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
@@ -299,10 +300,10 @@ function applyRule() {
 <tr bgcolor="#4D595D">
 <td valign="top">
 <div>&nbsp;</div>
-<div class="formfonttitle">NTP Daemon Performance Stats</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+<div class="formfonttitle" id="statstitle">NTPD Performance Stats</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="border:0px;">
 <tr class="apply_gen" valign="top" height="35px">
-<td>
+<td style="background-color:rgb(77, 89, 93);border:0px;">
 <input type="button" onClick="applyRule();" value="Update stats" class="button_gen" name="button">
 <input type="button" onClick="RedrawAllCharts();" value="Reset Zoom" class="button_gen" name="button">
 <input type="button" onClick="ToggleLines();" value="Toggle Lines" class="button_gen" name="button">
@@ -355,6 +356,9 @@ function applyRule() {
 <td width="10" align="center" valign="top">&nbsp;</td>
 </tr>
 </table>
+<script>
+SetNTPDStatsTitle();
+</script>
 <div id="footer">
 </div>
 </body>

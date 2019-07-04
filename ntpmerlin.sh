@@ -229,6 +229,7 @@ Create_Symlinks(){
 	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
 	
 	ln -s "$SCRIPT_DIR/ntpstatsdata.js" "$SCRIPT_WEB_DIR/ntpstatsdata.js" 2>/dev/null
+	ln -s "$SCRIPT_DIR/ntpstatstext.js" "$SCRIPT_WEB_DIR/ntpstatstext.js" 2>/dev/null
 	
 	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SHARED_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
 	ln -s "$SHARED_DIR/chartjs-plugin-annotation.js" "$SHARED_WEB_DIR/chartjs-plugin-annotation.js" 2>/dev/null
@@ -566,6 +567,16 @@ WriteData_ToJS(){
 	printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
 }
 
+WriteStats_ToJS(){
+	echo "function $3(){" >> "$2"
+	html='document.getElementById("'"$4"'").innerHTML="'
+	while IFS='' read -r line || [ -n "$line" ]; do
+		html="$html""$line""\\r\\n"
+	done < "$1"
+	html="$html"'"'
+	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
+}
+
 Generate_NTPStats(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
@@ -666,9 +677,13 @@ Generate_NTPStats(){
 	WriteData_ToJS "/tmp/ntp-jitterweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterWeekly"
 	WriteData_ToJS "/tmp/ntp-driftweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftWeekly"
 	
+	echo "NTPD Performance Stats generated on $(date +"%c")" > "/tmp/ntpstatstitle.txt"
+	WriteStats_ToJS "/tmp/uidivtitle.txt" "$SCRIPT_DIR/ntpstatstext.js" "SetNTPDStatsTitle" "statstitle"
+	
 	rm -f "$tmpfile"
 	rm -f "/tmp/ntp-"*".csv"
 	rm -f "/tmp/ntp-stats.sql"
+	rm -f "/tmp/ntpstatstitle.txt"
 }
 
 Shortcut_ntpMerlin(){
