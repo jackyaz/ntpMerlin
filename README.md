@@ -2,14 +2,14 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bc89c12c4bf44b49b28161f328e49b0)](https://www.codacy.com/app/jackyaz/ntpMerlin?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/ntpMerlin&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.com/jackyaz/ntpMerlin.svg?branch=master)](https://travis-ci.com/jackyaz/ntpMerlin)
 
-## v1.3.0
-### Updated on 2019-06-02
+## v2.0.0
+### Updated on 2019-07-04
 ## About
-Run an NTP server for your network. Graphs available for NTP accuracy on the Tools page of the WebUI.
+Run an NTP server for your network on your router. Graphs available for NTP accuracy on the Tools page of the WebUI.
 
 ntpMerlin is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
 
-This script serves as a user-friendly installer for [kvic](https://github.com/kvic-z)'s [project](https://github.com/kvic-z/goodies-asuswrt/wiki/Install-NTP-Daemon-for-Asuswrt-Merlin)
+Inspired by [kvic](https://github.com/kvic-z)'s [project](https://github.com/kvic-z/goodies-asuswrt/wiki/Install-NTP-Daemon-for-Asuswrt-Merlin)
 
 ![Menu UI](https://puu.sh/D9ccG/42b28695af.png)
 
@@ -30,8 +30,7 @@ All modes supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Mod
 *   RT-AC3100
 
 ### Firmware versions
-You must be running firmware no older than:
-*   [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/) 380.68
+You must be running firmware on the 384.XX branch [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/)
 
 ## Installation
 Using your preferred SSH client/terminal, copy and paste the following command, then press Enter:

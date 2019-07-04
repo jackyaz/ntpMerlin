@@ -19,13 +19,15 @@ readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v1.3.0"
-readonly NTPD_VERSION="v1.3.0"
+readonly SCRIPT_VERSION="v2.0.0"
+readonly NTPD_VERSION="v2.0.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
 readonly SCRIPT_WEB_DIR="$(readlink /www/ext)/$SCRIPT_NAME_LOWER"
 readonly SHARED_DIR="/jffs/scripts/shared-jy"
+readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
+readonly SHARED_WEB_DIR="$(readlink /www/ext)/shared-jy"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
 
@@ -54,30 +56,30 @@ Firmware_Version_Check(){
 
 ### Code for these functions inspired by https://github.com/Adamm00 - credit to @Adamm ###
 Check_Lock(){
-	if [ -f "/tmp/$SCRIPT_NAME.lock" ]; then
-		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$SCRIPT_NAME.lock)))
+	if [ -f "/tmp/$SCRIPT_NAME$1.lock" ]; then
+		ageoflock=$(($(date +%s) - $(date +%s -r "/tmp/""$SCRIPT_NAME""$1"".lock")))
 		if [ "$ageoflock" -gt 120 ]; then
 			Print_Output "true" "Stale lock file found (>120 seconds old) - purging lock" "$ERR"
-			kill "$(sed -n '1p' /tmp/$SCRIPT_NAME.lock)" >/dev/null 2>&1
-			Clear_Lock
-			echo "$$" > "/tmp/$SCRIPT_NAME.lock"
+			kill "$(sed -n '1p' "/tmp/""$SCRIPT_NAME""$1"".lock")" >/dev/null 2>&1
+			Clear_Lock "$1"
+			echo "$$" > "/tmp/$SCRIPT_NAME$1.lock"
 			return 0
 		else
 			Print_Output "true" "Lock file found (age: $ageoflock seconds) - stopping to prevent duplicate runs" "$ERR"
-			if [ -z "$1" ]; then
+			if [ -z "$1" ] || [ "$1" = "redirect" ]; then
 				exit 1
 			else
 				return 1
 			fi
 		fi
 	else
-		echo "$$" > "/tmp/$SCRIPT_NAME.lock"
+		echo "$$" > "/tmp/$SCRIPT_NAME$1.lock"
 		return 0
 	fi
 }
 
 Clear_Lock(){
-	rm -f "/tmp/$SCRIPT_NAME.lock" 2>/dev/null
+	rm -f "/tmp/$SCRIPT_NAME$1.lock" 2>/dev/null
 	return 0
 }
 
@@ -106,7 +108,10 @@ Update_Version(){
 		Update_File "S77ntpd"
 		Update_File "ntp.conf"
 		Update_File "ntpdstats_www.asp"
-		#Update_File "moment.min.js"
+		Update_File "chartjs-plugin-zoom.js"
+		Update_File "chartjs-plugin-annotation.js"
+		Update_File "hammerjs.js"
+		Update_File "moment.js"
 		Modify_WebUI_File
 		
 		if [ "$doupdate" != "false" ]; then
@@ -128,7 +133,10 @@ Update_Version(){
 			Update_File "S77ntpd"
 			Update_File "ntp.conf"
 			Update_File "ntpdstats_www.asp"
-			#Update_File "moment.min.js"
+			Update_File "chartjs-plugin-zoom.js"
+			Update_File "chartjs-plugin-annotation.js"
+			Update_File "hammerjs.js"
+			Update_File "moment.js"
 			Modify_WebUI_File
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$SCRIPT_NAME_LOWER"
@@ -174,13 +182,12 @@ Update_File(){
 			Mount_NTPD_WebUI
 		fi
 		rm -f "$tmpfile"
-	elif [ "$1" = "moment.min.js" ]; then
+	elif [ "$1" = "chartjs-plugin-zoom.js" ] || [ "$1" = "chartjs-plugin-annotation.js" ] || [ "$1" = "moment.js" ] || [ "$1" =  "hammerjs.js" ]; then
 		tmpfile="/tmp/$1"
-		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
-		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
+		Download_File "$SHARED_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "$SHARED_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			mv "$SCRIPT_DIR/$1" "$SCRIPT_DIR/$1.old"
-			#cp "/jffs/scripts/$1" "/www/ext/$1"
+			Download_File "$SHARED_REPO/$1" "$SHARED_DIR/$1"
 		fi
 		rm -f "$tmpfile"
 	else
@@ -212,6 +219,22 @@ Create_Dirs(){
 	if [ ! -d "$SCRIPT_WEB_DIR" ]; then
 		mkdir -p "$SCRIPT_WEB_DIR"
 	fi
+	
+	if [ ! -d "$SHARED_WEB_DIR" ]; then
+		mkdir -p "$SHARED_WEB_DIR"
+	fi
+}
+
+Create_Symlinks(){
+	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
+	
+	ln -s "$SCRIPT_DIR/ntpstatsdata.js" "$SCRIPT_WEB_DIR/ntpstatsdata.js" 2>/dev/null
+	ln -s "$SCRIPT_DIR/ntpstatstext.js" "$SCRIPT_WEB_DIR/ntpstatstext.js" 2>/dev/null
+	
+	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SHARED_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
+	ln -s "$SHARED_DIR/chartjs-plugin-annotation.js" "$SHARED_WEB_DIR/chartjs-plugin-annotation.js" 2>/dev/null
+	ln -s "$SHARED_DIR/hammerjs.js" "$SHARED_WEB_DIR/hammerjs.js" 2>/dev/null
+	ln -s "$SHARED_DIR/moment.js" "$SHARED_WEB_DIR/moment.js" 2>/dev/null
 }
 
 Auto_ServiceEvent(){
@@ -369,10 +392,12 @@ Auto_NAT(){
 Auto_Cron(){
 	case $1 in
 		create)
+			Auto_Cron delete 2>/dev/null
+			
 			STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME")
 			
 			if [ "$STARTUPLINECOUNT" -eq 0 ]; then
-				cru a "$SCRIPT_NAME" "*/5 * * * * /jffs/scripts/$SCRIPT_NAME_LOWER generate"
+				cru a "$SCRIPT_NAME" "*/10 * * * * /jffs/scripts/$SCRIPT_NAME_LOWER generate"
 			fi
 		;;
 		delete)
@@ -393,25 +418,33 @@ NTP_Redirect(){
 	case $1 in
 		create)
 			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
+			iptables -t nat -D PREROUTING -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 			iptables -t nat -A PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			iptables -t nat -A PREROUTING -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
 			Auto_DNSMASQ create 2>/dev/null
 		;;
 		delete)
 			iptables -t nat -D PREROUTING -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			iptables -t nat -D PREROUTING -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
 			Auto_DNSMASQ delete 2>/dev/null
 		;;
 	esac
 }
 
-RRD_Initialise(){
-	if [ -f "/jffs/scripts/ntpdstats_rrd.rrd" ]; then
-		mv "/jffs/scripts/ntpdstats_rrd.rrd" "$SCRIPT_DIR/ntpdstats_rrd.rrd"
-	fi
+NTP_Firmware_Check(){
+	ENABLED_NTPD="$(nvram get ntpd_enable)"
+	if ! Validate_Number "" "$ENABLED_NTPD" "silent"; then ENABLED_NTPD=0; fi
 	
-	if [ ! -f "$SCRIPT_DIR/ntpdstats_rrd.rrd" ]; then
-		Download_File "$SCRIPT_REPO/ntpdstats_xml.xml" "$SCRIPT_DIR/ntpdstats_xml.xml"
-		rrdtool restore -f "$SCRIPT_DIR/ntpdstats_xml.xml" "$SCRIPT_DIR/ntpdstats_rrd.rrd"
-		rm -f "$SCRIPT_DIR/ntpdstats_xml.xml"
+	if [ "$ENABLED_NTPD" -eq 1 ]; then
+		Print_Output "true" "Built-in ntpd is enabled and will conflict, it will be disabled" "$WARN"
+		nvram set ntpd_enable=0
+		nvram set ntpd_server_redir=0
+		nvram commit
+		service restart_time
+		service restart_firewall
+		return 1
+	else
+		return 0
 	fi
 }
 
@@ -426,106 +459,54 @@ Get_CONNMON_UI(){
 Mount_NTPD_WebUI(){
 	umount /www/Feedback_Info.asp 2>/dev/null
 	
-	if [ -f "/jffs/scripts/ntpdstats_www.asp" ]; then
-		mv "/jffs/scripts/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
-	fi
-	
 	if [ ! -f "$SCRIPT_DIR/ntpdstats_www.asp" ]; then
 		Download_File "$SCRIPT_REPO/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
 	fi
-	
-	#if [ ! -f /jffs/scripts/moment.min.js ]; then
-	#	Download_File "$SCRIPT_REPO/moment.min.js" "/jffs/scripts/moment.min.js"
-	#	cp "/jffs/scripts/moment.min.js" "/www/ext/moment.min.js"
-	#fi
-	
-	#if [ ! -f /www/ext/moment.min.js ]; then
-	#cp "/jffs/scripts/moment.min.js" "/www/ext/moment.min.js"
-	#fi
 	
 	mount -o bind "$SCRIPT_DIR/ntpdstats_www.asp" /www/Feedback_Info.asp
 }
 
 Modify_WebUI_File(){
-	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -gt "$(Firmware_Version_Check 380.67)" ]; then
-		### menuTree.js ###
-		umount /www/require/modules/menuTree.js 2>/dev/null
-		tmpfile=/tmp/menuTree.js
-		cp "/www/require/modules/menuTree.js" "$tmpfile"
-		
-		if [ -f "/jffs/scripts/uiDivStats" ]; then
-			sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: /d' "$tmpfile"
-			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"},' "$tmpfile"
-			sed -i '/retArray.push("Advanced_MultiSubnet_Content.asp");/d' "$tmpfile"
-		fi
-		
-		if [ -f "/jffs/scripts/connmon" ]; then
-			sed -i '/{url: "'"$(Get_CONNMON_UI)"'", tabName: /d' "$tmpfile"
-			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "'"$(Get_CONNMON_UI)"'", tabName: "Uptime Monitoring"},' "$tmpfile"
-			sed -i '/retArray.push("'"$(Get_CONNMON_UI)"'");/d' "$tmpfile"
-		fi
-		
-		if [ -f "/jffs/scripts/spdmerlin" ]; then
-			sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
-			sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
-			sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
-		fi
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
-		
-		if [ -f /jffs/scripts/custom_menuTree.js ]; then
-			mv /jffs/scripts/custom_menuTree.js "$SHARED_DIR/custom_menuTree.js"
-		fi
-		
-		if [ ! -f "$SHARED_DIR/custom_menuTree.js" ]; then
-			cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
-		fi
-		
-		if ! diff -q "$tmpfile" "$SHARED_DIR/custom_menuTree.js" >/dev/null 2>&1; then
-			cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
-		fi
-		
-		rm -f "$tmpfile"
-		
-		mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
-		### ###
-	else
-		### state.js ###
-		umount /www/state.js 2>/dev/null
-		tmpfile=/tmp/state.js
-		cp "/www/state.js" "$tmpfile"
-		
-		if [ -f "/jffs/scripts/spdmerlin" ] && [ -f "/jffs/scripts/connmon" ]; then
-			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "SpeedTest", "Uptime Monitoring");/' "$tmpfile"
-			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp", "'"$(Get_CONNMON_UI)"'");/' "$tmpfile"
-		elif [ -f "/jffs/scripts/spdmerlin" ]; then
-			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "SpeedTest");/' "$tmpfile"
-			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "Advanced_Feedback.asp");/' "$tmpfile"
-		elif [ -f "/jffs/scripts/connmon" ]; then
-			sed -i 's/Other Settings");/Other Settings", "NTP Daemon", "Uptime Monitoring");/' "$tmpfile"
-			sed -i 's/therSettings.asp");/therSettings.asp", "Feedback_Info.asp", "'"$(Get_CONNMON_UI)"'");/' "$tmpfile"
-		fi
-		
-		if [ -f "/jffs/scripts/spdmerlin" ]; then
-			sed -i -e '/else if(location.pathname == "\/Advanced_Feedback.asp") {/,+4d' "$tmpfile"
-		fi
-		
-		if [ -f /jffs/scripts/custom_state.js ]; then
-			mv /jffs/scripts/custom_state.js "$SHARED_DIR/custom_state.js"
-		fi
-		
-		if [ ! -f "$SHARED_DIR/custom_state.js" ]; then
-			cp "$tmpfile" "$SHARED_DIR/custom_state.js"
-		fi
-		
-		if ! diff -q "$tmpfile" "$SHARED_DIR/custom_state.js" >/dev/null 2>&1; then
-			cp "$tmpfile" "$SHARED_DIR/custom_state.js"
-		fi
-		
-		rm -f "$tmpfile"
-		
-		mount -o bind "$SHARED_DIR/custom_state.js" /www/state.js
-		### ###
+	### menuTree.js ###
+	umount /www/require/modules/menuTree.js 2>/dev/null
+	tmpfile=/tmp/menuTree.js
+	cp "/www/require/modules/menuTree.js" "$tmpfile"
+	
+	if [ -f "/jffs/scripts/uiDivStats" ]; then
+		sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: /d' "$tmpfile"
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"},' "$tmpfile"
+		sed -i '/retArray.push("Advanced_MultiSubnet_Content.asp");/d' "$tmpfile"
 	fi
+	
+	if [ -f "/jffs/scripts/connmon" ]; then
+		sed -i '/{url: "'"$(Get_CONNMON_UI)"'", tabName: /d' "$tmpfile"
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "'"$(Get_CONNMON_UI)"'", tabName: "Uptime Monitoring"},' "$tmpfile"
+		sed -i '/retArray.push("'"$(Get_CONNMON_UI)"'");/d' "$tmpfile"
+	fi
+	
+	if [ -f "/jffs/scripts/spdmerlin" ]; then
+		sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
+		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
+	fi
+	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
+	
+	if [ -f /jffs/scripts/custom_menuTree.js ]; then
+		mv /jffs/scripts/custom_menuTree.js "$SHARED_DIR/custom_menuTree.js"
+	fi
+	
+	if [ ! -f "$SHARED_DIR/custom_menuTree.js" ]; then
+		cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
+	fi
+	
+	if ! diff -q "$tmpfile" "$SHARED_DIR/custom_menuTree.js" >/dev/null 2>&1; then
+		cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
+	fi
+	
+	rm -f "$tmpfile"
+	
+	mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
+	### ###
 	
 	### start_apply.htm ###
 	umount /www/start_apply.htm 2>/dev/null
@@ -544,7 +525,7 @@ Modify_WebUI_File(){
 	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_Feedback.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	fi
 	
-	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Feedback_Info.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Feedback_Info.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect();}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	
 	if [ -f /jffs/scripts/custom_start_apply.htm ]; then
 		mv /jffs/scripts/custom_start_apply.htm "$SHARED_DIR/custom_start_apply.htm"
@@ -573,122 +554,136 @@ NTPD_Customise(){
 }
 
 WriteData_ToJS(){
-	echo 'function GenChartDataJitter() {' > "$2"
-	contents="$contents"'lineDataOffset.unshift('
+	{
+	echo "var $3;"
+	echo "$3 = [];"; } >> "$2"
+	contents="$3"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		datapoint="{ x: moment.unix(""$(echo "$line" | awk 'BEGIN{FS=","}{ print $1 }' | awk '{$1=$1};1')""), y: ""$(echo "$line" | awk 'BEGIN{FS=","}{ print $2 }' | awk '{$1=$1};1')"" }"
 		contents="$contents""$datapoint"","
 	done < "$1"
 	contents=$(echo "$contents" | sed 's/.$//')
 	contents="$contents"");"
-	echo "$contents" >> "$2"
-	echo "}" >> "$2"
+	printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
+}
+
+WriteStats_ToJS(){
+	echo "function $3(){" > "$2"
+	html='document.getElementById("'"$4"'").innerHTML="'
+	while IFS='' read -r line || [ -n "$line" ]; do
+		html="$html""$line""\\r\\n"
+	done < "$1"
+	html="$html"'"'
+	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
 }
 
 Generate_NTPStats(){
-	# This function originally written by kvic, updated by Jack Yaz
-	# This script is adapted from http://www.wraith.sf.ca.us/ntp
-	# The original is part of a set of scripts written by Steven Bjork
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
+	NTP_Firmware_Check
 	Create_Dirs
-	
-	RDB="$SCRIPT_DIR/ntpdstats_rrd.rrd"
+	Create_Symlinks
 	
 	#shellcheck disable=SC2086
 	killall ntp 2>/dev/null
-	ntpq -4 -c rv | awk 'BEGIN{ RS=","}{ print }' >> /tmp/ntp-rrdstats.$$
+	tmpfile=/tmp/ntp-stats.$$
+	ntpq -4 -c rv | awk 'BEGIN{ RS=","}{ print }' > "$tmpfile"
 	
-	[ ! -z "$(grep offset /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NOFFSET=$(grep offset /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NOFFSET=0
-	[ ! -z "$(grep frequency /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NFREQ=$(grep frequency /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NFREQ=0
-	[ ! -z "$(grep sys_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NSJIT=$(grep sys_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NSJIT=0
-	[ ! -z "$(grep clk_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NCJIT=$(grep clk_jitter /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NCJIT=0
-	[ ! -z "$(grep clk_wander /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] && NWANDER=$(grep clk_wander /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NWANDER=0
-	[ ! -z "$(grep rootdisp /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}')" ] &&  NDISPER=$(grep rootdisp /tmp/ntp-rrdstats.$$ | awk 'BEGIN{FS="="}{print $2}') || NDISPER=0
+	[ ! -z "$(grep offset "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NOFFSET=$(grep offset "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NOFFSET=0
+	[ ! -z "$(grep frequency "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NFREQ=$(grep frequency "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NFREQ=0
+	[ ! -z "$(grep sys_jitter "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NSJIT=$(grep sys_jitter "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NSJIT=0
+	[ ! -z "$(grep clk_jitter "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NCJIT=$(grep clk_jitter "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NCJIT=0
+	[ ! -z "$(grep clk_wander "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] && NWANDER=$(grep clk_wander "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NWANDER=0
+	[ ! -z "$(grep rootdisp "$tmpfile" | awk 'BEGIN{FS="="}{print $2}')" ] &&  NDISPER=$(grep rootdisp "$tmpfile" | awk 'BEGIN{FS="="}{print $2}') || NDISPER=0
 	
 	TZ=$(cat /etc/TZ)
 	export TZ
-	DATE=$(date "+%a %b %e %H:%M %Y")
 	
-	rrdtool update "$RDB" N:"$NOFFSET":"$NSJIT":"$NCJIT":"$NWANDER":"$NFREQ":"$NDISPER"
+	if [ -f "$SCRIPT_DIR/ntpdstats.db" ] && [ ! -f "$SCRIPT_DIR/.dbconverted" ]; then
+		{
+			echo "CREATE TABLE IF NOT EXISTS [ntpstats_new] ([StatID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
+			echo "INSERT INTO ntpstats_new ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) SELECT [Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp] FROM ntpstats ORDER BY [Timestamp];"
+			echo "DROP TABLE ntpstats;"
+			echo "ALTER TABLE [ntpstats_new] RENAME TO [ntpstats];"
+		} > /tmp/ntp-convert.sql
+		/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-convert.sql
+		touch "$SCRIPT_DIR/.dbconverted"
+		rm -f /tmp/ntp-convert.sql
+	fi
 	
-	#echo "$(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER" >> /jffs/scripts/ntpdstats_csv.csv
+	{
+		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([StatID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
+		echo "INSERT INTO ntpstats ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) values($(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
+	} > /tmp/ntp-stats.sql
 	
-	#WriteData_ToJS "/jffs/scripts/ntpdstats_csv.csv" "/www/ext/ntpjitter.js"
+	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
-	rm /tmp/ntp-rrdstats.$$
+	{
+		echo ".mode csv"
+		echo ".output /tmp/ntp-offsetdaily.csv"
+		echo "select [Timestamp],[Offset] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
+		echo ".output /tmp/ntp-jitterdaily.csv"
+		echo "select [Timestamp],[Sys_Jitter] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
+		echo ".output /tmp/ntp-driftdaily.csv"
+		echo "select [Timestamp],[Frequency] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
+	} > /tmp/ntp-stats.sql
 	
-	COMMON="-c SHADEA#475A5F -c SHADEB#475A5F -c BACK#475A5F -c CANVAS#92A0A520 -c AXIS#92a0a520 -c FONT#ffffff -c ARROW#475A5F -n TITLE:9 -n AXIS:8 -n LEGEND:9 -w 650 -h 200"
+	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
-	D_COMMON='--start -86400 --x-grid MINUTE:20:HOUR:2:HOUR:2:0:%H:%M'
-	W_COMMON='--start -604800 --x-grid HOUR:3:DAY:1:DAY:1:0:%Y-%m-%d'
+	rm -f /tmp/ntp-stats.sql
 	
-	rm -f /www/ext/*-ntp-*
+	{
+		echo ".mode csv"
+		echo ".output /tmp/ntp-offsetweekly.csv"
+	} >> /tmp/ntp-stats.sql
+	COUNTER=0
+	timenow="$(date '+%s')"
+	until [ $COUNTER -gt 168 ]; do
+		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Offset]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
+		COUNTER=$((COUNTER + 1))
+	done
 	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/offset.png" \
-		$COMMON $D_COMMON \
-		--title "Offset - $DATE" \
-		--vertical-label "Seconds" \
-		DEF:offset="$RDB":offset:LAST \
-		CDEF:noffset=offset,1000,/ \
-		LINE1.5:noffset#fc8500:"offset (s)" \
-		GPRINT:noffset:MIN:"Min\: %3.3lf %s" \
-		GPRINT:noffset:MAX:"Max\: %3.3lf %s" \
-		GPRINT:noffset:AVERAGE:"Avg\: %3.3lf %s" \
-		GPRINT:noffset:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
+	{
+		echo ".mode csv"
+		echo ".output /tmp/ntp-jitterweekly.csv"
+	} >> /tmp/ntp-stats.sql
+	COUNTER=0
+	timenow="$(date '+%s')"
+	until [ $COUNTER -gt 168 ]; do
+		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Sys_Jitter]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
+		COUNTER=$((COUNTER + 1))
+	done
 	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/sysjit.png" \
-		$COMMON $D_COMMON \
-		--title "Jitter - $DATE" \
-		--vertical-label "Seconds" \
-		DEF:sjit=$RDB:sjit:LAST \
-		CDEF:nsjit=sjit,1000,/ \
-		AREA:nsjit#778787:"jitter (s)" \
-		GPRINT:nsjit:MIN:"Min\: %3.3lf %s" \
-		GPRINT:nsjit:MAX:"Max\: %3.3lf %s" \
-		GPRINT:nsjit:AVERAGE:"Avg\: %3.3lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
+	{
+		echo ".mode csv"
+		echo ".output /tmp/ntp-driftweekly.csv"
+	} >> /tmp/ntp-stats.sql
+	COUNTER=0
+	timenow="$(date '+%s')"
+	until [ $COUNTER -gt 168 ]; do
+		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Frequency]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
+		COUNTER=$((COUNTER + 1))
+	done
 	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/week-offset.png" \
-		$COMMON $W_COMMON \
-		--title "Offset - $DATE" \
-		--vertical-label "Seconds" \
-		DEF:offset=$RDB:offset:LAST \
-		CDEF:noffset=offset,1000,/ \
-		LINE1.5:noffset#fc8500:"offset (s)" \
-		GPRINT:noffset:MIN:"Min\: %3.3lf %s" \
-		GPRINT:noffset:MAX:"Max\: %3.3lf %s" \
-		GPRINT:noffset:AVERAGE:"Avg\: %3.3lf %s" \
-		GPRINT:noffset:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
+	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/week-sysjit.png" \
-		$COMMON $W_COMMON --alt-autoscale-max \
-		--title "Jitter - $DATE" \
-		--vertical-label "Seconds" \
-		DEF:sjit=$RDB:sjit:LAST \
-		CDEF:nsjit=sjit,1000,/ \
-		AREA:nsjit#778787:"jitter (s)" \
-		GPRINT:nsjit:MIN:"Min\: %3.3lf %s" \
-		GPRINT:nsjit:MAX:"Max\: %3.3lf %s" \
-		GPRINT:nsjit:AVERAGE:"Avg\: %3.3lf %s" \
-		GPRINT:nsjit:LAST:"Curr\: %3.3lf %s\n" >/dev/null 2>&1
+	rm -f "$SCRIPT_DIR/ntpstatsdata.js"
+	WriteData_ToJS "/tmp/ntp-offsetdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataOffsetDaily"
+	WriteData_ToJS "/tmp/ntp-jitterdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterDaily"
+	WriteData_ToJS "/tmp/ntp-driftdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftDaily"
 	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG "$SCRIPT_WEB_DIR/week-freq.png" \
-		$COMMON $W_COMMON --alt-autoscale --alt-y-grid \
-		--title "Drift - $DATE" \
-		--vertical-label "ppm" \
-		DEF:freq=$RDB:freq:LAST \
-		LINE1.5:freq#778787:"drift (ppm)" \
-		GPRINT:freq:MIN:"Min\: %3.3lf" \
-		GPRINT:freq:MAX:"Max\: %3.3lf" \
-		GPRINT:freq:AVERAGE:"Avg\: %3.3lf" \
-		GPRINT:freq:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
+	WriteData_ToJS "/tmp/ntp-offsetweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataOffsetWeekly"
+	WriteData_ToJS "/tmp/ntp-jitterweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterWeekly"
+	WriteData_ToJS "/tmp/ntp-driftweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftWeekly"
+	
+	echo "NTPD Performance Stats generated on $(date +"%c")" > "/tmp/ntpstatstitle.txt"
+	WriteStats_ToJS "/tmp/ntpstatstitle.txt" "$SCRIPT_DIR/ntpstatstext.js" "SetNTPDStatsTitle" "statstitle"
+	
+	rm -f "$tmpfile"
+	rm -f "/tmp/ntp-"*".csv"
+	rm -f "/tmp/ntp-stats.sql"
+	rm -f "/tmp/ntpstatstitle.txt"
 }
 
 Shortcut_ntpMerlin(){
@@ -870,9 +865,11 @@ Check_Requirements(){
 		Print_Output "true" "Older Merlin firmware detected - service-event requires 384.5 or later" "$WARN"
 		Print_Output "true" "Please update to benefit from $SCRIPT_NAME stats generation in WebUI" "$WARN"
 	elif [ "$(Firmware_Version_Check "$(nvram get buildno)")" -eq "$(Firmware_Version_Check 374.43)" ]; then
-		Print_Output "true" "John's fork detected - service-event requires 374.43_32D6j9527 or later" "$WARN"
-		Print_Output "true" "Please update to benefit from $SCRIPT_NAME stats generation in WebUI" "$WARN"
+		Print_Output "true" "John's fork detected - unsupported" "$ERR"
+		CHECKSFAILED="true"
 	fi
+	
+	NTP_Firmware_Check
 	
 	if [ "$CHECKSFAILED" = "false" ]; then
 		return 0
@@ -898,9 +895,9 @@ Menu_Install(){
 	opkg update
 	opkg install ntp-utils
 	opkg install ntpd
-	opkg install rrdtool
 	
 	Create_Dirs
+	Create_Symlinks
 	
 	Download_File "$SCRIPT_REPO/ntp.conf" "/jffs/configs/ntp.conf"
 	
@@ -910,7 +907,6 @@ Menu_Install(){
 	Shortcut_ntpMerlin create
 	Mount_NTPD_WebUI
 	Modify_WebUI_File
-	RRD_Initialise
 	NTPD_Customise
 	Generate_NTPStats
 }
@@ -919,17 +915,18 @@ Menu_Startup(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
+	NTP_Firmware_Check
 	Shortcut_ntpMerlin create
 	Create_Dirs
+	Create_Symlinks
 	Mount_NTPD_WebUI
 	Modify_WebUI_File
-	RRD_Initialise
 	Clear_Lock
 }
 
 Menu_GenerateStats(){
 	Generate_NTPStats
-	Clear_Lock
+	Clear_Lock "menu"
 }
 
 Menu_Edit(){
@@ -971,7 +968,7 @@ Menu_Edit(){
 			/opt/etc/init.d/S77ntpd restart
 		fi
 	fi
-	Clear_Lock
+	Clear_Lock "menu"
 }
 
 Menu_ToggleNTPRedirect(){
@@ -988,12 +985,12 @@ Menu_ToggleNTPRedirect(){
 
 Menu_Update(){
 	Update_Version
-	Clear_Lock
+	Clear_Lock "menu"
 }
 
 Menu_ForceUpdate(){
 	Update_Version force
-	Clear_Lock
+	Clear_Lock "menu"
 }
 
 Menu_Uninstall(){
@@ -1009,7 +1006,6 @@ Menu_Uninstall(){
 		case "$confirm" in
 			y|Y)
 				rm -f "/jffs/configs/ntp.conf" 2>/dev/null
-				rm -f "$SCRIPT_DIR/ntpdstats_rrd.rrd" 2>/dev/null
 				break
 			;;
 			*)
@@ -1026,7 +1022,6 @@ Menu_Uninstall(){
 	umount /www/require/modules/menuTree.js 2>/dev/null
 	umount /www/start_apply.htm 2>/dev/null
 	if [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
-		opkg remove --autoremove rrdtool
 		rm -f "$SHARED_DIR/custom_menuTree.js" 2>/dev/null
 		rm -f "$SHARED_DIR/custom_start_apply.htm" 2>/dev/null
 	else
@@ -1041,6 +1036,7 @@ Menu_Uninstall(){
 
 if [ -z "$1" ]; then
 	Create_Dirs
+	Create_Symlinks
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
@@ -1066,30 +1062,34 @@ case "$1" in
 	generate)
 		if [ -z "$2" ] && [ -z "$3" ]; then
 			Check_Lock
-			Menu_GenerateStats
+			Generate_NTPStats
+			Clear_Lock
 		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME_LOWER" ]; then
 			Check_Lock
-			Menu_GenerateStats
+			Generate_NTPStats
+			Clear_Lock
 		fi
 		exit 0
 	;;
 	ntpredirect)
 		Print_Output "true" "Sleeping for 5s to allow firewall/nat startup to be completed..." "$PASS"
 		sleep 5
-		Check_Lock
+		Check_Lock "redirect"
 		Auto_NAT create
 		NTP_Redirect create
-		Clear_Lock
+		Clear_Lock "redirect"
 		exit 0
 	;;
 	update)
 		Check_Lock
-		Menu_Update
+		Update_Version
+		Clear_Lock
 		exit 0
 	;;
 	forceupdate)
 		Check_Lock
-		Menu_ForceUpdate
+		Update_Version force
+		Clear_Lock
 		exit 0
 	;;
 	uninstall)
