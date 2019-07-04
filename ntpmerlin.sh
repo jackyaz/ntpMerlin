@@ -391,10 +391,12 @@ Auto_NAT(){
 Auto_Cron(){
 	case $1 in
 		create)
+			Auto_Cron delete 2>/dev/null
+			
 			STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME")
 			
 			if [ "$STARTUPLINECOUNT" -eq 0 ]; then
-				cru a "$SCRIPT_NAME" "*/5 * * * * /jffs/scripts/$SCRIPT_NAME_LOWER generate"
+				cru a "$SCRIPT_NAME" "*/10 * * * * /jffs/scripts/$SCRIPT_NAME_LOWER generate"
 			fi
 		;;
 		delete)
