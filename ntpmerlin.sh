@@ -568,7 +568,7 @@ WriteData_ToJS(){
 }
 
 WriteStats_ToJS(){
-	echo "function $3(){" >> "$2"
+	echo "function $3(){" > "$2"
 	html='document.getElementById("'"$4"'").innerHTML="'
 	while IFS='' read -r line || [ -n "$line" ]; do
 		html="$html""$line""\\r\\n"
