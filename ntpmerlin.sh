@@ -391,8 +391,6 @@ Auto_NAT(){
 Auto_Cron(){
 	case $1 in
 		create)
-			Auto_Cron delete 2>/dev/null
-			
 			STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME")
 			
 			if [ "$STARTUPLINECOUNT" -eq 0 ]; then
