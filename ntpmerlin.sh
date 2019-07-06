@@ -19,8 +19,8 @@ readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v2.0.1"
-readonly NTPD_VERSION="v2.0.1"
+readonly SCRIPT_VERSION="v2.0.2"
+readonly NTPD_VERSION="v2.0.2"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
@@ -29,6 +29,11 @@ readonly SHARED_DIR="/jffs/scripts/shared-jy"
 readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
 readonly SHARED_WEB_DIR="$(readlink /www/ext)/shared-jy"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
+[ -f /opt/bin/sqlite3 ] && SQLITE3_PATH=/opt/bin/sqlite3 || SQLITE3_PATH=/usr/sbin/sqlite3
+
+
+
+
 ### End of script variables ###
 
 ### Start of output format variables ###
@@ -606,7 +611,7 @@ Generate_NTPStats(){
 			echo "DROP TABLE ntpstats;"
 			echo "ALTER TABLE [ntpstats_new] RENAME TO [ntpstats];"
 		} > /tmp/ntp-convert.sql
-		/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-convert.sql
+		"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-convert.sql
 		touch "$SCRIPT_DIR/.dbconverted"
 		rm -f /tmp/ntp-convert.sql
 	fi
@@ -616,7 +621,7 @@ Generate_NTPStats(){
 		echo "INSERT INTO ntpstats ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) values($(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
 	} > /tmp/ntp-stats.sql
 	
-	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
 	{
 		echo ".mode csv"
@@ -628,7 +633,7 @@ Generate_NTPStats(){
 		echo "select [Timestamp],[Frequency] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
 	} > /tmp/ntp-stats.sql
 	
-	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
 	rm -f /tmp/ntp-stats.sql
 	
@@ -665,7 +670,7 @@ Generate_NTPStats(){
 		COUNTER=$((COUNTER + 1))
 	done
 	
-	/usr/sbin/sqlite3 "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
 	rm -f "$SCRIPT_DIR/ntpstatsdata.js"
 	WriteData_ToJS "/tmp/ntp-offsetdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataOffsetDaily"
@@ -858,14 +863,18 @@ Check_Requirements(){
 	if [ ! -f "/opt/bin/opkg" ]; then
 		Print_Output "true" "Entware not detected!" "$ERR"
 		CHECKSFAILED="true"
+		return 1
 	fi
 	
 	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -lt "$(Firmware_Version_Check 384.11)" ] && [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ne "$(Firmware_Version_Check 374.43)" ]; then
-		Print_Output "true" "Older Merlin firmware detected - $SCRIPT_NAME requires 384.11 or later" "$ERR"
-		CHECKSFAILED="true"
+		Print_Output "true" "Older Merlin firmware detected - $SCRIPT_NAME requires 384.11 or later for sqlite3 support" "$WARN"
+		Print_Output "true" "Installing sqlite3-cli from Entware..." "$WARN"
+		opkg update
+		opkg install sqlite3-cli
 	elif [ "$(Firmware_Version_Check "$(nvram get buildno)")" -eq "$(Firmware_Version_Check 374.43)" ]; then
 		Print_Output "true" "John's fork detected - unsupported" "$ERR"
 		CHECKSFAILED="true"
+		return 1
 	fi
 	
 	NTP_Firmware_Check
