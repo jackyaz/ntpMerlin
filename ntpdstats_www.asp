@@ -15,6 +15,23 @@
 p{
 font-weight: bolder;
 }
+.collapsible {
+  color: white;
+  padding: 0px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  cursor: pointer;
+}
+
+.collapsiblecontent {
+  padding: 0px;
+  max-height: 0;
+  overflow: hidden;
+  border: none;
+  transition: max-height 0.2s ease-out;
+}
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/moment.js"></script>
@@ -327,30 +344,33 @@ function applyRule() {
 </table>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead>
+<thead class="collapsible">
 <tr>
-<td colspan="2">Last 24 Hours</td>
+<td colspan="2">Last 24 Hours (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr>
-<td colspan="2" align="center">
+<td colspan="2" align="center" style="padding: 0px;">
+<div class="collapsiblecontent">
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartOffsetDaily" height="300"></div>
 <div style="line-height:10px;">&nbsp;</div>
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartJitterDaily" height="300"></div>
 <div style="line-height:10px;">&nbsp;</div>
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftDaily" height="300"></div>
+</div>
 </td>
 </tr>
 </table>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead>
+<thead class="collapsible">
 <tr>
-<td colspan="2">Last 7 days</td>
+<td colspan="2">Last 7 days (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr>
-<td colspan="2" align="center">
+<td colspan="2" align="center" style="padding: 0px;">
+<div class="collapsiblecontent">
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartOffsetWeekly" height="300"></div>
 <div style="line-height:10px;">&nbsp;</div>
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartJitterWeekly" height="300"></div>
@@ -376,5 +396,22 @@ SetNTPDStatsTitle();
 </script>
 <div id="footer">
 </div>
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling.firstElementChild.firstElementChild.firstElementChild;
+    if (content.style.maxHeight){
+      content.style.maxHeight = null;
+    } else {
+      content.style.maxHeight = content.scrollHeight + "px";
+    }
+  });
+  coll[i].click();
+}
+</script>
 </body>
 </html>
