@@ -579,7 +579,7 @@ WriteSql_ToFile(){
 	} >> "$6"
 	COUNTER=0
 	timenow="$(date '+%s')"
-	until [ $COUNTER -gt "$((24/$3*$4))" ]; do
+	until [ $COUNTER -gt "$((24*$4/$3))" ]; do
 		echo "select $timenow - ((60*60*$3)*($COUNTER)),IFNULL(avg([$1]),0) from $2 WHERE ([Timestamp] >= $timenow - ((60*60*$3)*($COUNTER+1))) AND ([Timestamp] <= $timenow - ((60*60*$3)*$COUNTER));" >> "$6"
 		COUNTER=$((COUNTER + 1))
 	done
