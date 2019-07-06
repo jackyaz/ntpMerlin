@@ -50,7 +50,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatsdata.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatstext.js"></script>
 <script>
-var LineChartOffsetDaily,LineChartJitterDaily,LineChartDriftDaily,LineChartOffsetWeekly,LineChartJitterWeekly,LineChartDriftWeekly;
+var LineChartOffsetDaily,LineChartJitterDaily,LineChartDriftDaily,LineChartOffsetWeekly,LineChartJitterWeekly,LineChartDriftWeekly,LineChartOffsetMonthly,LineChartJitterMonthly,LineChartDriftMonthly;
 var ShowLines="line";
 var ShowFill=false;
 Chart.defaults.global.defaultFontColor = "#CCC";
@@ -278,6 +278,9 @@ function RedrawAllCharts() {
 	Draw_Chart("LineChartOffsetWeekly",LineChartOffsetWeekly,"DataOffsetWeekly",DataOffsetWeekly,"Offset","ms","day",7,"#fc8500");
 	Draw_Chart("LineChartJitterWeekly",LineChartJitterWeekly,"DataJitterWeekly",DataJitterWeekly,"Jitter","ms","day",7,"#42ecf5");
 	Draw_Chart("LineChartDriftWeekly",LineChartDriftWeekly,"DataDriftWeekly",DataDriftWeekly,"Drift","ppm","day",7,"#ffffff");
+	Draw_Chart("LineChartOffsetMonthly",LineChartOffsetMonthly,"DataOffsetMonthly",DataOffsetMonthly,"Offset","ms","day",30,"#fc8500");
+	Draw_Chart("LineChartJitterMonthly",LineChartJitterMonthly,"DataJitterMonthly",DataJitterMonthly,"Jitter","ms","day",30,"#42ecf5");
+	Draw_Chart("LineChartDriftMonthly",LineChartDriftMonthly,"DataDriftMonthly",DataDriftMonthly,"Drift","ppm","day",30,"#ffffff");
 }
 
 function initial(){
@@ -376,6 +379,25 @@ function applyRule() {
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartJitterWeekly" height="300"></div>
 <div style="line-height:10px;">&nbsp;</div>
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftWeekly" height="300"></div>
+</div>
+</td>
+</tr>
+</table><div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+<thead class="collapsible">
+<tr>
+<td colspan="2">Last 30 days (click to expand/collapse)</td>
+</tr>
+</thead>
+<tr>
+<td colspan="2" align="center" style="padding: 0px;">
+<div class="collapsiblecontent">
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartOffsetMonthly" height="300"></div>
+<div style="line-height:10px;">&nbsp;</div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartJitterMonthly" height="300"></div>
+<div style="line-height:10px;">&nbsp;</div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftMonthly" height="300"></div>
+</div>
 </td>
 </tr>
 </table>
