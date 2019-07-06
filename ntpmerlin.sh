@@ -19,8 +19,8 @@ readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v2.0.2"
-readonly NTPD_VERSION="v2.0.2"
+readonly SCRIPT_VERSION="v2.1.0"
+readonly NTPD_VERSION="v2.1.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
@@ -571,6 +571,20 @@ WriteStats_ToJS(){
 	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
 }
 
+#$1 fieldname $2 tablename $3 frequency (hours) $4 length (days) $5 outputfile $6 sqlfile
+WriteSql_ToFile(){
+	{
+		echo ".mode csv"
+		echo ".output $5"
+	} >> "$6"
+	COUNTER=0
+	timenow="$(date '+%s')"
+	until [ $COUNTER -gt "$((24*$4/$3))" ]; do
+		echo "select $timenow - ((60*60*$3)*($COUNTER)),IFNULL(avg([$1]),0) from $2 WHERE ([Timestamp] >= $timenow - ((60*60*$3)*($COUNTER+1))) AND ([Timestamp] <= $timenow - ((60*60*$3)*$COUNTER));" >> "$6"
+		COUNTER=$((COUNTER + 1))
+	done
+}
+
 Generate_NTPStats(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
@@ -627,38 +641,12 @@ Generate_NTPStats(){
 	
 	rm -f /tmp/ntp-stats.sql
 	
-	{
-		echo ".mode csv"
-		echo ".output /tmp/ntp-offsetweekly.csv"
-	} >> /tmp/ntp-stats.sql
-	COUNTER=0
-	timenow="$(date '+%s')"
-	until [ $COUNTER -gt 168 ]; do
-		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Offset]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
-		COUNTER=$((COUNTER + 1))
-	done
-	
-	{
-		echo ".mode csv"
-		echo ".output /tmp/ntp-jitterweekly.csv"
-	} >> /tmp/ntp-stats.sql
-	COUNTER=0
-	timenow="$(date '+%s')"
-	until [ $COUNTER -gt 168 ]; do
-		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Sys_Jitter]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
-		COUNTER=$((COUNTER + 1))
-	done
-	
-	{
-		echo ".mode csv"
-		echo ".output /tmp/ntp-driftweekly.csv"
-	} >> /tmp/ntp-stats.sql
-	COUNTER=0
-	timenow="$(date '+%s')"
-	until [ $COUNTER -gt 168 ]; do
-		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Frequency]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
-		COUNTER=$((COUNTER + 1))
-	done
+	WriteSql_ToFile "Offset" "ntpstats" 1 7 "/tmp/ntp-offsetweekly.csv" "/tmp/ntp-stats.sql"
+	WriteSql_ToFile "Sys_Jitter" "ntpstats" 1 7 "/tmp/ntp-jitterweekly.csv" "/tmp/ntp-stats.sql"
+	WriteSql_ToFile "Frequency" "ntpstats" 1 7 "/tmp/ntp-driftweekly.csv" "/tmp/ntp-stats.sql"
+	WriteSql_ToFile "Offset" "ntpstats" 3 30 "/tmp/ntp-offsetmonthly.csv" "/tmp/ntp-stats.sql"
+	WriteSql_ToFile "Sys_Jitter" "ntpstats" 3 30 "/tmp/ntp-jittermonthly.csv" "/tmp/ntp-stats.sql"
+	WriteSql_ToFile "Frequency" "ntpstats" 3 30 "/tmp/ntp-driftmonthly.csv" "/tmp/ntp-stats.sql"
 	
 	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
@@ -670,6 +658,10 @@ Generate_NTPStats(){
 	WriteData_ToJS "/tmp/ntp-offsetweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataOffsetWeekly"
 	WriteData_ToJS "/tmp/ntp-jitterweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterWeekly"
 	WriteData_ToJS "/tmp/ntp-driftweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftWeekly"
+	
+	WriteData_ToJS "/tmp/ntp-offsetmonthly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataOffsetMonthly"
+	WriteData_ToJS "/tmp/ntp-jittermonthly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterMonthly"
+	WriteData_ToJS "/tmp/ntp-driftmonthly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftMonthly"
 	
 	echo "NTPD Performance Stats generated on $(date +"%c")" > "/tmp/ntpstatstitle.txt"
 	WriteStats_ToJS "/tmp/ntpstatstitle.txt" "$SCRIPT_DIR/ntpstatstext.js" "SetNTPDStatsTitle" "statstitle"
