@@ -571,6 +571,20 @@ WriteStats_ToJS(){
 	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
 }
 
+#$1 fieldname $2 tablename $3 frequency (hours) $4 length (days) $5 outputfile $6 sqlfile
+WriteSql_ToFile(){
+	{
+		echo ".mode csv"
+		echo ".output $5"
+	} >> "$6"
+	COUNTER=0
+	timenow="$(date '+%s')"
+	until [ $COUNTER -gt "$((24/$3*$4))" ]; do
+		echo "select $timenow - ((60*60*$3)*($COUNTER)),IFNULL(avg([$1]),0) from $2 WHERE ([Timestamp] >= $timenow - ((60*60*$3)*($COUNTER+1))) AND ([Timestamp] <= $timenow - ((60*60*$3)*$COUNTER));" >> "$6"
+		COUNTER=$((COUNTER + 1))
+	done
+}
+
 Generate_NTPStats(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
@@ -627,38 +641,10 @@ Generate_NTPStats(){
 	
 	rm -f /tmp/ntp-stats.sql
 	
-	{
-		echo ".mode csv"
-		echo ".output /tmp/ntp-offsetweekly.csv"
-	} >> /tmp/ntp-stats.sql
-	COUNTER=0
-	timenow="$(date '+%s')"
-	until [ $COUNTER -gt 168 ]; do
-		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Offset]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
-		COUNTER=$((COUNTER + 1))
-	done
-	
-	{
-		echo ".mode csv"
-		echo ".output /tmp/ntp-jitterweekly.csv"
-	} >> /tmp/ntp-stats.sql
-	COUNTER=0
-	timenow="$(date '+%s')"
-	until [ $COUNTER -gt 168 ]; do
-		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Sys_Jitter]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
-		COUNTER=$((COUNTER + 1))
-	done
-	
-	{
-		echo ".mode csv"
-		echo ".output /tmp/ntp-driftweekly.csv"
-	} >> /tmp/ntp-stats.sql
-	COUNTER=0
-	timenow="$(date '+%s')"
-	until [ $COUNTER -gt 168 ]; do
-		echo "select $timenow - (3600*($COUNTER)),IFNULL(avg([Frequency]),0) from ntpstats WHERE ([Timestamp] >= $timenow - (3600*($COUNTER+1))) AND ([Timestamp] <= $timenow - (3600*$COUNTER));" >> /tmp/ntp-stats.sql
-		COUNTER=$((COUNTER + 1))
-	done
+	WriteSql_ToFile "Offset" "ntpstats" 1 7 "/tmp/ntp-offsetweekly.csv" "/tmp/ntp-stats.sql"
+	WriteSql_ToFile "Sys_Jitter" "ntpstats" 1 7 "/tmp/ntp-jitterweekly.csv" "/tmp/ntp-stats.sql"
+	WriteSql_ToFile "Frequency" "ntpstats" 1 7 "/tmp/ntp-driftweekly.csv" "/tmp/ntp-stats.sql"
+	WriteSql_ToFile "Offset" "ntpstats" 3 30 "/tmp/ntp-offsetmonthly.csv" "/tmp/ntp-stats.sql"
 	
 	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
