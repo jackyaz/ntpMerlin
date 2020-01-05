@@ -326,8 +326,8 @@ function AddEventHandlers(){
 }
 
 function SetCurrentPage(){
-	$("#next_page").val(window.location.pathname.substring(1));
-	$("#current_page").val(window.location.pathname.substring(1));
+	document.form.next_page.value = window.location.pathname.substring(1);
+	document.form.current_page.value = window.location.pathname.substring(1);
 }
 
 function initial(){
