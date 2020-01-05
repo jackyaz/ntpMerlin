@@ -1073,7 +1073,7 @@ Menu_Uninstall(){
 	opkg remove --autoremove ntpd
 	opkg remove --autoremove ntp-utils
 	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ge "$(Firmware_Version_Check 384.15)" ]; then
-		MyPage="$(Get_WebUI_Page "$SCRIPT_DIR/spdstats_www.asp")"
+		MyPage="$(Get_WebUI_Page "$SCRIPT_DIR/ntpdstats_www.asp")"
 		if [ -n "$MyPage" ] && [ "$MyPage" != "none" ] && [ -f "/tmp/menuTree.js" ]; then
 			sed -i "\\~$MyPage~d" /tmp/menuTree.js
 			umount /www/require/modules/menuTree.js
