@@ -467,7 +467,7 @@ NTP_Firmware_Check(){
 
 Get_WebUI_Page () {
 	for i in 1 2 3 4 5 6 7 8 9 10; do
-		page="/www/ext/user$i.asp"
+		page="$SCRIPT_PAGE_DIR/user$i.asp"
 		if [ ! -f "$page" ] || [ "$(md5sum < "$1")" = "$(md5sum < "$page")" ]; then
 			echo "user$i.asp"
 			return
