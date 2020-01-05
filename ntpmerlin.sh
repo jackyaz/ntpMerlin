@@ -496,11 +496,11 @@ Mount_WebUI(){
 		fi
 		Print_Output "true" "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
 		cp -f "$SCRIPT_DIR/ntpdstats_www.asp" "$SCRIPT_PAGE_DIR/$MyPage"
-
+		
 		if [ ! -f "/tmp/menuTree.js" ]; then
 			cp -f "/www/require/modules/menuTree.js" "/tmp/"
 		fi
-
+		
 		sed -i "\\~$MyPage~d" /tmp/menuTree.js
 		sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$MyPage\", tabName: \"NTP Daemon\"}," /tmp/menuTree.js
 		umount /www/require/modules/menuTree.js 2>/dev/null
