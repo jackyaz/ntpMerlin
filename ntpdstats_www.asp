@@ -15,6 +15,7 @@
 p{
 font-weight: bolder;
 }
+
 .collapsible {
   color: white;
   padding: 0px;
@@ -302,9 +303,39 @@ function SetCookie(cookiename,cookievalue) {
 	cookie.set("ntp_"+cookiename, cookievalue, 31);
 }
 
+function AddEventHandlers(){
+	var coll = document.getElementsByClassName("collapsible");
+	var i;
+
+	for (i = 0; i < coll.length; i++) {
+		coll[i].addEventListener("click", function() {
+			this.classList.toggle("active");
+			var content = this.nextElementSibling.firstElementChild.firstElementChild.firstElementChild;
+			if (content.style.maxHeight){
+				content.style.maxHeight = null;
+				SetCookie(this.id,"collapsed");
+			} else {
+				content.style.maxHeight = content.scrollHeight + "px";
+				SetCookie(this.id,"expanded");
+			}
+		});
+		if(GetCookie(coll[i].id) == "expanded"){
+			coll[i].click();
+		}
+	}
+}
+
+function SetCurrentPage(){
+	$("#next_page").val(window.location.pathname.substring(1));
+	$("#current_page").val(window.location.pathname.substring(1));
+}
+
 function initial(){
+	SetCurrentPage();
 	show_menu();
 	RedrawAllCharts();
+	AddEventHandlers();
+	SetNTPDStatsTitle();
 }
 
 function reload() {
@@ -314,6 +345,8 @@ function reload() {
 function applyRule() {
 	var action_script_tmp = "start_ntpmerlin";
 	document.form.action_script.value = action_script_tmp;
+	var restart_time = document.form.action_wait.value*1;
+	parent.showLoading(restart_time, "waiting");
 	document.form.submit();
 }
 
@@ -324,8 +357,8 @@ function applyRule() {
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-<input type="hidden" name="current_page" value="Feedback_Info.asp">
-<input type="hidden" name="next_page" value="Feedback_Info.asp">
+<input type="hidden" name="current_page" value="">
+<input type="hidden" name="next_page" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="start_ntpmerlin">
@@ -432,31 +465,7 @@ function applyRule() {
 <td width="10" align="center" valign="top">&nbsp;</td>
 </tr>
 </table>
-<script>
-SetNTPDStatsTitle();
-</script>
 <div id="footer">
 </div>
-<script>
-var coll = document.getElementsByClassName("collapsible");
-var i;
-
-for (i = 0; i < coll.length; i++) {
-  coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling.firstElementChild.firstElementChild.firstElementChild;
-    if (content.style.maxHeight){
-      content.style.maxHeight = null;
-      SetCookie(this.id,"collapsed");
-    } else {
-      content.style.maxHeight = content.scrollHeight + "px";
-      SetCookie(this.id,"expanded");
-    }
-  });
-  if(GetCookie(coll[i].id) == "expanded"){
-      coll[i].click();
-}
-}
-</script>
 </body>
 </html>

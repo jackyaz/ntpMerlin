@@ -20,7 +20,7 @@ fi
 
 ENABLED=yes
 PROCS=ntpd
-ARGS="-c /jffs/configs/ntp.conf -g"
+ARGS="-c /jffs/addons/ntpmerlin.d/ntp.conf -g"
 PREARGS=""
 PRECMD="killall ntp && killall ntpd"
 POSTCMD="/jffs/scripts/ntpmerlin generate"
