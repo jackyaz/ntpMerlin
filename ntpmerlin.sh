@@ -1022,7 +1022,7 @@ Menu_Edit(){
 	
 	if [ "$exitmenu" != "true" ]; then
 		oldmd5="$(md5sum "$SCRIPT_DIR/ntp.conf" | awk '{print $1}')"
-		$texteditor /jffs/configs/ntp.conf
+		$texteditor "$SCRIPT_DIR/ntp.conf"
 		newmd5="$(md5sum "$SCRIPT_DIR/ntp.conf" | awk '{print $1}')"
 		if [ "$oldmd5" != "$newmd5" ]; then
 			/opt/etc/init.d/S77ntpd restart
