@@ -1113,7 +1113,6 @@ if [ -z "$1" ]; then
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_ntpMerlin create
 	Update_File "S77ntpd"
-	Clear_Lock
 	ScriptHeader
 	MainMenu
 	exit 0
