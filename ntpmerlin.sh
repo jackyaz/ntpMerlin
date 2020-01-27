@@ -821,7 +821,8 @@ MainMenu(){
 	fi
 	printf "1.    Generate updated %s graphs now\\n\\n" "$SCRIPT_NAME"
 	printf "2.    Toggle redirect of all NTP traffic to %s\\n      (currently %s)\\n\\n" "$SCRIPT_NAME" "$NTP_REDIRECT_ENABLED"
-	printf "3.    Edit %s config\\n\\n" "$SCRIPT_NAME"
+	printf "3.    Edit %s config\\n" "$SCRIPT_NAME"
+	printf "4.    Restart ntpd\\n\\n"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
