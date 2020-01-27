@@ -19,8 +19,8 @@ readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v2.2.0"
-readonly NTPD_VERSION="v2.2.0"
+readonly SCRIPT_VERSION="v2.2.1"
+readonly NTPD_VERSION="v2.2.1"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly OLD_SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
@@ -855,6 +855,14 @@ MainMenu(){
 				fi
 				break
 			;;
+			r)
+							printf "\\n"
+							if Check_Lock "menu"; then
+								Menu_RestartNTPD
+							fi
+							PressEnter
+							break
+						;;
 			u)
 				printf "\\n"
 				if Check_Lock "menu"; then
@@ -1041,6 +1049,12 @@ Menu_ToggleNTPRedirect(){
 		NTP_Redirect create
 		printf "\\e[1mNTP Redirect has been enabled\\e[0m\\n\\n"
 	fi
+}
+
+Menu_RestartNTPD(){
+	Print_Output "true" "Restarting ntpd..." "$PASS"
+	/opt/etc/init.d/S77ntpd restart
+	Clear_Lock "menu"
 }
 
 Menu_Update(){
