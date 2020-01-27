@@ -857,13 +857,13 @@ MainMenu(){
 				break
 			;;
 			r)
-							printf "\\n"
-							if Check_Lock "menu"; then
-								Menu_RestartNTPD
-							fi
-							PressEnter
-							break
-						;;
+				printf "\\n"
+				if Check_Lock "menu"; then
+						Menu_RestartNTPD
+				fi
+				PressEnter
+				break
+			;;
 			u)
 				printf "\\n"
 				if Check_Lock "menu"; then
