@@ -20,6 +20,7 @@ readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2018
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
 readonly SCRIPT_VERSION="v2.2.2"
+#shellcheck disable=SC2034
 readonly NTPD_VERSION="v2.2.2"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
