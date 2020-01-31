@@ -19,8 +19,8 @@ readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v2.2.1"
-readonly NTPD_VERSION="v2.2.1"
+readonly SCRIPT_VERSION="v2.2.2"
+readonly NTPD_VERSION="v2.2.2"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly OLD_SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
@@ -802,6 +802,7 @@ ScriptHeader(){
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##       https://github.com/jackyaz/ntpMerlin           ##\\e[0m\\n"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
+	printf "\\e[1m##  Config location: %s  ##\\e[0m\\n" "$SCRIPT_DIR/ntp.conf"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
 	printf "\\e[1m##               DST is currently %-8s              ##\\e[0m\\n" "$DST_ENABLED"
 	printf "\\e[1m##                                                      ##\\e[0m\\n"
