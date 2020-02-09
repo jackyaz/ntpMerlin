@@ -100,7 +100,7 @@ Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
   return coordinates;
 };
-
+//test
 function Draw_Chart_NoData(txtchartname){
 	document.getElementById("divLineChart"+txtchartname).width="730";
 	document.getElementById("divLineChart"+txtchartname).height="300";
@@ -154,7 +154,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 				type: "time",
 				gridLines: { display: true, color: "#282828" },
 				ticks: {
-					min: moment().subtract(numunitx, txtunitx+"s"), 
+					min: moment().subtract(numunitx, txtunitx+"s"),
 					display: true
 				},
 				time: { unit: txtunitx, stepSize: 1 }
