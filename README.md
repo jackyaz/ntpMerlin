@@ -5,7 +5,7 @@
 ## v2.2.3
 ### Updated on 2020-02-09
 ## About
-Run an NTP server for your network on your router. Graphs available for NTP accuracy on the Tools page of the WebUI.
+Run an NTP server for your network on your router. Graphs available for NTP accuracy on the Addons page of the WebUI.
 
 ntpMerlin is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
 
