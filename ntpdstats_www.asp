@@ -11,7 +11,7 @@
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <style>
-p{
+p {
 font-weight: bolder;
 }
 
@@ -35,7 +35,7 @@ font-weight: bolder;
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/moment.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chart.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/hammerjs.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-zoom.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-annotation.js"></script>
@@ -50,7 +50,50 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatsdata.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatstext.js"></script>
 <script>
-var LineChartOffsetDaily,LineChartJitterDaily,LineChartDriftDaily,LineChartOffsetWeekly,LineChartJitterWeekly,LineChartDriftWeekly,LineChartOffsetMonthly,LineChartJitterMonthly,LineChartDriftMonthly;
+// Keep the real data in a seperate object called allData
+// Put only that part of allData in the dataset to optimize zoom/pan performance
+// Author: Evert van der Weit - 2018
+function filterData(chartInstance) {
+	var datasets = chartInstance.data.datasets;
+	var originalDatasets = chartInstance.data.allData;
+	var chartOptions = chartInstance.options.scales.xAxes[0];
+	
+	var startX = chartOptions.time.min;
+	var endX = chartOptions.time.max;
+	if(typeof originalDatasets === 'undefined' || originalDatasets === null) { return; }
+	for(var i = 0; i < originalDatasets.length; i++) {
+		var dataset = datasets[i];
+		var originalData = originalDatasets[i];
+		
+		if (!originalData.length) break
+		
+		var s = startX;
+		var e = endX;
+		var sI = null;
+		var eI = null;
+		
+		for (var j = 0; j < originalData.length; j++) {
+			if ((sI==null) && originalData[j].x > s) {
+				sI = j;
+			}
+			if ((eI==null) && originalData[j].x > e) {
+				eI = j;
+			}
+		}
+		if (sI==null) sI = 0;
+		if (originalData[originalData.length - 1].x < s) eI = 0
+			else if (eI==null) eI = originalData.length
+		
+		dataset.data = originalData.slice(sI, eI);
+	}
+}
+var datafilterPlugin = {
+	beforeUpdate: function(chartInstance) {
+		filterData(chartInstance);
+	}
+}
+</script>
+<script>
 var ShowLines=GetCookie("ShowLines");
 var ShowFill=GetCookie("ShowFill");
 Chart.defaults.global.defaultFontColor = "#CCC";
@@ -58,7 +101,27 @@ Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
   return coordinates;
 };
 
-function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,txtunity,txtunitx,numunitx,colourname){
+function Draw_Chart_NoData(txtchartname){
+	document.getElementById("divLineChart"+txtchartname).width="730";
+	document.getElementById("divLineChart"+txtchartname).height="300";
+	document.getElementById("divLineChart"+txtchartname).style.width="730px";
+	document.getElementById("divLineChart"+txtchartname).style.height="300px";
+	var ctx = document.getElementById("divLineChart"+txtchartname).getContext("2d");
+	ctx.save();
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	ctx.font = "normal normal bolder 48px Arial";
+	ctx.fillStyle = 'white';
+	ctx.fillText('No data to display', 365, 150);
+	ctx.restore();
+}
+
+function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname){
+	var objchartname=window["LineChart"+txtchartname];
+	var txtdataname="Data"+txtchartname;
+	var objdataname=window["Data"+txtchartname];
+	if(typeof objdataname === 'undefined' || objdataname === null) { Draw_Chart_NoData(txtchartname); return; }
+	if (objdataname.length == 0) { Draw_Chart_NoData(txtchartname); return; }
 	factor=0;
 	if (txtunitx=="hour"){
 		factor=60*60*1000;
@@ -67,7 +130,7 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 		factor=60*60*24*1000;
 	}
 	if (objchartname != undefined) objchartname.destroy();
-	var ctx = document.getElementById("div"+txtchartname).getContext("2d");
+	var ctx = document.getElementById("divLineChart"+txtchartname).getContext("2d");
 	var lineOptions = {
 		segmentShowStroke : false,
 		segmentStrokeColor : "#000",
@@ -91,9 +154,10 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 				type: "time",
 				gridLines: { display: true, color: "#282828" },
 				ticks: {
+					min: moment().subtract(numunitx, txtunitx+"s"), 
 					display: true
 				},
-				time: { min: moment().subtract(numunitx, txtunitx+"s"), unit: txtunitx, stepSize: 1 }
+				time: { unit: txtunitx, stepSize: 1 }
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
@@ -227,6 +291,7 @@ function Draw_Chart(txtchartname,objchartname,txtdataname,objdataname,txttitle,t
 	};
 	objchartname = new Chart(ctx, {
 		type: 'line',
+		plugins: [datafilterPlugin],
 		options: lineOptions,
 		data: lineDataset
 	});
@@ -255,11 +320,11 @@ function round(value, decimals) {
 function ToggleLines() {
 	if(ShowLines == ""){
 		ShowLines = "line";
-		SetCookie("ShowLines","line")
+		SetCookie("ShowLines","line");
 	}
 	else {
 		ShowLines = "";
-		SetCookie("ShowLines","")
+		SetCookie("ShowLines","");
 	}
 	RedrawAllCharts();
 }
@@ -267,25 +332,25 @@ function ToggleLines() {
 function ToggleFill() {
 	if(ShowFill == false){
 		ShowFill = "origin";
-		SetCookie("ShowFill","origin")
+		SetCookie("ShowFill","origin");
 	}
 	else {
 		ShowFill = false;
-		SetCookie("ShowFill",false)
+		SetCookie("ShowFill",false);
 	}
 	RedrawAllCharts();
 }
 
 function RedrawAllCharts() {
-	Draw_Chart("LineChartOffsetDaily",LineChartOffsetDaily,"DataOffsetDaily",DataOffsetDaily,"Offset","ms","hour",24,"#fc8500");
-	Draw_Chart("LineChartJitterDaily",LineChartJitterDaily,"DataJitterDaily",DataJitterDaily,"Jitter","ms","hour",24,"#42ecf5");
-	Draw_Chart("LineChartDriftDaily",LineChartDriftDaily,"DataDriftDaily",DataDriftDaily,"Drift","ppm","hour",24,"#ffffff");
-	Draw_Chart("LineChartOffsetWeekly",LineChartOffsetWeekly,"DataOffsetWeekly",DataOffsetWeekly,"Offset","ms","day",7,"#fc8500");
-	Draw_Chart("LineChartJitterWeekly",LineChartJitterWeekly,"DataJitterWeekly",DataJitterWeekly,"Jitter","ms","day",7,"#42ecf5");
-	Draw_Chart("LineChartDriftWeekly",LineChartDriftWeekly,"DataDriftWeekly",DataDriftWeekly,"Drift","ppm","day",7,"#ffffff");
-	Draw_Chart("LineChartOffsetMonthly",LineChartOffsetMonthly,"DataOffsetMonthly",DataOffsetMonthly,"Offset","ms","day",30,"#fc8500");
-	Draw_Chart("LineChartJitterMonthly",LineChartJitterMonthly,"DataJitterMonthly",DataJitterMonthly,"Jitter","ms","day",30,"#42ecf5");
-	Draw_Chart("LineChartDriftMonthly",LineChartDriftMonthly,"DataDriftMonthly",DataDriftMonthly,"Drift","ppm","day",30,"#ffffff");
+	Draw_Chart("OffsetDaily","Offset","ms","hour",24,"#fc8500");
+	Draw_Chart("JitterDaily","Jitter","ms","hour",24,"#42ecf5");
+	Draw_Chart("DriftDaily","Drift","ppm","hour",24,"#ffffff");
+	Draw_Chart("OffsetWeekly","Offset","ms","day",7,"#fc8500");
+	Draw_Chart("JitterWeekly","Jitter","ms","day",7,"#42ecf5");
+	Draw_Chart("DriftWeekly","Drift","ppm","day",7,"#ffffff");
+	Draw_Chart("OffsetMonthly","Offset","ms","day",30,"#fc8500");
+	Draw_Chart("JitterMonthly","Jitter","ms","day",30,"#42ecf5");
+	Draw_Chart("DriftMonthly","Drift","ppm","day",30,"#ffffff");
 }
 
 function GetCookie(cookiename) {
@@ -294,7 +359,7 @@ function GetCookie(cookiename) {
 		return cookie.get("ntp_"+cookiename);
 	}
 	else {
-		return ""
+		return "";
 	}
 }
 
