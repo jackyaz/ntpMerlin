@@ -961,7 +961,7 @@ Check_Requirements(){
 		CHECKSFAILED="true"
 	fi
 	
-	if Firmware_Version_Check "install" ; then
+	if ! Firmware_Version_Check "install" ; then
 		Print_Output "true" "Unsupported firmware detected - $SCRIPT_NAME requires 384.XX" "$ERR"
 		CHECKSFAILED="true"
 	fi
