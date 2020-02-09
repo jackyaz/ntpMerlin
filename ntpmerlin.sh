@@ -19,19 +19,19 @@ readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v2.2.2"
+readonly SCRIPT_VERSION="v2.2.3"
 #shellcheck disable=SC2034
-readonly NTPD_VERSION="v2.2.2"
+readonly NTPD_VERSION="v2.2.3"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly OLD_SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
-readonly SCRIPT_PAGE_DIR="$(readlink /www/user)"
-readonly SCRIPT_WEB_DIR="$SCRIPT_PAGE_DIR/$SCRIPT_NAME_LOWER"
+readonly SCRIPT_WEBPAGE_DIR="$(readlink /www/user)"
+readonly SCRIPT_WEB_DIR="$SCRIPT_WEBPAGE_DIR/$SCRIPT_NAME_LOWER"
 readonly OLD_SHARED_DIR="/jffs/scripts/shared-jy"
 readonly SHARED_DIR="/jffs/addons/shared-jy"
 readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
-readonly SHARED_WEB_DIR="$SCRIPT_PAGE_DIR/shared-jy"
+readonly SHARED_WEB_DIR="$SCRIPT_WEBPAGE_DIR/shared-jy"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 [ -f /opt/bin/sqlite3 ] && SQLITE3_PATH=/opt/bin/sqlite3 || SQLITE3_PATH=/usr/sbin/sqlite3
 ### End of script variables ###
@@ -53,11 +53,21 @@ Print_Output(){
 	fi
 }
 
-### Code for this function courtesy of https://github.com/decoderman- credit to @thelonelycoder ###
 Firmware_Version_Check(){
-	echo "$1" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'
+	if [ "$1" = "install" ]; then
+		if [ "$(uname -o)" = "ASUSWRT-Merlin" ] && [ "$(nvram get buildno | tr -d '.')" -ge "38400" ]; then
+			return 0
+		else
+			return 1
+		fi
+	elif [ "$1" = "webui" ]; then
+		if nvram get rc_support | grep -qF "am_addons"; then
+			return 0
+		else
+			return 1
+		fi
+	fi
 }
-############################################################################
 
 ### Code for these functions inspired by https://github.com/Adamm00 - credit to @Adamm ###
 Check_Lock(){
@@ -113,11 +123,14 @@ Update_Version(){
 		Update_File "S77ntpd"
 		Update_File "ntp.conf"
 		Update_File "ntpdstats_www.asp"
+		Update_File "redirect.htm"
+		Update_File "addons.png"
+		Update_File "chart.js"
 		Update_File "chartjs-plugin-zoom.js"
 		Update_File "chartjs-plugin-annotation.js"
+		Update_File "chartjs-plugin-datasource.js"
 		Update_File "hammerjs.js"
 		Update_File "moment.js"
-		Mount_WebUI
 		
 		if [ "$doupdate" != "false" ]; then
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
@@ -137,11 +150,14 @@ Update_Version(){
 			Update_File "S77ntpd"
 			Update_File "ntp.conf"
 			Update_File "ntpdstats_www.asp"
+			Update_File "redirect.htm"
+			Update_File "addons.png"
+			Update_File "chart.js"
 			Update_File "chartjs-plugin-zoom.js"
 			Update_File "chartjs-plugin-annotation.js"
+			Update_File "chartjs-plugin-datasource.js"
 			Update_File "hammerjs.js"
 			Update_File "moment.js"
-			Mount_WebUI
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$SCRIPT_NAME_LOWER"
 			Clear_Lock
@@ -177,12 +193,15 @@ Update_File(){
 		tmpfile="/tmp/$1"
 		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
 		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
+			Get_WebUI_Page "$SCRIPT_DIR/$1"
+			sed -i "\\~$MyPage~d" /tmp/menuTree.js
+			rm -f "$SCRIPT_WEBPAGE_DIR/$MyPage" 2>/dev/null
+			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			mv "$SCRIPT_DIR/$1" "$SCRIPT_DIR/$1.old"
 			Mount_WebUI
 		fi
 		rm -f "$tmpfile"
-	elif [ "$1" = "chartjs-plugin-zoom.js" ] || [ "$1" = "chartjs-plugin-annotation.js" ] || [ "$1" = "moment.js" ] || [ "$1" =  "hammerjs.js" ]; then
+	elif [ "$1" = "chart.js" ] || [ "$1" = "chartjs-plugin-zoom.js" ] || [ "$1" = "chartjs-plugin-annotation.js" ] || [ "$1" = "moment.js" ] || [ "$1" =  "hammerjs.js" ] || [ "$1" = "chartjs-plugin-datasource.js" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SHARED_REPO/$1" "$tmpfile"
 		if [ ! -f "$SHARED_DIR/$1" ]; then
@@ -237,8 +256,8 @@ Create_Dirs(){
 		rm -rf "$OLD_SHARED_DIR"
 	fi
 	
-	if [ ! -d "$SCRIPT_PAGE_DIR" ]; then
-		mkdir -p "$SCRIPT_PAGE_DIR"
+	if [ ! -d "$SCRIPT_WEBPAGE_DIR" ]; then
+		mkdir -p "$SCRIPT_WEBPAGE_DIR"
 	fi
 	
 	if [ ! -d "$SCRIPT_WEB_DIR" ]; then
@@ -257,10 +276,14 @@ Create_Symlinks(){
 	ln -s "$SCRIPT_DIR/ntpstatsdata.js" "$SCRIPT_WEB_DIR/ntpstatsdata.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/ntpstatstext.js" "$SCRIPT_WEB_DIR/ntpstatstext.js" 2>/dev/null
 	
+	ln -s "$SHARED_DIR/chart.js" "$SHARED_WEB_DIR/chart.js" 2>/dev/null
 	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SHARED_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
 	ln -s "$SHARED_DIR/chartjs-plugin-annotation.js" "$SHARED_WEB_DIR/chartjs-plugin-annotation.js" 2>/dev/null
+	ln -s "$SHARED_DIR/chartjs-plugin-datasource.js" "$SHARED_WEB_DIR/chartjs-plugin-datasource.js" 2>/dev/null
 	ln -s "$SHARED_DIR/hammerjs.js" "$SHARED_WEB_DIR/hammerjs.js" 2>/dev/null
 	ln -s "$SHARED_DIR/moment.js" "$SHARED_WEB_DIR/moment.js" 2>/dev/null
+	ln -s "$SHARED_DIR/redirect.htm" "$SHARED_WEB_DIR/redirect.htm" 2>/dev/null
+	ln -s "$SHARED_DIR/addons.png" "$SHARED_WEB_DIR/addons.png" 2>/dev/null
 }
 
 Auto_ServiceEvent(){
@@ -474,13 +497,13 @@ NTP_Firmware_Check(){
 
 Get_WebUI_Page () {
 	for i in 1 2 3 4 5 6 7 8 9 10; do
-		page="$SCRIPT_PAGE_DIR/user$i.asp"
+		page="$SCRIPT_WEBPAGE_DIR/user$i.asp"
 		if [ ! -f "$page" ] || [ "$(md5sum < "$1")" = "$(md5sum < "$page")" ]; then
-			echo "user$i.asp"
+			MyPage="user$i.asp"
 			return
 		fi
 	done
-	echo "none"
+	MyPage="none"
 }
 
 Get_spdMerlin_UI(){
@@ -492,24 +515,39 @@ Get_spdMerlin_UI(){
 }
 
 Mount_WebUI(){
-	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ge "$(Firmware_Version_Check 384.15)" ]; then
-		if [ ! -f "$SCRIPT_DIR/ntpdstats_www.asp" ]; then
-			Download_File "$SCRIPT_REPO/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
-		fi
-		MyPage="$(Get_WebUI_Page "$SCRIPT_DIR/ntpdstats_www.asp")"
+	if Firmware_Version_Check "webui" ; then
+		Get_WebUI_Page "$SCRIPT_DIR/ntpdstats_www.asp"
 		if [ "$MyPage" = "none" ]; then
 			Print_Output "true" "Unable to mount $SCRIPT_NAME WebUI page, exiting" "$CRIT"
 			exit 1
 		fi
 		Print_Output "true" "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
-		cp -f "$SCRIPT_DIR/ntpdstats_www.asp" "$SCRIPT_PAGE_DIR/$MyPage"
+		cp -f "$SCRIPT_DIR/ntpdstats_www.asp" "$SCRIPT_WEBPAGE_DIR/$MyPage"
+		
+		if [ ! -f "/tmp/index_style.css" ]; then
+			cp -f "/www/index_style.css" "/tmp/"
+		fi
+		
+		if ! grep -q '.menu_Addons' /tmp/index_style.css ; then
+			echo ".menu_Addons { background: url(ext/shared-jy/addons.png); }" >> /tmp/index_style.css
+		fi
+		
+		umount /www/index_style.css 2>/dev/null
+		mount -o bind /tmp/index_style.css /www/index_style.css
 		
 		if [ ! -f "/tmp/menuTree.js" ]; then
 			cp -f "/www/require/modules/menuTree.js" "/tmp/"
 		fi
 		
 		sed -i "\\~$MyPage~d" /tmp/menuTree.js
-		sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$MyPage\", tabName: \"NTP Daemon\"}," /tmp/menuTree.js
+		
+		if ! grep -q 'menuName: "Addons"' /tmp/menuTree.js ; then
+			lineinsbefore="$(( $(grep -n "exclude:" /tmp/menuTree.js | cut -f1 -d':') - 1))"
+			sed -i "$lineinsbefore"'i,\n{\nmenuName: "Addons",\nindex: "menu_Addons",\ntab: [\n{url: "ext/shared-jy/redirect.htm", tabName: "Help & Support"},\n{url: "NULL", tabName: "__INHERIT__"}\n]\n}' /tmp/menuTree.js
+		fi
+		
+		sed -i "/url: \"ext\/shared-jy\/redirect.htm\", tabName:/i {url: \"$MyPage\", tabName: \"NTP Daemon\"}," /tmp/menuTree.js
+		
 		umount /www/require/modules/menuTree.js 2>/dev/null
 		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
 	else
@@ -520,10 +558,6 @@ Mount_WebUI(){
 
 Mount_NTPD_WebUI_Old(){
 	umount /www/Feedback_Info.asp 2>/dev/null
-	
-	if [ ! -f "$SCRIPT_DIR/ntpdstats_www.asp" ]; then
-		Download_File "$SCRIPT_REPO/ntpdstats_www.asp" "$SCRIPT_DIR/ntpdstats_www.asp"
-	fi
 	
 	mount -o bind "$SCRIPT_DIR/ntpdstats_www.asp" /www/Feedback_Info.asp
 }
@@ -925,23 +959,21 @@ Check_Requirements(){
 	if [ ! -f "/opt/bin/opkg" ]; then
 		Print_Output "true" "Entware not detected!" "$ERR"
 		CHECKSFAILED="true"
-		return 1
 	fi
 	
-	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -lt "$(Firmware_Version_Check 384.11)" ] && [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ne "$(Firmware_Version_Check 374.43)" ]; then
-		Print_Output "true" "Older Merlin firmware detected - $SCRIPT_NAME requires 384.11 or later for sqlite3 support" "$WARN"
-		Print_Output "true" "Installing sqlite3-cli from Entware..." "$WARN"
-		opkg update
-		opkg install sqlite3-cli
-	elif [ "$(Firmware_Version_Check "$(nvram get buildno)")" -eq "$(Firmware_Version_Check 374.43)" ]; then
-		Print_Output "true" "John's fork detected - unsupported" "$ERR"
+	if Firmware_Version_Check "install" ; then
+		Print_Output "true" "Unsupported firmware detected - $SCRIPT_NAME requires 384.XX" "$ERR"
 		CHECKSFAILED="true"
-		return 1
 	fi
 	
 	NTP_Firmware_Check
 	
 	if [ "$CHECKSFAILED" = "false" ]; then
+		Print_Output "true" "Installing required packages from Entware" "$PASS"
+		opkg update
+		opkg install sqlite3-cli
+		opkg install ntp-utils
+		opkg install ntpd
 		return 0
 	else
 		return 1
@@ -962,16 +994,17 @@ Menu_Install(){
 		exit 1
 	fi
 	
-	opkg update
-	opkg install ntp-utils
-	opkg install ntpd
-	
 	Create_Dirs
 	Create_Symlinks
 	
 	Download_File "$SCRIPT_REPO/ntp.conf" "$SCRIPT_DIR/ntp.conf"
+	Update_File "ntpdstats_www.asp"
+	Update_File "redirect.htm"
+	Update_File "addons.png"
+	Update_File "chart.js"
 	Update_File "chartjs-plugin-zoom.js"
 	Update_File "chartjs-plugin-annotation.js"
+	Update_File "chartjs-plugin-datasource.js"
 	Update_File "hammerjs.js"
 	Update_File "moment.js"
 
@@ -979,7 +1012,6 @@ Menu_Install(){
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_ntpMerlin create
-	Mount_WebUI
 	NTPD_Customise
 	Generate_NTPStats
 }
@@ -1095,13 +1127,13 @@ Menu_Uninstall(){
 	/opt/etc/init.d/S77ntpd stop
 	opkg remove --autoremove ntpd
 	opkg remove --autoremove ntp-utils
-	if [ "$(Firmware_Version_Check "$(nvram get buildno)")" -ge "$(Firmware_Version_Check 384.15)" ]; then
-		MyPage="$(Get_WebUI_Page "$SCRIPT_DIR/ntpdstats_www.asp")"
+	if Firmware_Version_Check "webui" ; then
+		Get_WebUI_Page "$SCRIPT_DIR/ntpdstats_www.asp"
 		if [ -n "$MyPage" ] && [ "$MyPage" != "none" ] && [ -f "/tmp/menuTree.js" ]; then
 			sed -i "\\~$MyPage~d" /tmp/menuTree.js
 			umount /www/require/modules/menuTree.js
 			mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
-			rm -rf "{$SCRIPT_PAGE_DIR:?}/$MyPage"
+			rm -rf "{$SCRIPT_WEBPAGE_DIR:?}/$MyPage"
 		fi
 	else
 		umount /www/Feedback_Info.asp 2>/dev/null
@@ -1124,6 +1156,11 @@ Menu_Uninstall(){
 }
 
 if [ -z "$1" ]; then
+	if [ ! -f /opt/bin/sqlite3 ]; then
+		Print_Output "true" "Installing required version of sqlite3 from Entware" "$PASS"
+		opkg update
+		opkg install sqlite3-cli
+	fi
 	Create_Dirs
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
