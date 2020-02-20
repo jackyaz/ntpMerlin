@@ -235,6 +235,10 @@ Create_Dirs(){
 		mkdir -p "$SCRIPT_DIR"
 	fi
 	
+	if [ ! -d "$CSV_OUTPUT_DIR" ]; then
+		mkdir -p "$CSV_OUTPUT_DIR"
+	fi
+	
 	if [ -d "$OLD_SCRIPT_DIR" ]; then
 		mv "$OLD_SCRIPT_DIR" "$(dirname "$SCRIPT_DIR")"
 		rm -rf "$OLD_SCRIPT_DIR"
@@ -276,6 +280,7 @@ Create_Symlinks(){
 	
 	ln -s "$SCRIPT_DIR/ntpstatsdata.js" "$SCRIPT_WEB_DIR/ntpstatsdata.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/ntpstatstext.js" "$SCRIPT_WEB_DIR/ntpstatstext.js" 2>/dev/null
+	ln -s "$CSV_OUTPUT_DIR" "$SCRIPT_WEB_DIR/csv" 2>/dev/null
 	
 	ln -s "$SHARED_DIR/chart.js" "$SHARED_WEB_DIR/chart.js" 2>/dev/null
 	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SHARED_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
