@@ -743,7 +743,7 @@ Generate_NTPStats(){
 	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
 	{
-		echo "DELETE FROM [ntpstats] WHERE [Timestamp] < ($timenow - 2592000‬);"
+		echo "DELETE FROM [ntpstats] WHERE [Timestamp] < ($timenow - (86400*30));"
 	} > /tmp/ntp-stats.sql
 	
 	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
