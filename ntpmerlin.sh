@@ -770,8 +770,6 @@ Generate_NTPStats(){
 		Aggregate_Stats "$metric" "monthly"
 		rm -f "$CSV_OUTPUT_DIR/$metric""monthly.tmp"
 		rm -f /tmp/ntp-stats.sql
-		
-		"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	done
 	
 	echo "NTPD Performance Stats generated on $timenowfriendly" > "/tmp/ntpstatstitle.txt"
