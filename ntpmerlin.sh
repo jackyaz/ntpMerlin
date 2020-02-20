@@ -680,7 +680,7 @@ WriteSql_ToFile(){
 	} >> "$7"
 	
 	{
-		echo "SELECT Min([Timestamp]) ChunkStart, IFNULL(Avg([$1]),'NaN') Value FROM"
+		echo "SELECT '$metric',Min([Timestamp]) ChunkStart, IFNULL(Avg([$1]),'NaN') Value FROM"
 		echo "( SELECT NTILE($((24*$4/$3))) OVER (ORDER BY [Timestamp]) Chunk, * FROM $2 WHERE [Timestamp] >= ($timenow - ((60*60*$3)*$earliest))) AS T"
 		echo "GROUP BY Chunk"
 		echo "ORDER BY ChunkStart;"
@@ -691,14 +691,14 @@ WriteSql_ToFile(){
 Aggregate_Stats(){
 	metricname="$1"
 	period="$2"
-	sed -i '1iTime,Value' "$CSV_OUTPUT_DIR/$metricname$period.tmp"
+	sed -i '1iMetric,Time,Value' "$CSV_OUTPUT_DIR/$metricname$period.tmp"
 	head -c -2 "$CSV_OUTPUT_DIR/$metricname$period.tmp" > "$CSV_OUTPUT_DIR/$metricname$period.htm"
 	dos2unix "$CSV_OUTPUT_DIR/$metricname$period.htm"
 	cp "$CSV_OUTPUT_DIR/$metricname$period.htm" "$CSV_OUTPUT_DIR/$metricname$period.tmp"
 	sed -i '1d' "$CSV_OUTPUT_DIR/$metricname$period.tmp"
-	min="$(cut -f2 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | head -1)"
-	max="$(cut -f2 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | tail -1)"
-	avg="$(cut -f2 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | awk '{ total += $1; count++ } END { print total/count }')"
+	min="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | head -1)"
+	max="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | tail -1)"
+	avg="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | awk '{ total += $1; count++ } END { print total/count }')"
 	{
 	echo "var $metricname$period""min = $min;"
 	echo "var $metricname$period""max = $max;"
@@ -755,7 +755,7 @@ Generate_NTPStats(){
 		{
 			echo ".mode csv"
 			echo ".output $CSV_OUTPUT_DIR/$metric""daily.tmp"
-			echo "select [Timestamp],[$metric] from ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
+			echo "select '$metric',[Timestamp],[$metric] from ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
 		} > /tmp/ntp-stats.sql
 		
 		"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
