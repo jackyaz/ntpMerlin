@@ -737,6 +737,12 @@ Generate_NTPStats(){
 	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
 	{
+		echo "DELETE FROM [ntpstats] WHERE [Timestamp] < ($timenow - 2592000‬);"
+	} > /tmp/ntp-stats.sql
+	
+	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+	
+	{
 		echo ".mode csv"
 		echo ".output /tmp/ntp-offsetdaily.csv"
 		echo "select [Timestamp],[Offset] from ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
