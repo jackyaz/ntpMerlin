@@ -690,7 +690,7 @@ WriteSql_ToFile(){
 Aggregate_Stats(){
 	metricname="$1"
 	period="$2"
-	sed -i '1i,Time,Value' "$CSV_OUTPUT_DIR/$metricname$period.tmp"
+	sed -i '1iTime,Value' "$CSV_OUTPUT_DIR/$metricname$period.tmp"
 	head -c -2 "$CSV_OUTPUT_DIR/$metricname$period.tmp" > "$CSV_OUTPUT_DIR/$metricname$period.htm"
 	dos2unix "$CSV_OUTPUT_DIR/$metricname$period.htm"
 	cp "$CSV_OUTPUT_DIR/$metricname$period.htm" "$CSV_OUTPUT_DIR/$metricname$period.tmp"
