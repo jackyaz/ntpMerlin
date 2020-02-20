@@ -744,6 +744,10 @@ Generate_NTPStats(){
 	
 	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
+	rm -f "$SCRIPT_DIR/ntpstatsdata.js"
+	rm -f "$CSV_OUTPUT_DIR/"*
+	rm -f /tmp/ntp-stats.sql
+	
 	metriclist="Offset Sys_Jitter Frequency"
 	
 	for metric in $metriclist; do
