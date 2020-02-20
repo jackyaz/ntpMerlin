@@ -714,6 +714,8 @@ Generate_NTPStats(){
 	
 	TZ=$(cat /etc/TZ)
 	export TZ
+	timenow=$(date +"%s")
+	timenowfriendly=$(date +"%s")
 	
 	if [ -f "$SCRIPT_DIR/ntpdstats.db" ] && [ ! -f "$SCRIPT_DIR/.dbconverted" ]; then
 		{
@@ -729,7 +731,7 @@ Generate_NTPStats(){
 	
 	{
 		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([StatID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
-		echo "INSERT INTO ntpstats ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) values($(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
+		echo "INSERT INTO ntpstats ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) values($timenow,$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
 	} > /tmp/ntp-stats.sql
 	
 	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
@@ -737,11 +739,11 @@ Generate_NTPStats(){
 	{
 		echo ".mode csv"
 		echo ".output /tmp/ntp-offsetdaily.csv"
-		echo "select [Timestamp],[Offset] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
+		echo "select [Timestamp],[Offset] from ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
 		echo ".output /tmp/ntp-jitterdaily.csv"
-		echo "select [Timestamp],[Sys_Jitter] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
+		echo "select [Timestamp],[Sys_Jitter] from ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
 		echo ".output /tmp/ntp-driftdaily.csv"
-		echo "select [Timestamp],[Frequency] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
+		echo "select [Timestamp],[Frequency] from ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
 	} > /tmp/ntp-stats.sql
 	
 	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
@@ -770,7 +772,7 @@ Generate_NTPStats(){
 	WriteData_ToJS "/tmp/ntp-jittermonthly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterMonthly"
 	WriteData_ToJS "/tmp/ntp-driftmonthly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftMonthly"
 	
-	echo "NTPD Performance Stats generated on $(date +"%c")" > "/tmp/ntpstatstitle.txt"
+	echo "NTPD Performance Stats generated on $timenowfriendly" > "/tmp/ntpstatstitle.txt"
 	WriteStats_ToJS "/tmp/ntpstatstitle.txt" "$SCRIPT_DIR/ntpstatstext.js" "SetNTPDStatsTitle" "statstitle"
 	
 	rm -f "$tmpfile"
