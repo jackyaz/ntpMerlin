@@ -759,7 +759,7 @@ Generate_NTPStats(){
 		} > /tmp/ntp-stats.sql
 		
 		"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
-		echo "var $metric""dailysize = 1;" >> "$SCRIPT_DIR/modstatsdata.js"
+		echo "var $metric""dailysize = 1;" >> "$SCRIPT_DIR/ntpstatsdata.js"
 		Aggregate_Stats "$metric" "daily"
 		rm -f "$CSV_OUTPUT_DIR/$metric""daily.tmp"*
 		rm -f /tmp/ntp-stats.sql
