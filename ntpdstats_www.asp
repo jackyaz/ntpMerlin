@@ -177,11 +177,11 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 					mode: 'xy',
 					rangeMin: {
 						x: new Date().getTime() - (factor * numunitx),
-						y: getLimit(txtdataname,"y","min") - Math.sqrt(Math.pow(getLimit(txtdataname,"y","min"),2))*0.1,
+						y: getLimit(txtchartname,"y","min",false) - Math.sqrt(Math.pow(getLimit(txtchartname,"y","min",false),2))*0.1,
 					},
 					rangeMax: {
 						x: new Date().getTime(),
-						y: getLimit(txtdataname,"y","max") + getLimit(txtdataname,"y","max")*0.1,
+						y: getLimit(txtchartname,"y","max",false) + getLimit(txtchartname,"y","max",false)*0.1,
 					},
 				},
 				zoom: {
@@ -189,24 +189,34 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 					mode: 'xy',
 					rangeMin: {
 						x: new Date().getTime() - (factor * numunitx),
-						y: getLimit(txtdataname,"y","min") - Math.sqrt(Math.pow(getLimit(txtdataname,"y","min"),2))*0.1,
+						y: getLimit(txtchartname,"y","min",false) - Math.sqrt(Math.pow(getLimit(txtchartname,"y","min",false),2))*0.1,
 					},
 					rangeMax: {
 						x: new Date().getTime(),
-						y: getLimit(txtdataname,"y","max") + getLimit(txtdataname,"y","max")*0.1,
+						y: getLimit(txtchartname,"y","max",false) + getLimit(txtchartname,"y","max",false)*0.1,
 					},
 					speed: 0.1
 				},
+				datasource: {
+					type: 'csv',
+					url: '/ext/ntpmerlin/csv/'+txtchartname+'.htm',
+					delimiter: ',',
+					rowMapping: 'datapoint',
+					datapointLabelMapping: {
+						x: 'Time',
+						y: 'Value'
+					}
+				}
 			},
 		},
 		annotation: {
 			drawTime: 'afterDatasetsDraw',
 			annotations: [{
-				id: 'avgline',
+				//id: 'avgline',
 				type: ShowLines,
 				mode: 'horizontal',
 				scaleID: 'y-axis-0',
-				value: getAverage(objdataname),
+				value: getAverage(txtchartname),
 				borderColor: colourname,
 				borderWidth: 1,
 				borderDash: [5, 5],
@@ -223,15 +233,15 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 					enabled: true,
 					xAdjust: 0,
 					yAdjust: 0,
-					content: "Avg=" + round(getAverage(objdataname),3).toFixed(3)+txtunity,
+					content: "Avg=" + round(getAverage(txtchartname),3).toFixed(3)+txtunity,
 				}
 			},
 			{
-				id: 'maxline',
+				//id: 'maxline',
 				type: ShowLines,
 				mode: 'horizontal',
 				scaleID: 'y-axis-0',
-				value: getLimit(txtdataname,"y","max"),
+				value: getLimit(txtchartname,"y","max",true),
 				borderColor: colourname,
 				borderWidth: 1,
 				borderDash: [5, 5],
@@ -248,15 +258,15 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 					enabled: true,
 					xAdjust: 0,
 					yAdjust: 0,
-					content: "Max=" + round(getLimit(txtdataname,"y","max"),3).toFixed(3)+txtunity,
+					content: "Max=" + round(getLimit(txtchartname,"y","max",true),3).toFixed(3)+txtunity,
 				}
 			},
 			{
-				id: 'minline',
+				//id: 'minline',
 				type: ShowLines,
 				mode: 'horizontal',
 				scaleID: 'y-axis-0',
-				value: getLimit(txtdataname,"y","min"),
+				value: getLimit(txtchartname,"y","min",true),
 				borderColor: colourname,
 				borderWidth: 1,
 				borderDash: [5, 5],
@@ -273,7 +283,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 					enabled: true,
 					xAdjust: 0,
 					yAdjust: 0,
-					content: "Min=" + round(getLimit(txtdataname,"y","min"),3).toFixed(3)+txtunity,
+					content: "Min=" + round(getLimit(txtchartname,"y","min",true),3).toFixed(3)+txtunity,
 				}
 			}]
 		}
@@ -291,25 +301,29 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 	};
 	objchartname = new Chart(ctx, {
 		type: 'line',
-		plugins: [datafilterPlugin],
+		plugins: [ChartDataSource,datafilterPlugin],
 		options: lineOptions,
 		data: lineDataset
 	});
 	window[txtchartname]=objchartname;
 }
 
-function getLimit(datasetname,axis,maxmin) {
-	limit=0;
-	eval("limit=Math."+maxmin+".apply(Math, "+datasetname+".map(function(o) { return o."+axis+";} ))");
+function getLimit(datasetname,axis,maxmin,isannotation) {
+	var limit = 0;
+	var objdataname=window[datasetname+maxmin];
+	if(typeof objdataname === 'undefined' || objdataname === null) { limit = 0; }
+	else {limit = objdataname;}
+	if(maxmin == "max" && limit == 0 && isannotation == false){
+		limit = 1;
+	}
 	return limit;
 }
 
 function getAverage(datasetname) {
-	var total = 0;
-	for(var i = 0; i < datasetname.length; i++) {
-		total += datasetname[i].y;
-	}
-	var avg = total / datasetname.length;
+	var avg = 0;
+	var objdataname=window[datasetname+"avg"];
+	if(typeof objdataname === 'undefined' || objdataname === null) { avg = 0; }
+	else {avg = objdataname;}
 	return avg;
 }
 
