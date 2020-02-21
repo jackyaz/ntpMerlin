@@ -39,6 +39,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/hammerjs.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-zoom.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-annotation.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-datasource.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -118,10 +119,10 @@ function Draw_Chart_NoData(txtchartname){
 
 function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname){
 	var objchartname=window["LineChart"+txtchartname];
-	var txtdataname="Data"+txtchartname;
-	var objdataname=window["Data"+txtchartname];
+	var objdataname=window[txtchartname+"size"];
 	if(typeof objdataname === 'undefined' || objdataname === null) { Draw_Chart_NoData(txtchartname); return; }
-	if (objdataname.length == 0) { Draw_Chart_NoData(txtchartname); return; }
+	if (objdataname == 0) { Draw_Chart_NoData(txtchartname); return; }
+	
 	factor=0;
 	if (txtunitx=="hour"){
 		factor=60*60*1000;
@@ -157,13 +158,14 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 					min: moment().subtract(numunitx, txtunitx+"s"),
 					display: true
 				},
-				time: { unit: txtunitx, stepSize: 1 }
+				time: { parser: "X", unit: txtunitx, stepSize: 1 }
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: txttitle },
 				ticks: {
 					display: true,
+					max: getLimit(txtchartname,"y","max",false) + getLimit(txtchartname,"y","max",false)*0.1,
 					callback: function (value, index, values) {
 						return round(value,3).toFixed(3) + ' ' + txtunity;
 					}
@@ -197,15 +199,16 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 					},
 					speed: 0.1
 				},
-				datasource: {
-					type: 'csv',
-					url: '/ext/ntpmerlin/csv/'+txtchartname+'.htm',
-					delimiter: ',',
-					rowMapping: 'datapoint',
-					datapointLabelMapping: {
-						x: 'Time',
-						y: 'Value'
-					}
+			},
+			datasource: {
+				type: 'csv',
+				url: '/ext/ntpmerlin/csv/'+txtchartname+'.htm',
+				delimiter: ',',
+				rowMapping: 'datapoint',
+				datapointLabelMapping: {
+					_dataset: 'Metric',
+					x: 'Time',
+					y: 'Value'
 				}
 			},
 		},
@@ -289,8 +292,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 		}
 	};
 	var lineDataset = {
-		datasets: [{data: objdataname,
-			label: txttitle,
+		datasets: [{label: txttitle,
 			borderWidth: 1,
 			pointRadius: 1,
 			lineTension: 0,
@@ -302,8 +304,8 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 	objchartname = new Chart(ctx, {
 		type: 'line',
 		plugins: [ChartDataSource,datafilterPlugin],
-		options: lineOptions,
-		data: lineDataset
+		data: lineDataset,
+		options: lineOptions
 	});
 	window[txtchartname]=objchartname;
 }
@@ -356,15 +358,15 @@ function ToggleFill() {
 }
 
 function RedrawAllCharts() {
-	Draw_Chart("OffsetDaily","Offset","ms","hour",24,"#fc8500");
-	Draw_Chart("JitterDaily","Jitter","ms","hour",24,"#42ecf5");
-	Draw_Chart("DriftDaily","Drift","ppm","hour",24,"#ffffff");
-	Draw_Chart("OffsetWeekly","Offset","ms","day",7,"#fc8500");
-	Draw_Chart("JitterWeekly","Jitter","ms","day",7,"#42ecf5");
-	Draw_Chart("DriftWeekly","Drift","ppm","day",7,"#ffffff");
-	Draw_Chart("OffsetMonthly","Offset","ms","day",30,"#fc8500");
-	Draw_Chart("JitterMonthly","Jitter","ms","day",30,"#42ecf5");
-	Draw_Chart("DriftMonthly","Drift","ppm","day",30,"#ffffff");
+	Draw_Chart("Offsetdaily","Offset","ms","hour",24,"#fc8500");
+	Draw_Chart("Sys_Jitterdaily","Sys_Jitter","ms","hour",24,"#42ecf5");
+	Draw_Chart("Driftdaily","Drift","ppm","hour",24,"#ffffff");
+	Draw_Chart("Offsetweekly","Offset","ms","day",7,"#fc8500");
+	Draw_Chart("Sys_Jitterweekly","Sys_Jitter","ms","day",7,"#42ecf5");
+	Draw_Chart("Driftweekly","Drift","ppm","day",7,"#ffffff");
+	Draw_Chart("Offsetmonthly","Offset","ms","day",30,"#fc8500");
+	Draw_Chart("Sys_Jittermonthly","Sys_Jitter","ms","day",30,"#42ecf5");
+	Draw_Chart("Driftmonthly","Drift","ppm","day",30,"#ffffff");
 }
 
 function GetCookie(cookiename) {
@@ -486,11 +488,11 @@ function applyRule() {
 <tr>
 <td colspan="2" align="center" style="padding: 0px;">
 <div class="collapsiblecontent">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartOffsetDaily" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartOffsetdaily" height="300" /></div>
 <div style="line-height:10px;">&nbsp;</div>
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartJitterDaily" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartSys_Jitterdaily" height="300" /></div>
 <div style="line-height:10px;">&nbsp;</div>
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftDaily" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftdaily" height="300" /></div>
 </div>
 </td>
 </tr>
@@ -505,11 +507,11 @@ function applyRule() {
 <tr>
 <td colspan="2" align="center" style="padding: 0px;">
 <div class="collapsiblecontent">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartOffsetWeekly" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartOffsetweekly" height="300" /></div>
 <div style="line-height:10px;">&nbsp;</div>
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartJitterWeekly" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartSys_Jitterweekly" height="300" /></div>
 <div style="line-height:10px;">&nbsp;</div>
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftWeekly" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftweekly" height="300" /></div>
 </div>
 </td>
 </tr>
@@ -523,11 +525,11 @@ function applyRule() {
 <tr>
 <td colspan="2" align="center" style="padding: 0px;">
 <div class="collapsiblecontent">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartOffsetMonthly" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartOffsetmonthly" height="300" /></div>
 <div style="line-height:10px;">&nbsp;</div>
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartJitterMonthly" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartSys_Jittermonthly" height="300" /></div>
 <div style="line-height:10px;">&nbsp;</div>
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftMonthly" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftmonthly" height="300" /></div>
 </div>
 </td>
 </tr>
