@@ -366,13 +366,13 @@ function ToggleLines() {
 }
 
 function ToggleFill() {
-	if(ShowFill == false){
+	if(ShowFill == "false"){
 		ShowFill = "origin";
 		SetCookie("ShowFill","origin");
 	}
 	else {
-		ShowFill = false;
-		SetCookie("ShowFill",false);
+		ShowFill = "false";
+		SetCookie("ShowFill","false");
 	}
 	for(i = 0; i < metriclist.length; i++){
 		for (i2 = 0; i2 < chartlist.length; i2++) {
