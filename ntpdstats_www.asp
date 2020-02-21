@@ -390,6 +390,7 @@ function RedrawAllCharts() {
 			Draw_Chart(metriclist[i]+chartlist[i2],titlelist[i],measureunitlist[i],timeunitlist[i2],intervallist[i2],colourlist[i]);
 		}
 	}
+	ResetZoom();
 }
 
 function GetCookie(cookiename) {
