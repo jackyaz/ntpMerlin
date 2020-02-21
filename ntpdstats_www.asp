@@ -102,6 +102,14 @@ Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
   return coordinates;
 };
 
+var metriclist = ["Offset","Sys_Jitter","Frequency"];
+var titlelist = ["Offset","Jitter","Drift"];
+var measureunitlist = ["ms","ms","ppm"];
+var chartlist = ["daily","weekly","monthly"];
+var timeunitlist = ["hour","day","day"];
+var intervallist = [24,7,30];
+var colourlist = ["#fc8500","#42ecf5","#ffffff"]
+
 function Draw_Chart_NoData(txtchartname){
 	document.getElementById("divLineChart"+txtchartname).width="730";
 	document.getElementById("divLineChart"+txtchartname).height="300";
@@ -135,15 +143,20 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 	var lineOptions = {
 		segmentShowStroke : false,
 		segmentStrokeColor : "#000",
-		animationEasing : "easeOutQuart",
-		animationSteps : 100,
+		//animationEasing : "easeOutQuart",
+		//animationSteps : 100,
+		animation: {
+			duration: 0 // general animation time
+		},
+		responsiveAnimationDuration: 0, // animation duration after a resize
 		maintainAspectRatio: false,
 		animateScale : true,
+		hover: { mode: "point" },
 		legend: { display: false, position: "bottom", onClick: null },
 		title: { display: true, text: txttitle },
 		tooltips: {
 			callbacks: {
-					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel).format('YYYY-MM-DD HH:mm:ss')); },
+					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel,"X").format('YYYY-MM-DD HH:mm:ss')); },
 					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString() + ' ' + txtunity;}
 				},
 				mode: 'point',
@@ -307,7 +320,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 		data: lineDataset,
 		options: lineOptions
 	});
-	window[txtchartname]=objchartname;
+	window["LineChart"+txtchartname]=objchartname;
 }
 
 function getLimit(datasetname,axis,maxmin,isannotation) {
@@ -342,7 +355,14 @@ function ToggleLines() {
 		ShowLines = "";
 		SetCookie("ShowLines","");
 	}
-	RedrawAllCharts();
+	for(i = 0; i < metriclist.length; i++){
+		for (i2 = 0; i2 < chartlist.length; i2++) {
+			for (i3 = 0; i3 < 3; i3++) {
+				window["LineChart"+metriclist[i]+chartlist[i2]].options.annotation.annotations[i3].type=ShowLines;
+			}
+			window["LineChart"+metriclist[i]+chartlist[i2]].update();
+		}
+	}
 }
 
 function ToggleFill() {
@@ -354,19 +374,22 @@ function ToggleFill() {
 		ShowFill = false;
 		SetCookie("ShowFill",false);
 	}
-	RedrawAllCharts();
+	for(i = 0; i < metriclist.length; i++){
+		for (i2 = 0; i2 < chartlist.length; i2++) {
+			for (i3 = 0; i3 < 3; i3++) {
+				window["LineChart"+metriclist[i]+chartlist[i2]].data.datasets[0].fill=ShowFill;
+			}
+			window["LineChart"+metriclist[i]+chartlist[i2]].update();
+		}
+	}
 }
 
 function RedrawAllCharts() {
-	Draw_Chart("Offsetdaily","Offset","ms","hour",24,"#fc8500");
-	Draw_Chart("Sys_Jitterdaily","Sys_Jitter","ms","hour",24,"#42ecf5");
-	Draw_Chart("Driftdaily","Drift","ppm","hour",24,"#ffffff");
-	Draw_Chart("Offsetweekly","Offset","ms","day",7,"#fc8500");
-	Draw_Chart("Sys_Jitterweekly","Sys_Jitter","ms","day",7,"#42ecf5");
-	Draw_Chart("Driftweekly","Drift","ppm","day",7,"#ffffff");
-	Draw_Chart("Offsetmonthly","Offset","ms","day",30,"#fc8500");
-	Draw_Chart("Sys_Jittermonthly","Sys_Jitter","ms","day",30,"#42ecf5");
-	Draw_Chart("Driftmonthly","Drift","ppm","day",30,"#ffffff");
+	for(i = 0; i < metriclist.length; i++){
+		for (i2 = 0; i2 < chartlist.length; i2++) {
+			Draw_Chart(metriclist[i]+chartlist[i2],titlelist[i],measureunitlist[i],timeunitlist[i2],intervallist[i2],colourlist[i]);
+		}
+	}
 }
 
 function GetCookie(cookiename) {
@@ -422,6 +445,14 @@ function reload() {
 	location.reload(true);
 }
 
+function ResetZoom(){
+	for(i = 0; i < metriclist.length; i++){
+		for (i2 = 0; i2 < chartlist.length; i2++) {
+			window["LineChart"+metriclist[i]+chartlist[i2]].resetZoom();
+		}
+	}
+}
+
 function applyRule() {
 	var action_script_tmp = "start_ntpmerlin";
 	document.form.action_script.value = action_script_tmp;
@@ -470,7 +501,7 @@ function applyRule() {
 <td style="background-color:rgb(77, 89, 93);border:0px;">
 <input type="button" onclick="applyRule();" value="Update stats" class="button_gen" name="button">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<input type="button" onclick="RedrawAllCharts();" value="Reset Zoom" class="button_gen" name="button">
+<input type="button" onclick="ResetZoom();" value="Reset Zoom" class="button_gen" name="button">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <input type="button" onclick="ToggleLines();" value="Toggle Lines" class="button_gen" name="button">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -492,7 +523,7 @@ function applyRule() {
 <div style="line-height:10px;">&nbsp;</div>
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartSys_Jitterdaily" height="300" /></div>
 <div style="line-height:10px;">&nbsp;</div>
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftdaily" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartFrequencydaily" height="300" /></div>
 </div>
 </td>
 </tr>
@@ -511,7 +542,7 @@ function applyRule() {
 <div style="line-height:10px;">&nbsp;</div>
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartSys_Jitterweekly" height="300" /></div>
 <div style="line-height:10px;">&nbsp;</div>
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftweekly" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartFrequencyweekly" height="300" /></div>
 </div>
 </td>
 </tr>
@@ -529,7 +560,7 @@ function applyRule() {
 <div style="line-height:10px;">&nbsp;</div>
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartSys_Jittermonthly" height="300" /></div>
 <div style="line-height:10px;">&nbsp;</div>
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartDriftmonthly" height="300" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="divLineChartFrequencymonthly" height="300" /></div>
 </div>
 </td>
 </tr>
