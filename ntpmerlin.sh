@@ -730,7 +730,7 @@ Generate_NTPStats(){
 	TZ=$(cat /etc/TZ)
 	export TZ
 	timenow=$(date +"%s")
-	timenowfriendly=$(date +"%s")
+	timenowfriendly=$(date +"%c")
 	
 	{
 		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([StatID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
