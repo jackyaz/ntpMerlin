@@ -19,9 +19,9 @@ readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v2.2.3"
+readonly SCRIPT_VERSION="v2.3.0"
 #shellcheck disable=SC2034
-readonly NTPD_VERSION="v2.2.3"
+readonly NTPD_VERSION="v2.3.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly OLD_SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
@@ -32,6 +32,7 @@ readonly OLD_SHARED_DIR="/jffs/scripts/shared-jy"
 readonly SHARED_DIR="/jffs/addons/shared-jy"
 readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
 readonly SHARED_WEB_DIR="$SCRIPT_WEBPAGE_DIR/shared-jy"
+readonly CSV_OUTPUT_DIR="$SCRIPT_DIR/csv"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 [ -f /opt/bin/sqlite3 ] && SQLITE3_PATH=/opt/bin/sqlite3 || SQLITE3_PATH=/usr/sbin/sqlite3
 ### End of script variables ###
@@ -234,6 +235,10 @@ Create_Dirs(){
 		mkdir -p "$SCRIPT_DIR"
 	fi
 	
+	if [ ! -d "$CSV_OUTPUT_DIR" ]; then
+		mkdir -p "$CSV_OUTPUT_DIR"
+	fi
+	
 	if [ -d "$OLD_SCRIPT_DIR" ]; then
 		mv "$OLD_SCRIPT_DIR" "$(dirname "$SCRIPT_DIR")"
 		rm -rf "$OLD_SCRIPT_DIR"
@@ -275,6 +280,7 @@ Create_Symlinks(){
 	
 	ln -s "$SCRIPT_DIR/ntpstatsdata.js" "$SCRIPT_WEB_DIR/ntpstatsdata.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/ntpstatstext.js" "$SCRIPT_WEB_DIR/ntpstatstext.js" 2>/dev/null
+	ln -s "$CSV_OUTPUT_DIR" "$SCRIPT_WEB_DIR/csv" 2>/dev/null
 	
 	ln -s "$SHARED_DIR/chart.js" "$SHARED_WEB_DIR/chart.js" 2>/dev/null
 	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SHARED_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
@@ -653,21 +659,6 @@ NTPD_Customise(){
 	/opt/etc/init.d/S77ntpd start
 }
 
-WriteData_ToJS(){
-	{
-	echo "var $3;"
-	echo "$3 = [];"; } >> "$2"
-	contents="$3"'.unshift('
-	while IFS='' read -r line || [ -n "$line" ]; do
-		if echo "$line" | grep -q "NaN"; then continue; fi
-		datapoint="{ x: moment.unix(""$(echo "$line" | awk 'BEGIN{FS=","}{ print $1 }' | awk '{$1=$1};1')""), y: ""$(echo "$line" | awk 'BEGIN{FS=","}{ print $2 }' | awk '{$1=$1};1')"" }"
-		contents="$contents""$datapoint"","
-	done < "$1"
-	contents=$(echo "$contents" | sed 's/.$//')
-	contents="$contents"");"
-	printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
-}
-
 WriteStats_ToJS(){
 	echo "function $3(){" > "$2"
 	html='document.getElementById("'"$4"'").innerHTML="'
@@ -678,19 +669,43 @@ WriteStats_ToJS(){
 	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
 }
 
-#$1 fieldname $2 tablename $3 frequency (hours) $4 length (days) $5 outputfile $6 sqlfile
+#$1 fieldname $2 tablename $3 frequency (hours) $4 length (days) $5 outputfile $6 outputfrequency $7 sqlfile $8 timestamp
 WriteSql_ToFile(){
+	timenow="$8"
+	earliest="$((24*$4/$3))"
+	
 	{
 		echo ".mode csv"
-		echo ".output $5"
-	} >> "$6"
-	COUNTER=0
-	timenow="$(date '+%s')"
-	until [ $COUNTER -gt "$((24*$4/$3))" ]; do
-		echo "select $timenow - ((60*60*$3)*($COUNTER)),IFNULL(avg([$1]),'NaN') from $2 WHERE ([Timestamp] >= $timenow - ((60*60*$3)*($COUNTER+1))) AND ([Timestamp] <= $timenow - ((60*60*$3)*$COUNTER));" >> "$6"
-		COUNTER=$((COUNTER + 1))
-	done
+		echo ".output $5$6.tmp"
+	} >> "$7"
+	
+	{
+		echo "SELECT '$metric',Min([Timestamp]) ChunkStart, IFNULL(Avg([$1]),'NaN') Value FROM"
+		echo "( SELECT NTILE($((24*$4/$3))) OVER (ORDER BY [Timestamp]) Chunk, * FROM $2 WHERE [Timestamp] >= ($timenow - ((60*60*$3)*$earliest))) AS T"
+		echo "GROUP BY Chunk"
+		echo "ORDER BY ChunkStart;"
+	} >> "$7"
+	echo "var $metric$6""size = 1;" >> "$SCRIPT_DIR/ntpstatsdata.js"
 }
+
+Aggregate_Stats(){
+	metricname="$1"
+	period="$2"
+	sed -i '1iMetric,Time,Value' "$CSV_OUTPUT_DIR/$metricname$period.tmp"
+	head -c -2 "$CSV_OUTPUT_DIR/$metricname$period.tmp" > "$CSV_OUTPUT_DIR/$metricname$period.htm"
+	dos2unix "$CSV_OUTPUT_DIR/$metricname$period.htm"
+	cp "$CSV_OUTPUT_DIR/$metricname$period.htm" "$CSV_OUTPUT_DIR/$metricname$period.tmp"
+	sed -i '1d' "$CSV_OUTPUT_DIR/$metricname$period.tmp"
+	min="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | head -1)"
+	max="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | tail -1)"
+	avg="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | awk '{ total += $1; count++ } END { print total/count }')"
+	{
+	echo "var $metricname$period""min = $min;"
+	echo "var $metricname$period""max = $max;"
+	echo "var $metricname$period""avg = $avg;"
+	} >> "$SCRIPT_DIR/ntpstatsdata.js"
+}
+
 
 Generate_NTPStats(){
 	Auto_Startup create 2>/dev/null
@@ -714,63 +729,55 @@ Generate_NTPStats(){
 	
 	TZ=$(cat /etc/TZ)
 	export TZ
-	
-	if [ -f "$SCRIPT_DIR/ntpdstats.db" ] && [ ! -f "$SCRIPT_DIR/.dbconverted" ]; then
-		{
-			echo "CREATE TABLE IF NOT EXISTS [ntpstats_new] ([StatID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
-			echo "INSERT INTO ntpstats_new ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) SELECT [Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp] FROM ntpstats ORDER BY [Timestamp];"
-			echo "DROP TABLE ntpstats;"
-			echo "ALTER TABLE [ntpstats_new] RENAME TO [ntpstats];"
-		} > /tmp/ntp-convert.sql
-		"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-convert.sql
-		touch "$SCRIPT_DIR/.dbconverted"
-		rm -f /tmp/ntp-convert.sql
-	fi
+	timenow=$(date +"%s")
+	timenowfriendly=$(date +"%c")
 	
 	{
 		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([StatID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
-		echo "INSERT INTO ntpstats ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) values($(date '+%s'),$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
+		echo "INSERT INTO ntpstats ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) values($timenow,$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
 	} > /tmp/ntp-stats.sql
 	
 	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
 	{
-		echo ".mode csv"
-		echo ".output /tmp/ntp-offsetdaily.csv"
-		echo "select [Timestamp],[Offset] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
-		echo ".output /tmp/ntp-jitterdaily.csv"
-		echo "select [Timestamp],[Sys_Jitter] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
-		echo ".output /tmp/ntp-driftdaily.csv"
-		echo "select [Timestamp],[Frequency] from ntpstats WHERE [Timestamp] >= (strftime('%s','now') - 86400);"
+		echo "DELETE FROM [ntpstats] WHERE [Timestamp] < ($timenow - (86400*30));"
 	} > /tmp/ntp-stats.sql
-	
-	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
-	
-	rm -f /tmp/ntp-stats.sql
-	
-	WriteSql_ToFile "Offset" "ntpstats" 1 7 "/tmp/ntp-offsetweekly.csv" "/tmp/ntp-stats.sql"
-	WriteSql_ToFile "Sys_Jitter" "ntpstats" 1 7 "/tmp/ntp-jitterweekly.csv" "/tmp/ntp-stats.sql"
-	WriteSql_ToFile "Frequency" "ntpstats" 1 7 "/tmp/ntp-driftweekly.csv" "/tmp/ntp-stats.sql"
-	WriteSql_ToFile "Offset" "ntpstats" 3 30 "/tmp/ntp-offsetmonthly.csv" "/tmp/ntp-stats.sql"
-	WriteSql_ToFile "Sys_Jitter" "ntpstats" 3 30 "/tmp/ntp-jittermonthly.csv" "/tmp/ntp-stats.sql"
-	WriteSql_ToFile "Frequency" "ntpstats" 3 30 "/tmp/ntp-driftmonthly.csv" "/tmp/ntp-stats.sql"
 	
 	"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
 	rm -f "$SCRIPT_DIR/ntpstatsdata.js"
-	WriteData_ToJS "/tmp/ntp-offsetdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataOffsetDaily"
-	WriteData_ToJS "/tmp/ntp-jitterdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterDaily"
-	WriteData_ToJS "/tmp/ntp-driftdaily.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftDaily"
+	rm -f "$CSV_OUTPUT_DIR/"*
+	rm -f /tmp/ntp-stats.sql
 	
-	WriteData_ToJS "/tmp/ntp-offsetweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataOffsetWeekly"
-	WriteData_ToJS "/tmp/ntp-jitterweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterWeekly"
-	WriteData_ToJS "/tmp/ntp-driftweekly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftWeekly"
+	metriclist="Offset Sys_Jitter Frequency"
 	
-	WriteData_ToJS "/tmp/ntp-offsetmonthly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataOffsetMonthly"
-	WriteData_ToJS "/tmp/ntp-jittermonthly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataJitterMonthly"
-	WriteData_ToJS "/tmp/ntp-driftmonthly.csv" "$SCRIPT_DIR/ntpstatsdata.js" "DataDriftMonthly"
+	for metric in $metriclist; do
+		{
+			echo ".mode csv"
+			echo ".output $CSV_OUTPUT_DIR/$metric""daily.tmp"
+			echo "select '$metric',[Timestamp],[$metric] from ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
+		} > /tmp/ntp-stats.sql
+		
+		"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+		echo "var $metric""dailysize = 1;" >> "$SCRIPT_DIR/ntpstatsdata.js"
+		Aggregate_Stats "$metric" "daily"
+		rm -f "$CSV_OUTPUT_DIR/$metric""daily.tmp"*
+		rm -f /tmp/ntp-stats.sql
+		
+		WriteSql_ToFile "$metric" "ntpstats" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/ntp-stats.sql" "$timenow"
+		"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+		Aggregate_Stats "$metric" "weekly"
+		rm -f "$CSV_OUTPUT_DIR/$metric""weekly.tmp"
+		rm -f /tmp/ntp-stats.sql
+		
+		WriteSql_ToFile "$metric" "ntpstats" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/ntp-stats.sql" "$timenow"
+		"$SQLITE3_PATH" "$SCRIPT_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+		Aggregate_Stats "$metric" "monthly"
+		rm -f "$CSV_OUTPUT_DIR/$metric""monthly.tmp"
+		rm -f /tmp/ntp-stats.sql
+	done
 	
-	echo "NTPD Performance Stats generated on $(date +"%c")" > "/tmp/ntpstatstitle.txt"
+	echo "NTPD Performance Stats generated on $timenowfriendly" > "/tmp/ntpstatstitle.txt"
 	WriteStats_ToJS "/tmp/ntpstatstitle.txt" "$SCRIPT_DIR/ntpstatstext.js" "SetNTPDStatsTitle" "statstitle"
 	
 	rm -f "$tmpfile"
