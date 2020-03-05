@@ -20,8 +20,6 @@ readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2018
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
 readonly SCRIPT_VERSION="v2.3.0"
-#shellcheck disable=SC2034
-readonly NTPD_VERSION="v2.3.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly OLD_SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
@@ -680,12 +678,12 @@ WriteSql_ToFile(){
 	} >> "$7"
 	
 	{
-		echo "SELECT '$metric',Min([Timestamp]) ChunkStart, IFNULL(Avg([$1]),'NaN') Value FROM"
+		echo "SELECT '$1',Min([Timestamp]) ChunkStart, IFNULL(Avg([$1]),'NaN') Value FROM"
 		echo "( SELECT NTILE($((24*$4/$3))) OVER (ORDER BY [Timestamp]) Chunk, * FROM $2 WHERE [Timestamp] >= ($timenow - ((60*60*$3)*$earliest))) AS T"
 		echo "GROUP BY Chunk"
 		echo "ORDER BY ChunkStart;"
 	} >> "$7"
-	echo "var $metric$6""size = 1;" >> "$SCRIPT_DIR/ntpstatsdata.js"
+	echo "var $1$6""size = 1;" >> "$SCRIPT_DIR/ntpstatsdata.js"
 }
 
 Aggregate_Stats(){
