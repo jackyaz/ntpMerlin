@@ -108,7 +108,7 @@ var measureunitlist = ["ms","ms","ppm"];
 var chartlist = ["daily","weekly","monthly"];
 var timeunitlist = ["hour","day","day"];
 var intervallist = [24,7,30];
-var colourlist = ["#fc8500","#42ecf5","#ffffff"]
+var colourlist = ["#fc8500","#42ecf5","#ffffff"];
 
 function Draw_Chart_NoData(txtchartname){
 	document.getElementById("divLineChart"+txtchartname).width="730";
