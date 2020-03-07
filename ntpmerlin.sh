@@ -19,8 +19,8 @@ readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v2.3.0"
-readonly SCRIPT_BRANCH="master"
+readonly SCRIPT_VERSION="v2.3.1"
+readonly SCRIPT_BRANCH="develop"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly OLD_SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
@@ -122,14 +122,7 @@ Update_Version(){
 		Update_File "S77ntpd"
 		Update_File "ntp.conf"
 		Update_File "ntpdstats_www.asp"
-		Update_File "redirect.htm"
-		Update_File "addons.png"
-		Update_File "chart.js"
-		Update_File "chartjs-plugin-zoom.js"
-		Update_File "chartjs-plugin-annotation.js"
-		Update_File "chartjs-plugin-datasource.js"
-		Update_File "hammerjs.js"
-		Update_File "moment.js"
+		Update_File "shared-jy.tar.gz"
 		
 		if [ "$doupdate" != "false" ]; then
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
@@ -149,14 +142,7 @@ Update_Version(){
 			Update_File "S77ntpd"
 			Update_File "ntp.conf"
 			Update_File "ntpdstats_www.asp"
-			Update_File "redirect.htm"
-			Update_File "addons.png"
-			Update_File "chart.js"
-			Update_File "chartjs-plugin-zoom.js"
-			Update_File "chartjs-plugin-annotation.js"
-			Update_File "chartjs-plugin-datasource.js"
-			Update_File "hammerjs.js"
-			Update_File "moment.js"
+			Update_File "shared-jy.tar.gz"
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$SCRIPT_NAME_LOWER"
 			Clear_Lock
@@ -200,17 +186,23 @@ Update_File(){
 			Mount_WebUI
 		fi
 		rm -f "$tmpfile"
-	elif [ "$1" = "chart.js" ] || [ "$1" = "chartjs-plugin-zoom.js" ] || [ "$1" = "chartjs-plugin-annotation.js" ] || [ "$1" = "moment.js" ] || [ "$1" =  "hammerjs.js" ] || [ "$1" = "chartjs-plugin-datasource.js" ] || [ "$1" = "addons.png" ] || [ "$1" = "redirect.htm" ]; then
-		tmpfile="/tmp/$1"
-		Download_File "$SHARED_REPO/$1" "$tmpfile"
-		if [ ! -f "$SHARED_DIR/$1" ]; then
-			touch "$SHARED_DIR/$1"
-		fi
-		if ! diff -q "$tmpfile" "$SHARED_DIR/$1" >/dev/null 2>&1; then
-			Print_Output "true" "New version of $1 downloaded" "$PASS"
+	elif [ "$1" = "shared-jy.tar.gz" ]; then
+		if [ ! -f "$SHARED_DIR/$1.md5" ]; then
 			Download_File "$SHARED_REPO/$1" "$SHARED_DIR/$1"
+			Download_File "$SHARED_REPO/$1.md5" "$SHARED_DIR/$1.md5"
+			tar -xzf "$SHARED_DIR/$1" -C "$SHARED_DIR"
+			rm -f "$SHARED_DIR/$1"
+			Print_Output "true" "New version of $1 downloaded" "$PASS"
+		else
+			localmd5="$(cat "$SHARED_DIR/$1.md5")"
+			remotemd5="$(curl -fsL --retry 3 "$SHARED_REPO/$1.md5")"
+			if [ "$localmd5" != "$remotemd5" ]; then
+				Download_File "$SHARED_REPO/$1" "$SHARED_DIR/$1"
+				tar -xzf "$SHARED_DIR/$1" -C "$SHARED_DIR"
+				rm -f "$SHARED_DIR/$1"
+				Print_Output "true" "New version of $1 downloaded" "$PASS"
+			fi
 		fi
-		rm -f "$tmpfile"
 	else
 		return 1
 	fi
@@ -237,26 +229,8 @@ Create_Dirs(){
 		mkdir -p "$CSV_OUTPUT_DIR"
 	fi
 	
-	if [ -d "$OLD_SCRIPT_DIR" ]; then
-		mv "$OLD_SCRIPT_DIR" "$(dirname "$SCRIPT_DIR")"
-		rm -rf "$OLD_SCRIPT_DIR"
-	fi
-	
-	if [ -f "/jffs/configs/ntp.conf" ]; then
-		mv "/jffs/configs/ntp.conf" "$SCRIPT_DIR/ntp.conf"
-	fi
-	
-	if [ -f "/jffs/configs/ntp.conf.default" ]; then
-		mv "/jffs/configs/ntp.conf.default" "$SCRIPT_DIR/ntp.conf.default"
-	fi
-	
 	if [ ! -d "$SHARED_DIR" ]; then
 		mkdir -p "$SHARED_DIR"
-	fi
-	
-	if [ -d "$OLD_SHARED_DIR" ]; then
-		mv "$OLD_SHARED_DIR" "$(dirname "$SHARED_DIR")"
-		rm -rf "$OLD_SHARED_DIR"
 	fi
 	
 	if [ ! -d "$SCRIPT_WEBPAGE_DIR" ]; then
@@ -266,28 +240,21 @@ Create_Dirs(){
 	if [ ! -d "$SCRIPT_WEB_DIR" ]; then
 		mkdir -p "$SCRIPT_WEB_DIR"
 	fi
-	
-	if [ ! -d "$SHARED_WEB_DIR" ]; then
-		mkdir -p "$SHARED_WEB_DIR"
-	fi
 }
 
 Create_Symlinks(){
 	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
-	rm -f "$SHARED_WEB_DIR/"* 2>/dev/null
 	
 	ln -s "$SCRIPT_DIR/ntpstatsdata.js" "$SCRIPT_WEB_DIR/ntpstatsdata.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/ntpstatstext.js" "$SCRIPT_WEB_DIR/ntpstatstext.js" 2>/dev/null
-	ln -s "$CSV_OUTPUT_DIR" "$SCRIPT_WEB_DIR/csv" 2>/dev/null
 	
-	ln -s "$SHARED_DIR/chart.js" "$SHARED_WEB_DIR/chart.js" 2>/dev/null
-	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SHARED_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
-	ln -s "$SHARED_DIR/chartjs-plugin-annotation.js" "$SHARED_WEB_DIR/chartjs-plugin-annotation.js" 2>/dev/null
-	ln -s "$SHARED_DIR/chartjs-plugin-datasource.js" "$SHARED_WEB_DIR/chartjs-plugin-datasource.js" 2>/dev/null
-	ln -s "$SHARED_DIR/hammerjs.js" "$SHARED_WEB_DIR/hammerjs.js" 2>/dev/null
-	ln -s "$SHARED_DIR/moment.js" "$SHARED_WEB_DIR/moment.js" 2>/dev/null
-	ln -s "$SHARED_DIR/redirect.htm" "$SHARED_WEB_DIR/redirect.htm" 2>/dev/null
-	ln -s "$SHARED_DIR/addons.png" "$SHARED_WEB_DIR/addons.png" 2>/dev/null
+	if [ ! -d "$SCRIPT_WEB_DIR/csv" ]; then
+		ln -s "$CSV_OUTPUT_DIR" "$SCRIPT_WEB_DIR/csv" 2>/dev/null
+	fi
+	
+	if [ ! -d "$SHARED_WEB_DIR" ]; then
+		ln -s "$SHARED_DIR" "$SHARED_WEB_DIR" 2>/dev/null
+	fi
 }
 
 Auto_ServiceEvent(){
@@ -1007,15 +974,8 @@ Menu_Install(){
 	
 	Download_File "$SCRIPT_REPO/ntp.conf" "$SCRIPT_DIR/ntp.conf"
 	Update_File "ntpdstats_www.asp"
-	Update_File "redirect.htm"
-	Update_File "addons.png"
-	Update_File "chart.js"
-	Update_File "chartjs-plugin-zoom.js"
-	Update_File "chartjs-plugin-annotation.js"
-	Update_File "chartjs-plugin-datasource.js"
-	Update_File "hammerjs.js"
-	Update_File "moment.js"
-
+	Update_File "shared-jy.tar.gz"
+	
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
