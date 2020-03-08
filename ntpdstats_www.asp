@@ -99,7 +99,7 @@ var ShowLines=GetCookie("ShowLines");
 var ShowFill=GetCookie("ShowFill");
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
-  return coordinates;
+	return coordinates;
 };
 
 var metriclist = ["Offset","Sys_Jitter","Frequency"];
