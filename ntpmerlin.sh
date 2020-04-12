@@ -954,7 +954,7 @@ Menu_ToggleOutputDataMode(){
 	elif [ "$(OutputDataMode "check")" = "average" ]; then
 		OutputDataMode "raw"
 	fi
-	Clear_Lock
+	Clear_Lock "menu"
 }
 
 Menu_Edit(){
