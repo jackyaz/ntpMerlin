@@ -367,7 +367,7 @@ function RedrawAllCharts() {
 	var i;
 	for(i = 0; i < metriclist.length; i++){
 		for (i2 = 0; i2 < chartlist.length; i2++) {
-			d3.csv('/ext/spdmerlin/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(Draw_Chart.bind(null,metriclist[i]+chartlist[i2],titlelist[i],measureunitlist[i],timeunitlist[i2],intervallist[i2],colourlist[i]));
+			d3.csv('/ext/ntpmerlin/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(Draw_Chart.bind(null,metriclist[i]+chartlist[i2],titlelist[i],measureunitlist[i],timeunitlist[i2],intervallist[i2],colourlist[i]));
 		}
 	}
 	ResetZoom();
@@ -467,7 +467,7 @@ function DragZoom(button){
 }
 
 function ExportCSV() {
-	location.href = "ext/spdmerlin/csv/spdmerlindata.zip";
+	location.href = "ext/ntpmerlin/csv/ntpmerlindata.zip";
 	return 0;
 }
 
