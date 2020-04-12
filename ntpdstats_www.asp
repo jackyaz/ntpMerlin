@@ -108,7 +108,7 @@ function Draw_Chart_NoData(txtchartname){
 	ctx.restore();
 }
 
-function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname){
+function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname,dataobject){
 	if(typeof dataobject === 'undefined' || dataobject === null) { Draw_Chart_NoData(txtchartname); return; }
 	if (dataobject.length == 0) { Draw_Chart_NoData(txtchartname); return; }
 	
