@@ -168,7 +168,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname,
 		plugins: {
 			zoom: {
 				pan: {
-					enabled: true,
+					enabled: false,
 					mode: 'xy',
 					rangeMin: {
 						x: new Date().getTime() - (factor * numunitx),
@@ -181,6 +181,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname,
 				},
 				zoom: {
 					enabled: true,
+					drag: true,
 					mode: 'xy',
 					rangeMin: {
 						x: new Date().getTime() - (factor * numunitx),
@@ -451,17 +452,14 @@ function DragZoom(button){
 		buttonvalue = "Drag Zoom On";
 	}
 	
-	if(interfacelist != ""){
-		var interfacetextarray = interfacelist.split(',');
-		for(i = 0; i < metriclist.length; i++){
-			for (i2 = 0; i2 < chartlist.length; i2++) {
-				var chartobj = window["LineChart"+metriclist[i]+chartlist[i2]];
-				if(typeof chartobj === 'undefined' || chartobj === null) { continue; }
-				chartobj.options.plugins.zoom.zoom.drag = drag;
-				chartobj.options.plugins.zoom.pan.enabled = pan;
-				button.value = buttonvalue;
-				chartobj.update();
-			}
+	for(i = 0; i < metriclist.length; i++){
+		for (i2 = 0; i2 < chartlist.length; i2++) {
+			var chartobj = window["LineChart"+metriclist[i]+chartlist[i2]];
+			if(typeof chartobj === 'undefined' || chartobj === null) { continue; }
+			chartobj.options.plugins.zoom.zoom.drag = drag;
+			chartobj.options.plugins.zoom.pan.enabled = pan;
+			button.value = buttonvalue;
+			chartobj.update();
 		}
 	}
 }
