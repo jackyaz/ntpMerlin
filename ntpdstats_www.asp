@@ -12,9 +12,8 @@
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <style>
 p {
-font-weight: bolder;
+  font-weight: bolder;
 }
-
 .collapsible {
   color: white;
   padding: 0px;
@@ -24,7 +23,15 @@ font-weight: bolder;
   outline: none;
   cursor: pointer;
 }
-
+.collapsible-jquery {
+  color: white;
+  padding: 0px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  cursor: pointer;
+}
 .collapsiblecontent {
   padding: 0px;
   max-height: 0;
@@ -32,69 +39,31 @@ font-weight: bolder;
   border: none;
   transition: max-height 0.2s ease-out;
 }
+.invalid {
+  background-color: darkred !important;
+}
 </style>
-<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/moment.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chart.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/hammerjs.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-zoom.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-annotation.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-datasource.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-deferred.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/d3.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmhist.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
-<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatsdata.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatstext.js"></script>
 <script>
-// Keep the real data in a seperate object called allData
-// Put only that part of allData in the dataset to optimize zoom/pan performance
-// Author: Evert van der Weit - 2018
-function filterData(chartInstance) {
-	var datasets = chartInstance.data.datasets;
-	var originalDatasets = chartInstance.data.allData;
-	var chartOptions = chartInstance.options.scales.xAxes[0];
-	
-	var startX = chartOptions.time.min;
-	var endX = chartOptions.time.max;
-	if(typeof originalDatasets === 'undefined' || originalDatasets === null) { return; }
-	for(var i = 0; i < originalDatasets.length; i++) {
-		var dataset = datasets[i];
-		var originalData = originalDatasets[i];
-		
-		if (!originalData.length) break
-		
-		var s = startX;
-		var e = endX;
-		var sI = null;
-		var eI = null;
-		
-		for (var j = 0; j < originalData.length; j++) {
-			if ((sI==null) && originalData[j].x > s) {
-				sI = j;
-			}
-			if ((eI==null) && originalData[j].x > e) {
-				eI = j;
-			}
-		}
-		if (sI==null) sI = 0;
-		if (originalData[originalData.length - 1].x < s) eI = 0
-			else if (eI==null) eI = originalData.length
-		
-		dataset.data = originalData.slice(sI, eI);
-	}
-}
-var datafilterPlugin = {
-	beforeUpdate: function(chartInstance) {
-		filterData(chartInstance);
-	}
-}
-</script>
-<script>
+var $j = jQuery.noConflict(); //avoid conflicts on John's fork (state.js)
+
 var ShowLines=GetCookie("ShowLines");
 var ShowFill=GetCookie("ShowFill");
 Chart.defaults.global.defaultFontColor = "#CCC";
@@ -109,6 +78,21 @@ var chartlist = ["daily","weekly","monthly"];
 var timeunitlist = ["hour","day","day"];
 var intervallist = [24,7,30];
 var colourlist = ["#fc8500","#42ecf5","#ffffff"];
+
+function keyHandler(e) {
+	if (e.keyCode == 27){
+		$j(document).off("keydown");
+		ResetZoom();
+	}
+}
+
+$j(document).keydown(function(e){keyHandler(e);});
+$j(document).keyup(function(e){
+	$j(document).keydown(function(e){
+		keyHandler(e);
+	});
+});
+
 
 function Draw_Chart_NoData(txtchartname){
 	document.getElementById("divLineChart"+txtchartname).width="730";
@@ -125,11 +109,13 @@ function Draw_Chart_NoData(txtchartname){
 	ctx.restore();
 }
 
-function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname){
+function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname,dataobject){
+	if(typeof dataobject === 'undefined' || dataobject === null) { Draw_Chart_NoData(txtchartname); return; }
+	if (dataobject.length == 0) { Draw_Chart_NoData(txtchartname); return; }
+	
+	var chartLabels = dataobject.map(function(d) {return d.Metric});
+	var chartData = dataobject.map(function(d) {return {x: d.Time, y: d.Value}});
 	var objchartname=window["LineChart"+txtchartname];
-	var objdataname=window[txtchartname+"size"];
-	if(typeof objdataname === 'undefined' || objdataname === null) { Draw_Chart_NoData(txtchartname); return; }
-	if (objdataname == 0) { Draw_Chart_NoData(txtchartname); return; }
 	
 	factor=0;
 	if (txtunitx=="hour"){
@@ -143,12 +129,8 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 	var lineOptions = {
 		segmentShowStroke : false,
 		segmentStrokeColor : "#000",
-		//animationEasing : "easeOutQuart",
-		//animationSteps : 100,
-		animation: {
-			duration: 0 // general animation time
-		},
-		responsiveAnimationDuration: 0, // animation duration after a resize
+		animationEasing : "easeOutQuart",
+		animationSteps : 100,
 		maintainAspectRatio: false,
 		animateScale : true,
 		hover: { mode: "point" },
@@ -157,7 +139,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 		tooltips: {
 			callbacks: {
 					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel,"X").format('YYYY-MM-DD HH:mm:ss')); },
-					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString() + ' ' + txtunity;}
+					label: function (tooltipItem, data) { return round(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y,3).toFixed(3) + ' ' + txtunity;}
 				},
 				mode: 'point',
 				position: 'cursor',
@@ -187,41 +169,34 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 		plugins: {
 			zoom: {
 				pan: {
-					enabled: true,
+					enabled: false,
 					mode: 'xy',
 					rangeMin: {
 						x: new Date().getTime() - (factor * numunitx),
-						y: getLimit(txtchartname,"y","min",false) - Math.sqrt(Math.pow(getLimit(txtchartname,"y","min",false),2))*0.1,
+						y: getLimit(chartData,"y","min",false) - Math.sqrt(Math.pow(getLimit(chartData,"y","min",false),2))*0.1,
 					},
 					rangeMax: {
 						x: new Date().getTime(),
-						y: getLimit(txtchartname,"y","max",false) + getLimit(txtchartname,"y","max",false)*0.1,
+						y: getLimit(chartData,"y","max",false) + getLimit(chartData,"y","max",false)*0.1,
 					},
 				},
 				zoom: {
 					enabled: true,
+					drag: true,
 					mode: 'xy',
 					rangeMin: {
 						x: new Date().getTime() - (factor * numunitx),
-						y: getLimit(txtchartname,"y","min",false) - Math.sqrt(Math.pow(getLimit(txtchartname,"y","min",false),2))*0.1,
+						y: getLimit(chartData,"y","min",false) - Math.sqrt(Math.pow(getLimit(chartData,"y","min",false),2))*0.1,
 					},
 					rangeMax: {
 						x: new Date().getTime(),
-						y: getLimit(txtchartname,"y","max",false) + getLimit(txtchartname,"y","max",false)*0.1,
+						y: getLimit(chartData,"y","max",false) + getLimit(chartData,"y","max",false)*0.1,
 					},
 					speed: 0.1
 				},
 			},
-			datasource: {
-				type: 'csv',
-				url: '/ext/ntpmerlin/csv/'+txtchartname+'.htm',
-				delimiter: ',',
-				rowMapping: 'datapoint',
-				datapointLabelMapping: {
-					_dataset: 'Metric',
-					x: 'Time',
-					y: 'Value'
-				}
+			deferred: {
+				delay: 250
 			},
 		},
 		annotation: {
@@ -231,7 +206,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 				type: ShowLines,
 				mode: 'horizontal',
 				scaleID: 'y-axis-0',
-				value: getAverage(txtchartname),
+				value: getAverage(chartData),
 				borderColor: colourname,
 				borderWidth: 1,
 				borderDash: [5, 5],
@@ -248,7 +223,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 					enabled: true,
 					xAdjust: 0,
 					yAdjust: 0,
-					content: "Avg=" + round(getAverage(txtchartname),3).toFixed(3)+txtunity,
+					content: "Avg=" + round(getAverage(chartData),3).toFixed(3)+txtunity,
 				}
 			},
 			{
@@ -256,7 +231,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 				type: ShowLines,
 				mode: 'horizontal',
 				scaleID: 'y-axis-0',
-				value: getLimit(txtchartname,"y","max",true),
+				value: getLimit(chartData,"y","max",true),
 				borderColor: colourname,
 				borderWidth: 1,
 				borderDash: [5, 5],
@@ -273,7 +248,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 					enabled: true,
 					xAdjust: 0,
 					yAdjust: 0,
-					content: "Max=" + round(getLimit(txtchartname,"y","max",true),3).toFixed(3)+txtunity,
+					content: "Max=" + round(getLimit(chartData,"y","max",true),3).toFixed(3)+txtunity,
 				}
 			},
 			{
@@ -281,7 +256,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 				type: ShowLines,
 				mode: 'horizontal',
 				scaleID: 'y-axis-0',
-				value: getLimit(txtchartname,"y","min",true),
+				value: getLimit(chartData,"y","min",true),
 				borderColor: colourname,
 				borderWidth: 1,
 				borderDash: [5, 5],
@@ -298,13 +273,14 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 					enabled: true,
 					xAdjust: 0,
 					yAdjust: 0,
-					content: "Min=" + round(getLimit(txtchartname,"y","min",true),3).toFixed(3)+txtunity,
+					content: "Min=" + round(getLimit(chartData,"y","min",true),3).toFixed(3)+txtunity,
 				}
 			}]
 		}
 	};
 	var lineDataset = {
-		datasets: [{label: txttitle,
+		labels: chartLabels,
+		datasets: [{data: chartData,
 			borderWidth: 1,
 			pointRadius: 1,
 			lineTension: 0,
@@ -315,7 +291,6 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 	};
 	objchartname = new Chart(ctx, {
 		type: 'line',
-		plugins: [ChartDataSource,datafilterPlugin],
 		data: lineDataset,
 		options: lineOptions
 	});
@@ -323,10 +298,21 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname)
 }
 
 function getLimit(datasetname,axis,maxmin,isannotation) {
-	var limit = 0;
-	var objdataname=window[datasetname+maxmin];
-	if(typeof objdataname === 'undefined' || objdataname === null) { limit = 0; }
-	else {limit = objdataname;}
+	var limit=0;
+	var values;
+	if(axis == "x"){
+		values = datasetname.map(function(o) { return o.x } );
+	}
+	else{
+		values = datasetname.map(function(o) { return o.y } );
+	}
+	
+	if(maxmin == "max"){
+		limit=Math.max.apply(Math, values);
+	}
+	else{
+		limit=Math.min.apply(Math, values);
+	}
 	if(maxmin == "max" && limit == 0 && isannotation == false){
 		limit = 1;
 	}
@@ -334,10 +320,11 @@ function getLimit(datasetname,axis,maxmin,isannotation) {
 }
 
 function getAverage(datasetname) {
-	var avg = 0;
-	var objdataname=window[datasetname+"avg"];
-	if(typeof objdataname === 'undefined' || objdataname === null) { avg = 0; }
-	else {avg = objdataname;}
+	var total = 0;
+	for(var i = 0; i < datasetname.length; i++) {
+		total += (datasetname[i].y*1);
+	}
+	var avg = total / datasetname.length;
 	return avg;
 }
 
@@ -382,9 +369,10 @@ function ToggleFill() {
 }
 
 function RedrawAllCharts() {
+	var i;
 	for(i = 0; i < metriclist.length; i++){
 		for (i2 = 0; i2 < chartlist.length; i2++) {
-			Draw_Chart(metriclist[i]+chartlist[i2],titlelist[i],measureunitlist[i],timeunitlist[i2],intervallist[i2],colourlist[i]);
+			d3.csv('/ext/ntpmerlin/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(Draw_Chart.bind(null,metriclist[i]+chartlist[i2],titlelist[i],measureunitlist[i],timeunitlist[i2],intervallist[i2],colourlist[i]));
 		}
 	}
 	ResetZoom();
@@ -407,7 +395,7 @@ function SetCookie(cookiename,cookievalue) {
 function AddEventHandlers(){
 	var coll = document.getElementsByClassName("collapsible");
 	var i;
-
+	
 	for (i = 0; i < coll.length; i++) {
 		coll[i].addEventListener("click", function() {
 			this.classList.toggle("active");
@@ -446,9 +434,43 @@ function reload() {
 function ResetZoom(){
 	for(i = 0; i < metriclist.length; i++){
 		for (i2 = 0; i2 < chartlist.length; i2++) {
-			window["LineChart"+metriclist[i]+chartlist[i2]].resetZoom();
+			var chartobj = window["LineChart"+metriclist[i]+chartlist[i2]];
+			if(typeof chartobj === 'undefined' || chartobj === null) { continue; }
+			chartobj.resetZoom();
 		}
 	}
+}
+
+function DragZoom(button){
+	var drag = true;
+	var pan = false;
+	var buttonvalue = "";
+	if(button.value.indexOf("On") != -1){
+		drag = false;
+		pan = true;
+		buttonvalue = "Drag Zoom Off";
+	}
+	else {
+		drag = true;
+		pan = false;
+		buttonvalue = "Drag Zoom On";
+	}
+	
+	for(i = 0; i < metriclist.length; i++){
+		for (i2 = 0; i2 < chartlist.length; i2++) {
+			var chartobj = window["LineChart"+metriclist[i]+chartlist[i2]];
+			if(typeof chartobj === 'undefined' || chartobj === null) { continue; }
+			chartobj.options.plugins.zoom.zoom.drag = drag;
+			chartobj.options.plugins.zoom.pan.enabled = pan;
+			button.value = buttonvalue;
+			chartobj.update();
+		}
+	}
+}
+
+function ExportCSV() {
+	location.href = "ext/ntpmerlin/csv/ntpmerlindata.zip";
+	return 0;
 }
 
 function applyRule() {
@@ -458,7 +480,6 @@ function applyRule() {
 	showLoading();
 	document.form.submit();
 }
-
 </script>
 </head>
 <body onload="initial();" onunload="return unload_body();">
@@ -494,16 +515,25 @@ function applyRule() {
 <td valign="top">
 <div>&nbsp;</div>
 <div class="formfonttitle" id="statstitle">NTPD Performance Stats</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="border:0px;">
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="border:0px;" id="table_buttons">
 <tr class="apply_gen" valign="top" height="35px">
 <td style="background-color:rgb(77, 89, 93);border:0px;">
-<input type="button" onclick="applyRule();" value="Update stats" class="button_gen" name="button">
+<input type="button" onclick="DragZoom(this);" value="Drag Zoom On" class="button_gen" name="button">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <input type="button" onclick="ResetZoom();" value="Reset Zoom" class="button_gen" name="button">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <input type="button" onclick="ToggleLines();" value="Toggle Lines" class="button_gen" name="button">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <input type="button" onclick="ToggleFill();" value="Toggle Fill" class="button_gen" name="button">
+</td>
+</tr>
+</table>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="border:0px;" id="table_buttons2">
+<tr class="apply_gen" valign="top" height="35px">
+<td style="background-color:rgb(77, 89, 93);border:0px;">
+<input type="button" onclick="applyRule();" value="Update stats" class="button_gen" name="button">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="button" onclick="ExportCSV();" value="Export to CSV" class="button_gen" name="button">
 </td>
 </tr>
 </table>

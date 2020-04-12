@@ -2,8 +2,8 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bc89c12c4bf44b49b28161f328e49b0)](https://www.codacy.com/app/jackyaz/ntpMerlin?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/ntpMerlin&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.com/jackyaz/ntpMerlin.svg?branch=master)](https://travis-ci.com/jackyaz/ntpMerlin)
 
-## v2.3.1
-### Updated on 2020-03-08
+## v2.4.0
+### Updated on 2020-04-12
 ## About
 Run an NTP server for your network on your router. Graphs available for NTP accuracy on the Addons page of the WebUI.
 
@@ -19,18 +19,8 @@ Inspired by [kvic](https://github.com/kvic-z)'s [project](https://github.com/kvi
 Love the script and want to support future development? Any and all donations gratefully received!
 [**PayPal donation**](https://paypal.me/jackyaz21)
 
-## Supported Models
-### Models
-All models supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Models confirmed to work are below:
-*   RT-AC66U_B1
-*   RT-AC68U
-*   RT-AC86U
-*   RT-AC88U
-*   RT-AX88U
-*   RT-AC3100
-
-### Firmware versions
-You must be running firmware no earlier than 384.XX [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/)
+## Supported firmware versions
+You must be running firmware Merlin 384.15/384.13_4 or Fork 43E5 (or later) [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/)
 
 ## Installation
 Using your preferred SSH client/terminal, copy and paste the following command, then press Enter:
