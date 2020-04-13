@@ -121,6 +121,7 @@ Update_Version(){
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$SCRIPT_NAME_LOWER"
 			Clear_Lock "$2"
+			exec "$0"
 			exit 0
 		else
 			Print_Output "true" "No new version - latest is $localver" "$WARN"
@@ -139,6 +140,7 @@ Update_Version(){
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 "/jffs/scripts/$SCRIPT_NAME_LOWER"
 			Clear_Lock
+			exec "$0"
 			exit 0
 		;;
 	esac
