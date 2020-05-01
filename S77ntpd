@@ -13,7 +13,6 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 
 	if [ "$ntptimer" -ge "300" ]; then
 		logger -st "S77ntpd" "NTP failed to sync after 5 minutes - please check immediately!"
-		echo ""
 		exit 1
 	fi
 fi
@@ -23,7 +22,7 @@ PROCS=ntpd
 ARGS="-c /jffs/addons/ntpmerlin.d/ntp.conf -g"
 PREARGS=""
 PRECMD="killall ntp && killall ntpd"
-POSTCMD="/jffs/scripts/ntpmerlin generate"
+POSTCMD=""
 DESC=$PROCS
 PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
