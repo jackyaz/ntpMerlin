@@ -1316,6 +1316,7 @@ if [ -z "$1" ]; then
 	fi
 	
 	rm -f "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntpstatsdata.js" 2>/dev/null
+	rm -f "/jffs/addons/$SCRIPT_NAME_LOWER.d/.dbconverted" 2>/dev/null
 	
 	Create_Dirs
 	Conf_Exists
