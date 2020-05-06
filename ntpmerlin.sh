@@ -546,7 +546,7 @@ Mount_WebUI(){
 	Print_Output "true" "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
 	cp -f "$SCRIPT_DIR/ntpdstats_www.asp" "$SCRIPT_WEBPAGE_DIR/$MyPage"
 	echo "NTP Daemon" > "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
-
+	
 	if [ "$(uname -o)" = "ASUSWRT-Merlin" ]; then
 		
 		if [ ! -f "/tmp/index_style.css" ]; then
