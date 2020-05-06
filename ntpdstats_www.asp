@@ -7,14 +7,14 @@
 <meta http-equiv="Expires" content="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title>NTP Daemon</title>
+<title>ntpMerlin - NTP Daemon with stats</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <style>
 p {
   font-weight: bolder;
 }
-.collapsible {
+thead.collapsible {
   color: white;
   padding: 0px;
   width: 100%;
@@ -23,7 +23,7 @@ p {
   outline: none;
   cursor: pointer;
 }
-.collapsible-jquery {
+thead.collapsible-jquery {
   color: white;
   padding: 0px;
   width: 100%;
@@ -64,12 +64,14 @@ p {
 <script>
 var $j = jQuery.noConflict(); //avoid conflicts on John's fork (state.js)
 
-var ShowLines=GetCookie("ShowLines");
-var ShowFill=GetCookie("ShowFill");
+var ShowLines=GetCookie("ShowLines","string");
+var ShowFill=GetCookie("ShowFill","string");
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
 	return coordinates;
 };
+
+var custom_settings = <% get_custom_settings(); %>;
 
 var metriclist = ["Offset","Sys_Jitter","Frequency"];
 var titlelist = ["Offset","Jitter","Drift"];
@@ -77,7 +79,8 @@ var measureunitlist = ["ms","ms","ppm"];
 var chartlist = ["daily","weekly","monthly"];
 var timeunitlist = ["hour","day","day"];
 var intervallist = [24,7,30];
-var colourlist = ["#fc8500","#42ecf5","#ffffff"];
+var bordercolourlist = ["#fc8500","#42ecf5","#ffffff"];
+var backgroundcolourlist = ["rgba(252,133,0,0.5)","rgba(66,236,245,0.5)","rgba(255,255,255,0.5)"];
 
 function keyHandler(e) {
 	if (e.keyCode == 27){
@@ -109,13 +112,16 @@ function Draw_Chart_NoData(txtchartname){
 	ctx.restore();
 }
 
-function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname,dataobject){
+function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,bordercolourname,backgroundcolourname,dataobject){
 	if(typeof dataobject === 'undefined' || dataobject === null) { Draw_Chart_NoData(txtchartname); return; }
 	if (dataobject.length == 0) { Draw_Chart_NoData(txtchartname); return; }
 	
 	var chartLabels = dataobject.map(function(d) {return d.Metric});
 	var chartData = dataobject.map(function(d) {return {x: d.Time, y: d.Value}});
 	var objchartname=window["LineChart"+txtchartname];
+	
+	var timeaxisformat = getTimeFormat($j("#Time_Format option:selected").val(),"axis");
+	var timetooltipformat = getTimeFormat($j("#Time_Format option:selected").val(),"tooltip");
 	
 	factor=0;
 	if (txtunitx=="hour"){
@@ -138,12 +144,12 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname,
 		title: { display: true, text: txttitle },
 		tooltips: {
 			callbacks: {
-					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel,"X").format('YYYY-MM-DD HH:mm:ss')); },
+					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel,"X").format(timetooltipformat)); },
 					label: function (tooltipItem, data) { return round(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y,3).toFixed(3) + ' ' + txtunity;}
 				},
-				mode: 'point',
-				position: 'cursor',
-				intersect: true
+				mode: 'x',
+				position: 'nearest',
+				intersect: false
 		},
 		scales: {
 			xAxes: [{
@@ -153,7 +159,12 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname,
 					min: moment().subtract(numunitx, txtunitx+"s"),
 					display: true
 				},
-				time: { parser: "X", unit: txtunitx, stepSize: 1 }
+				time: {
+					parser: "X",
+					unit: txtunitx,
+					stepSize: 1,
+					displayFormats: timeaxisformat
+				}
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
@@ -207,7 +218,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname,
 				mode: 'horizontal',
 				scaleID: 'y-axis-0',
 				value: getAverage(chartData),
-				borderColor: colourname,
+				borderColor: bordercolourname,
 				borderWidth: 1,
 				borderDash: [5, 5],
 				label: {
@@ -232,7 +243,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname,
 				mode: 'horizontal',
 				scaleID: 'y-axis-0',
 				value: getLimit(chartData,"y","max",true),
-				borderColor: colourname,
+				borderColor: bordercolourname,
 				borderWidth: 1,
 				borderDash: [5, 5],
 				label: {
@@ -257,7 +268,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname,
 				mode: 'horizontal',
 				scaleID: 'y-axis-0',
 				value: getLimit(chartData,"y","min",true),
-				borderColor: colourname,
+				borderColor: bordercolourname,
 				borderWidth: 1,
 				borderDash: [5, 5],
 				label: {
@@ -285,8 +296,8 @@ function Draw_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname,
 			pointRadius: 1,
 			lineTension: 0,
 			fill: ShowFill,
-			backgroundColor: colourname,
-			borderColor: colourname,
+			backgroundColor: backgroundcolourname,
+			borderColor: bordercolourname,
 		}]
 	};
 	objchartname = new Chart(ctx, {
@@ -372,18 +383,56 @@ function RedrawAllCharts() {
 	var i;
 	for(i = 0; i < metriclist.length; i++){
 		for (i2 = 0; i2 < chartlist.length; i2++) {
-			d3.csv('/ext/ntpmerlin/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(Draw_Chart.bind(null,metriclist[i]+chartlist[i2],titlelist[i],measureunitlist[i],timeunitlist[i2],intervallist[i2],colourlist[i]));
+			d3.csv('/ext/ntpmerlin/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(Draw_Chart.bind(null,metriclist[i]+chartlist[i2],titlelist[i],measureunitlist[i],timeunitlist[i2],intervallist[i2],bordercolourlist[i],backgroundcolourlist[i]));
 		}
 	}
 }
 
-function GetCookie(cookiename) {
+function getTimeFormat(value,format) {
+	var timeformat;
+	
+	if(format == "axis"){
+		if (value == 0){
+			timeformat = {
+				millisecond: 'HH:mm:ss.SSS',
+				second: 'HH:mm:ss',
+				minute: 'HH:mm',
+				hour: 'HH:mm'
+			}
+		}
+		else if (value == 1){
+			timeformat = {
+				millisecond: 'h:mm:ss.SSS A',
+				second: 'h:mm:ss A',
+				minute: 'h:mm A',
+				hour: 'h A'
+			}
+		}
+	}
+	else if(format == "tooltip"){
+		if (value == 0){
+			timeformat = "YYYY-MM-DD HH:mm:ss";
+		}
+		else if (value == 1){
+			timeformat = "YYYY-MM-DD h:mm:ss A";
+		}
+	}
+	
+	return timeformat;
+}
+
+function GetCookie(cookiename,returntype) {
 	var s;
 	if ((s = cookie.get("ntp_"+cookiename)) != null) {
 		return cookie.get("ntp_"+cookiename);
 	}
 	else {
-		return "";
+		if(returntype == "string"){
+			return "";
+		}
+		else if(returntype == "number"){
+			return 0;
+		}
 	}
 }
 
@@ -392,6 +441,10 @@ function SetCookie(cookiename,cookievalue) {
 }
 
 function AddEventHandlers(){
+	$j(".collapsible-jquery").click(function(){
+		$j(this).siblings().toggle("fast")
+	});
+	
 	var coll = document.getElementsByClassName("collapsible");
 	var i;
 	
@@ -407,7 +460,7 @@ function AddEventHandlers(){
 				SetCookie(this.id,"expanded");
 			}
 		});
-		if(GetCookie(coll[i].id) == "expanded"){
+		if(GetCookie(coll[i].id) == "expanded","string"){
 			coll[i].click();
 		}
 	}
@@ -422,8 +475,24 @@ function initial(){
 	SetCurrentPage();
 	show_menu();
 	RedrawAllCharts();
-	AddEventHandlers();
+	ScriptUpdateLayout();
 	SetNTPDStatsTitle();
+	$j("#Time_Format").val(GetCookie("Time_Format","number"));
+	AddEventHandlers();
+}
+
+function ScriptUpdateLayout(){
+	var localver = GetVersionNumber("local");
+	var serverver = GetVersionNumber("server");
+	$j("#scripttitle").text($j("#scripttitle").text()+" - "+localver);
+	$j("#ntpmerlin_version_local").text(localver);
+	
+	if (localver != serverver && serverver != "N/A"){
+		$j("#ntpmerlin_version_server").text("Updated version available: "+serverver);
+		showhide("btnChkUpdate", false);
+		showhide("ntpmerlin_version_server", true);
+		showhide("btnDoUpdate", true);
+	}
 }
 
 function reload() {
@@ -472,12 +541,57 @@ function ExportCSV() {
 	return 0;
 }
 
+function CheckUpdate(){
+	var action_script_tmp = "start_ntpmerlincheckupdate";
+	document.form.action_script.value = action_script_tmp;
+	var restart_time = 10;
+	document.form.action_wait.value = restart_time;
+	showLoading();
+	document.form.submit();
+}
+
+function DoUpdate(){
+	var action_script_tmp = "start_ntpmerlindoupdate";
+	document.form.action_script.value = action_script_tmp;
+	var restart_time = 20;
+	document.form.action_wait.value = restart_time;
+	showLoading();
+	document.form.submit();
+}
+
 function applyRule() {
 	var action_script_tmp = "start_ntpmerlin";
 	document.form.action_script.value = action_script_tmp;
-	var restart_time = document.form.action_wait.value*1;
+	var restart_time = 35;
+	document.form.action_wait.value = restart_time;
 	showLoading();
 	document.form.submit();
+}
+
+function GetVersionNumber(versiontype)
+{
+	var versionprop;
+	if(versiontype == "local"){
+		versionprop = custom_settings.ntpmerlin_version_local;
+	}
+	else if(versiontype == "server"){
+		versionprop = custom_settings.ntpmerlin_version_server;
+	}
+	
+	if(typeof versionprop == 'undefined' || versionprop == null)
+	{
+		return "N/A";
+	}
+	else {
+		return versionprop;
+	}
+}
+
+function changeChart(e) {
+	value = e.value * 1;
+	name = e.id.substring(0, e.id.indexOf("_"));
+	SetCookie(e.id,value);
+	RedrawAllCharts();
 }
 </script>
 </head>
@@ -491,7 +605,7 @@ function applyRule() {
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="start_ntpmerlin">
-<input type="hidden" name="action_wait" value="30">
+<input type="hidden" name="action_wait" value="35">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="SystemCmd" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
@@ -513,28 +627,69 @@ function applyRule() {
 <tr bgcolor="#4D595D">
 <td valign="top">
 <div>&nbsp;</div>
-<div class="formfonttitle" id="statstitle">NTPD Performance Stats</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="border:0px;" id="table_buttons">
-<tr class="apply_gen" valign="top" height="35px">
-<td style="background-color:rgb(77, 89, 93);border:0px;">
-<input type="button" onclick="DragZoom(this);" value="Drag Zoom On" class="button_gen" name="button">
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<input type="button" onclick="ResetZoom();" value="Reset Zoom" class="button_gen" name="button">
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<input type="button" onclick="ToggleLines();" value="Toggle Lines" class="button_gen" name="button">
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<input type="button" onclick="ToggleFill();" value="Toggle Fill" class="button_gen" name="button">
+<div class="formfonttitle" id="scripttitle" style="text-align:center;">ntpMerlin</div>
+<div class="formfonttitle" id="statstitle">Stats last updated:</div>
+<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+<div class="formfontdesc">ntpMerlin is an implementation of ntpd for AsusWRT Merlin - with charts.</div>
+
+<table width="100%" border="1" align="center" cellpadding="2" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="border:0px;" id="table_buttons">
+<thead class="collapsible-jquery" id="ntpmerlin_scripttools">
+<tr><td colspan="2">Script Utilities (click to expand/collapse)</td></tr>
+</thead>
+<div class="collapsiblecontent">
+<tr>
+<th width="20%">Version information</th>
+<td>
+<span id="ntpmerlin_version_local" style="color:#FFFFFF;"></span>
+&nbsp;&nbsp;&nbsp;
+<span id="ntpmerlin_version_server" style="display:none;">Update version</span>
+&nbsp;&nbsp;&nbsp;
+<input type="button" class="button_gen" onclick="CheckUpdate();" value="Check" id="btnChkUpdate">
+<input type="button" class="button_gen" onclick="DoUpdate();" value="Update" id="btnDoUpdate" style="display:none;">
+&nbsp;&nbsp;&nbsp;
 </td>
 </tr>
-</table>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="border:0px;" id="table_buttons2">
-<tr class="apply_gen" valign="top" height="35px">
-<td style="background-color:rgb(77, 89, 93);border:0px;">
+<tr>
+<th width="20%">Update stats</th>
+<td>
 <input type="button" onclick="applyRule();" value="Update stats" class="button_gen" name="button">
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<input type="button" onclick="ExportCSV();" value="Export to CSV" class="button_gen" name="button">
 </td>
 </tr>
+<tr>
+<th width="20%">Export</th>
+<td>
+<input type="button" onclick="ExportCSV();" value="Export to CSV" class="button_gen" name="btnExport">
+</td>
+</tr>
+</div>
+</table>
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="2" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="border:0px;" id="table_buttons2">
+<thead class="collapsible-jquery" id="ntpmerlin_charttools">
+<tr><td colspan="2">Chart Configuration (click to expand/collapse)</td></tr>
+</thead>
+<div class="collapsiblecontent">
+<tr>
+<th width="20%"><span style="color:#FFFFFF;">Time format</span><br /><span style="color:#FFFFFF;">for tooltips and Last 24h chart axis</span></th>
+<td>
+<select style="width:100px" class="input_option" onchange="changeChart(this)" id="Time_Format">
+<option value="0">24h</option>
+<option value="1">12h</option>
+</select>
+</td>
+</tr>
+<tr class="apply_gen" valign="top">
+<td style="background-color:rgb(77, 89, 93);" colspan="2">
+<input type="button" onclick="DragZoom(this);" value="Drag Zoom On" class="button_gen" name="btnDragZoom">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="button" onclick="ResetZoom();" value="Reset Zoom" class="button_gen" name="btnResetZoom">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="button" onclick="ToggleLines();" value="Toggle Lines" class="button_gen" name="btnToggleLines">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="button" onclick="ToggleFill();" value="Toggle Fill" class="button_gen" name="btnToggleFill">
+</td>
+</tr>
+</div>
 </table>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
@@ -603,7 +758,6 @@ function applyRule() {
 </tr>
 </table>
 </form>
-<div id="footer">
-</div>
+<div id="footer"></div>
 </body>
 </html>
