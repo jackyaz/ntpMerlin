@@ -17,6 +17,7 @@ Inspired by [kvic](https://github.com/kvic-z)'s [project](https://github.com/kvi
 
 ### Supporting development
 Love the script and want to support future development? Any and all donations gratefully received!
+
 [**PayPal donation**](https://paypal.me/jackyaz21)
 
 [**Buy me a coffee**](https://www.buymeacoffee.com/jackyaz)
