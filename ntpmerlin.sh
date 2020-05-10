@@ -600,6 +600,7 @@ ScriptStorageLocation(){
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntpdstats.db" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntp.conf" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntp.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			/opt/etc/init.d/S77ntpd restart 2>/dev/null
 			SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation "load"
 		;;
@@ -612,6 +613,7 @@ ScriptStorageLocation(){
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntpdstats.db" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntp.conf" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntp.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			/opt/etc/init.d/S77ntpd restart 2>/dev/null
 			SCRIPT_CONF="/jffs/addons/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation "load"
 		;;
