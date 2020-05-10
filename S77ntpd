@@ -17,9 +17,15 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 	fi
 fi
 
+if [ -f "/opt/share/ntpmerlin.d/config" ]; then
+	SCRIPT_STORAGE_DIR="/opt/share/ntpmerlin.d"
+else
+	SCRIPT_STORAGE_DIR="/jffs/addons/ntpmerlin.d"
+fi
+
 ENABLED=yes
 PROCS=ntpd
-ARGS="-c /jffs/addons/ntpmerlin.d/ntp.conf -g"
+ARGS="-c $SCRIPT_STORAGE_DIR/ntp.conf -g"
 PREARGS=""
 PRECMD="killall ntp && killall ntpd"
 POSTCMD=""
