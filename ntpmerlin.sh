@@ -19,8 +19,8 @@ readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v2.5.0"
-readonly SCRIPT_BRANCH="master"
+readonly SCRIPT_VERSION="v2.5.1"
+readonly SCRIPT_BRANCH="develop"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
 readonly SCRIPT_WEBPAGE_DIR="$(readlink /www/user)"
@@ -1079,6 +1079,7 @@ Menu_Install(){
 	Shortcut_ntpMerlin create
 	NTPD_Customise
 	Get_ntpd_Stats
+	Clear_Lock
 }
 
 Menu_Startup(){

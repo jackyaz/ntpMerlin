@@ -17,9 +17,17 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 	fi
 fi
 
+if [ -f "/opt/share/$SCRIPT_NAME_LOWER.d/config" ]; then
+	SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
+	SCRIPT_STORAGE_DIR="/opt/share/$SCRIPT_NAME_LOWER.d"
+else
+	SCRIPT_CONF="/jffs/addons/$SCRIPT_NAME_LOWER.d/config"
+	SCRIPT_STORAGE_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
+fi
+
 ENABLED=yes
 PROCS=ntpd
-ARGS="-c /jffs/addons/ntpmerlin.d/ntp.conf -g"
+ARGS="-c $SCRIPT_STORAGE_DIR/ntp.conf -g"
 PREARGS=""
 PRECMD="killall ntp && killall ntpd"
 POSTCMD=""
