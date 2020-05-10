@@ -17,12 +17,10 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
 	fi
 fi
 
-if [ -f "/opt/share/$SCRIPT_NAME_LOWER.d/config" ]; then
-	SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
-	SCRIPT_STORAGE_DIR="/opt/share/$SCRIPT_NAME_LOWER.d"
+if [ -f "/opt/share/ntpmerlin.d/config" ]; then
+	SCRIPT_STORAGE_DIR="/opt/share/ntpmerlin.d"
 else
-	SCRIPT_CONF="/jffs/addons/$SCRIPT_NAME_LOWER.d/config"
-	SCRIPT_STORAGE_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
+	SCRIPT_STORAGE_DIR="/jffs/addons/ntpmerlin.d"
 fi
 
 ENABLED=yes
