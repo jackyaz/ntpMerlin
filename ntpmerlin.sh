@@ -1333,7 +1333,6 @@ if [ -z "$1" ]; then
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_ntpMerlin create
-	Update_File "S77ntpd"
 	ScriptHeader
 	MainMenu
 	exit 0
