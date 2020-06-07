@@ -1346,7 +1346,7 @@ case "$1" in
 	;;
 	startup)
 		Check_Lock
-		sleep 2
+		sleep 7
 		Menu_Startup
 		exit 0
 	;;
