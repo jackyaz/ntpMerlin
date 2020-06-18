@@ -1251,6 +1251,8 @@ NTP_Ready(){
 		if [ -n "$2" ] && [ "$(echo "$3" | grep -c "$SCRIPT_NAME_LOWER")" -eq 0 ]; then
 			exit 0
 		fi
+	elif [ "$1" = "ntpredirect" ]; then
+		exit 0
 	fi
 	if [ "$(nvram get ntp_ready)" = "0" ]; then
 		Check_Lock
@@ -1281,7 +1283,7 @@ Entware_Ready(){
 		fi
 	fi
 	
-	if [ ! -f "/opt/bin/opkg" ] && ! echo "$@" | grep -wqE "(install|uninstall|update|forceupdate)"; then
+	if [ ! -f "/opt/bin/opkg" ] && ! echo "$@" | grep -wqE "(install|uninstall|update|forceupdate|ntpredirect)"; then
 		Check_Lock
 		sleepcount=1
 		while [ ! -f "/opt/bin/opkg" ] && [ "$sleepcount" -le 10 ]; do
