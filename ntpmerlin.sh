@@ -1252,7 +1252,7 @@ NTP_Ready(){
 			exit 0
 		fi
 	elif [ "$1" = "ntpredirect" ]; then
-		exit 0
+		return 0
 	fi
 	if [ "$(nvram get ntp_ready)" = "0" ]; then
 		Check_Lock
