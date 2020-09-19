@@ -1,11 +1,11 @@
-# ntpMerlin - NTP Daemon for AsusWRT Merlin - with graphs
+# ntpMerlin - local time server for AsusWRT Merlin - with graphs
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bc89c12c4bf44b49b28161f328e49b0)](https://www.codacy.com/app/jackyaz/ntpMerlin?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/ntpMerlin&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.com/jackyaz/ntpMerlin.svg?branch=master)](https://travis-ci.com/jackyaz/ntpMerlin)
 
-## v2.5.1
-### Updated on 2020-05-10
+## v3.0.0
+### Updated on 2020-09-19
 ## About
-Run an NTP server for your network on your router. Graphs available for NTP accuracy on the Addons page of the WebUI.
+Run an NTP server for your network on your router, with a choice of ntpd and chronyd. Graphs available for accuracy of your time server on the Addons page of the WebUI.
 
 ntpMerlin is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
 
