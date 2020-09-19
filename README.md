@@ -5,11 +5,9 @@
 ## v3.0.0
 ### Updated on 2020-09-19
 ## About
-Run an NTP server for your network on your router, with a choice of ntpd and chronyd. Graphs available for accuracy of your time server on the Addons page of the WebUI.
+Run a time server for your network on your router, with a choice of ntpd and chronyd. Graphs available for accuracy of your time server on the Addons page of the WebUI.
 
 ntpMerlin is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
-
-Inspired by [kvic](https://github.com/kvic-z)'s [project](https://github.com/kvic-z/goodies-asuswrt/wiki/Install-NTP-Daemon-for-Asuswrt-Merlin)
 
 ![Menu UI](https://puu.sh/DOJFc/f2a03e489b.png)
 
