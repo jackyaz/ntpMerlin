@@ -25,7 +25,7 @@ fi
 
 ENABLED=yes
 PROCS=chronyd
-ARGS="-u nobody -c $SCRIPT_STORAGE_DIR/chrony.conf"
+ARGS="-u $(nvram get http_username) -f $SCRIPT_STORAGE_DIR/chrony.conf"
 PREARGS=""
 PRECMD="killall ntp && killall ntpd"
 POSTCMD=""
