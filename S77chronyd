@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# shellcheck disable=SC2034
+
+if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
+	# Wait for NTP before starting
+	logger -st "S77chronyd" "Waiting for NTP to sync before starting..."
+	ntptimer=0
+	while [ "$(nvram get ntp_ready)" = "0" ] && [ "$ntptimer" -lt "300" ]; do
+		ntptimer=$((ntptimer+1))
+		sleep 1
+	done
+
+	if [ "$ntptimer" -ge "300" ]; then
+		logger -st "S77chronyd" "NTP failed to sync after 5 minutes - please check immediately!"
+		exit 1
+	fi
+fi
+
+if [ -f "/opt/share/ntpmerlin.d/config" ]; then
+	SCRIPT_STORAGE_DIR="/opt/share/ntpmerlin.d"
+else
+	SCRIPT_STORAGE_DIR="/jffs/addons/ntpmerlin.d"
+fi
+
+ENABLED=yes
+PROCS=chronyd
+ARGS="-u $(nvram get http_username) -c $SCRIPT_STORAGE_DIR/chrony.conf"
+PREARGS=""
+PRECMD="killall ntp && killall ntpd"
+POSTCMD=""
+DESC=$PROCS
+PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+. /opt/etc/init.d/rc.func
