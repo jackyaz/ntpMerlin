@@ -754,7 +754,7 @@ WriteSql_ToFile(){
 		echo ".output $5$6.htm"
 	} >> "$7"
 	
-	echo "SELECT '$1' Metric, Min([Timestamp]) Time, IFNULL(Avg([$1]),'NaN') Value FROM $2 WHERE ([Timestamp] >= $timenow - ($multiplier*$maxcount)) GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+	echo "SELECT '$1' Metric, Min([Timestamp]) Time, IFNULL(Avg(printf('%f', $1)),'NaN') Value FROM $2 WHERE ([Timestamp] >= $timenow - ($multiplier*$maxcount)) GROUP BY ([Timestamp]/($multiplier));" >> "$7"
 }
 
 Get_TimeServer_Stats(){
@@ -838,7 +838,7 @@ Generate_CSVs(){
 			echo ".mode csv"
 			echo ".headers on"
 			echo ".output $CSV_OUTPUT_DIR/$metric""daily"".htm"
-			echo "select '$metric' Metric,[Timestamp] Time,[$metric] Value from ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
+			echo "select '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value from ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
 		} > /tmp/ntp-stats.sql
 		
 		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
@@ -849,7 +849,7 @@ Generate_CSVs(){
 				echo ".mode csv"
 				echo ".headers on"
 				echo ".output $CSV_OUTPUT_DIR/$metric""weekly"".htm"
-				echo "select '$metric' Metric,[Timestamp] Time,[$metric] Value from ntpstats WHERE [Timestamp] >= ($timenow - 86400*7);"
+				echo "select '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value from ntpstats WHERE [Timestamp] >= ($timenow - 86400*7);"
 			} > /tmp/ntp-stats.sql
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
@@ -858,7 +858,7 @@ Generate_CSVs(){
 				echo ".mode csv"
 				echo ".headers on"
 				echo ".output $CSV_OUTPUT_DIR/$metric""monthly"".htm"
-				echo "select '$metric' Metric,[Timestamp] Time,[$metric] Value from ntpstats WHERE [Timestamp] >= ($timenow - 86400*30);"
+				echo "select '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value from ntpstats WHERE [Timestamp] >= ($timenow - 86400*30);"
 			} > /tmp/ntp-stats.sql
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
