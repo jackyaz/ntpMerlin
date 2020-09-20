@@ -23,6 +23,10 @@ else
 	SCRIPT_STORAGE_DIR="/jffs/addons/ntpmerlin.d"
 fi
 
+if [ -f "/opt/etc/init.d/S06chronyd" ]; then
+	rm -f "/opt/etc/init.d/S06chronyd"
+fi
+
 ENABLED=yes
 PROCS=chronyd
 ARGS="-u $(nvram get http_username) -f $SCRIPT_STORAGE_DIR/chrony.conf"
