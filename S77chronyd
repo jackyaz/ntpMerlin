@@ -27,9 +27,16 @@ if [ -f "/opt/etc/init.d/S06chronyd" ]; then
 	rm -f "/opt/etc/init.d/S06chronyd"
 fi
 
+mkdir -p /opt/var/lib/chrony
+mkdir -p /opt/var/run/chrony
+chown -R nobody:nobody /opt/var/lib/chrony
+chown -R nobody:nobody /opt/var/run/chrony
+chmod -R 770 /opt/var/lib/chrony
+chmod -R 770 /opt/var/run/chrony
+
 ENABLED=yes
 PROCS=chronyd
-ARGS="-r -u $(nvram get http_username) -f $SCRIPT_STORAGE_DIR/chrony.conf"
+ARGS="-r -u nobody -f $SCRIPT_STORAGE_DIR/chrony.conf"
 PREARGS=""
 PRECMD="killall ntp && killall ntpd"
 POSTCMD=""

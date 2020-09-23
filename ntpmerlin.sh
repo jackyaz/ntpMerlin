@@ -612,10 +612,14 @@ TimeServer_Customise(){
 	rm -f "/opt/etc/init.d/S77$TIMESERVER_NAME"
 	Download_File "$SCRIPT_REPO/S77$TIMESERVER_NAME" "/opt/etc/init.d/S77$TIMESERVER_NAME"
 	chmod +x "/opt/etc/init.d/S77$TIMESERVER_NAME"
-	chown -R "$(nvram get http_username)" /opt/var/lib/chrony
-	chown -R "$(nvram get http_username)" /opt/var/run/chrony
-	chmod -R 770 /opt/var/lib/chrony
-	chmod -R 770 /opt/var/run/chrony
+	if [ "$TIMESERVER_NAME" = "chronyd" ]; then
+		mkdir -p /opt/var/lib/chrony
+		mkdir -p /opt/var/run/chrony
+		chown -R nobody:nobody /opt/var/lib/chrony
+		chown -R nobody:nobody /opt/var/run/chrony
+		chmod -R 770 /opt/var/lib/chrony
+		chmod -R 770 /opt/var/run/chrony
+	fi
 	"/opt/etc/init.d/S77$TIMESERVER_NAME" start
 }
 
