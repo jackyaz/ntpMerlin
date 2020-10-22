@@ -5,13 +5,9 @@
 ## v3.0.0
 ### Updated on 2020-09-19
 ## About
-Run a time server for your network on your router, with a choice of ntpd and chronyd. Graphs available for accuracy of your time server on the Addons page of the WebUI.
+ntpMerlin implements an NTP time server for AsusWRT Merlin with charts for daily, weekly and monthly summaries of performance. A choice between ntpd and chrony is available.
 
 ntpMerlin is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
-
-![Menu UI](https://puu.sh/DOJFc/f2a03e489b.png)
-
-![Graph Example](https://puu.sh/DOJGn/1f7efed1d8.png)
 
 ### Supporting development
 Love the script and want to support future development? Any and all donations gratefully received!
@@ -31,6 +27,10 @@ Using your preferred SSH client/terminal, copy and paste the following command, 
 ```
 
 ## Usage
+### WebUI
+ntpMerlin can be configured via the WebUI, in the Addons section.
+
+### Command Line
 To launch the ntpMerlin menu after installation, use:
 ```sh
 ntpmerlin
@@ -41,8 +41,11 @@ If this does not work, you will need to use the full path:
 /jffs/scripts/ntpmerlin
 ```
 
-## Updating
-Launch ntpmerlin and select option u
+## Screenshots
+
+![WebUI](https://puu.sh/GFJGB/ea90b33f61.png)
+
+![CLI UI](https://puu.sh/GFJD7/b48a8bf2bf.png)
 
 ## Help
 Please post about any issues and problems here: [ntpMerlin on SNBForums](https://www.snbforums.com/threads/ntpmerlin-ntp-daemon-for-asuswrt-merlin.55756/)
