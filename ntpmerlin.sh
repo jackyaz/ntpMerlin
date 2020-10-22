@@ -119,6 +119,7 @@ Set_Version_Custom_Settings(){
 }
 
 Update_Check(){
+	echo 'var updatestatus = "InProgress";' > "$SCRIPT_WEB_DIR/detect_update.js"
 	doupdate="false"
 	localver=$(grep "SCRIPT_VERSION=" /jffs/scripts/"$SCRIPT_NAME_LOWER" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 	/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | grep -qF "jackyaz" || { Print_Output "true" "404 error detected - stopping update" "$ERR"; return 1; }
@@ -126,13 +127,18 @@ Update_Check(){
 	if [ "$localver" != "$serverver" ]; then
 		doupdate="version"
 		Set_Version_Custom_Settings "server" "$serverver"
+		echo 'var updatestatus = "'"$serverver"'";'  > "$SCRIPT_WEB_DIR/detect_update.js"
 	else
 		localmd5="$(md5sum "/jffs/scripts/$SCRIPT_NAME_LOWER" | awk '{print $1}')"
 		remotemd5="$(curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | md5sum | awk '{print $1}')"
 		if [ "$localmd5" != "$remotemd5" ]; then
 			doupdate="md5"
 			Set_Version_Custom_Settings "server" "$serverver-hotfix"
+			echo 'var updatestatus = "'"$serverver-hotfix"'";'  > "$SCRIPT_WEB_DIR/detect_update.js"
 		fi
+	fi
+	if [ "$doupdate" = "false" ]; then
+		echo 'var updatestatus = "None";'  > "$SCRIPT_WEB_DIR/detect_update.js"
 	fi
 	echo "$doupdate,$localver,$serverver"
 }
@@ -278,6 +284,42 @@ Validate_Number(){
 	fi
 }
 
+Conf_FromSettings(){
+	SETTINGSFILE="/jffs/addons/custom_settings.txt"
+	TMPFILE="/tmp/ntpmerlin_settings.txt"
+	if [ -f "$SETTINGSFILE" ]; then
+		if [ "$(grep "ntpmerlin_" $SETTINGSFILE | grep -v "version" -c)" -gt 0 ]; then
+			Print_Output "true" "Updated settings from WebUI found, merging into $SCRIPT_CONF" "$PASS"
+			cp -a "$SCRIPT_CONF" "$SCRIPT_CONF.bak"
+			grep "ntpmerlin_" "$SETTINGSFILE" | grep -v "version" > "$TMPFILE"
+			sed -i "s/ntpmerlin_//g;s/ /=/g" "$TMPFILE"
+			while IFS='' read -r line || [ -n "$line" ]; do
+				SETTINGNAME="$(echo "$line" | cut -f1 -d'=' | awk '{ print toupper($1) }')"
+				SETTINGVALUE="$(echo "$line" | cut -f2 -d'=')"
+				sed -i "s/$SETTINGNAME=.*/$SETTINGNAME=$SETTINGVALUE/" "$SCRIPT_CONF"
+			done < "$TMPFILE"
+			grep 'ntpmerlin_version' "$SETTINGSFILE" > "$TMPFILE"
+			sed -i "\\~ntpmerlin_~d" "$SETTINGSFILE"
+			mv "$SETTINGSFILE" "$SETTINGSFILE.bak"
+			cat "$SETTINGSFILE.bak" "$TMPFILE" > "$SETTINGSFILE"
+			rm -f "$TMPFILE"
+			rm -f "$SETTINGSFILE.bak"
+			
+			ScriptStorageLocation "$(ScriptStorageLocation "check")"
+			Create_Symlinks
+			
+			Generate_CSVs
+			
+			TimeServer "$(Timeserver "check")"
+			
+			Print_Output "true" "Merge of updated settings from WebUI completed successfully" "$PASS"
+		else
+			Print_Output "false" "No updated settings from WebUI found, no merge into $SCRIPT_CONF necessary" "$PASS"
+		fi
+	fi
+}
+
+
 Create_Dirs(){
 	if [ ! -d "$SCRIPT_DIR" ]; then
 		mkdir -p "$SCRIPT_DIR"
@@ -308,6 +350,8 @@ Create_Symlinks(){
 	rm -rf "${SCRIPT_WEB_DIR:?}/"* 2>/dev/null
 	
 	ln -s "$SCRIPT_STORAGE_DIR/ntpstatstext.js" "$SCRIPT_WEB_DIR/ntpstatstext.js" 2>/dev/null
+	
+	ln -s "$SCRIPT_CONF" "$SCRIPT_WEB_DIR/config.htm" 2>/dev/null
 	
 	ln -s "$CSV_OUTPUT_DIR" "$SCRIPT_WEB_DIR/csv" 2>/dev/null
 	
@@ -568,7 +612,7 @@ Mount_WebUI(){
 	fi
 	Print_Output "true" "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
 	cp -f "$SCRIPT_DIR/ntpdstats_www.asp" "$SCRIPT_WEBPAGE_DIR/$MyPage"
-	echo "NTP Daemon" > "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
+	echo "ntpMerlin" > "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
 	
 	if [ "$(uname -o)" = "ASUSWRT-Merlin" ]; then
 		
@@ -597,7 +641,7 @@ Mount_WebUI(){
 		if ! grep -q "javascript:window.open('/ext/shared-jy/redirect.htm'" /tmp/menuTree.js ; then
 			sed -i "s~ext/shared-jy/redirect.htm~javascript:window.open('/ext/shared-jy/redirect.htm','_blank')~" /tmp/menuTree.js
 		fi
-		sed -i "/url: \"javascript:window.open('\/ext\/shared-jy\/redirect.htm'/i {url: \"$MyPage\", tabName: \"NTP Daemon\"}," /tmp/menuTree.js
+		sed -i "/url: \"javascript:window.open('\/ext\/shared-jy\/redirect.htm'/i {url: \"$MyPage\", tabName: \"ntpMerlin\"}," /tmp/menuTree.js
 		
 		umount /www/require/modules/menuTree.js 2>/dev/null
 		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
@@ -631,6 +675,7 @@ ScriptStorageLocation(){
 			mkdir -p "/opt/share/$SCRIPT_NAME_LOWER.d/"
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/csv" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/config" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/config.bak" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntpstatstext.js" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntpdstats.db" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntp.conf" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
@@ -645,6 +690,7 @@ ScriptStorageLocation(){
 			mkdir -p "/jffs/addons/$SCRIPT_NAME_LOWER.d/"
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/csv" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/config" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/opt/share/$SCRIPT_NAME_LOWER.d/config.bak" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntpstatstext.js" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntpdstats.db" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntp.conf" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
@@ -994,17 +1040,14 @@ MainMenu(){
 	else
 		NTP_REDIRECT_ENABLED="Disabled"
 	fi
-	OUTPUTDATAMODE_MENU="$(OutputDataMode "check")"
-	OUTPUTTIMEMODE_MENU="$(OutputTimeMode "check")"
-	SCRIPTSTORAGE_MENU="$(ScriptStorageLocation "check")"
 	TIMESERVER_NAME_MENU="$(TimeServer "check")"
 	
 	printf "1.    Generate updated %s graphs now\\n\\n" "$SCRIPT_NAME"
 	printf "2.    Toggle redirect of all NTP traffic to %s\\n      (currently %s)\\n\\n" "$SCRIPT_NAME" "$NTP_REDIRECT_ENABLED"
 	printf "3.    Edit %s config\\n\\n" "$SCRIPT_NAME"
-	printf "4.    Toggle data output mode\\n      Currently \\e[1m%s\\e[0m values will be used for weekly and monthly charts\\n\\n" "$OUTPUTDATAMODE_MENU"
-	printf "5.    Toggle time output mode\\n      Currently \\e[1m%s\\e[0m time values will be used for CSV exports\\n\\n" "$OUTPUTTIMEMODE_MENU"
-	printf "s.    Toggle storage location for stats and config\\n      Current location is \\e[1m%s\\e[0m \\n\\n" "$SCRIPTSTORAGE_MENU"
+	printf "4.    Toggle data output mode\\n      Currently \\e[1m%s\\e[0m values will be used for weekly and monthly charts\\n\\n" "$(OutputDataMode "check")"
+	printf "5.    Toggle time output mode\\n      Currently \\e[1m%s\\e[0m time values will be used for CSV exports\\n\\n" "$(OutputTimeMode "check")"
+	printf "s.    Toggle storage location for stats and config\\n      Current location is \\e[1m%s\\e[0m \\n\\n" "$(ScriptStorageLocation "check")"
 	printf "t.    Switch timeserver between ntpd and chronyd\\n      Currently using \\e[1m%s\\e[0m\\n\\n" "$TIMESERVER_NAME_MENU"
 	printf "r.    Restart %s\\n\\n" "$TIMESERVER_NAME_MENU"
 	printf "u.    Check for updates\\n"
@@ -1042,23 +1085,17 @@ MainMenu(){
 			;;
 			4)
 				printf "\\n"
-				if Check_Lock "menu"; then
-					Menu_ToggleOutputDataMode
-				fi
+				Menu_ToggleOutputDataMode
 				break
 			;;
 			5)
 				printf "\\n"
-				if Check_Lock "menu"; then
-					Menu_ToggleOutputTimeMode
-				fi
+				Menu_ToggleOutputTimeMode
 				break
 			;;
 			s)
 				printf "\\n"
-				if Check_Lock "menu"; then
-					Menu_ToggleStorageLocation
-				fi
+				Menu_ToggleStorageLocation
 				break
 			;;
 			t)
@@ -1070,9 +1107,7 @@ MainMenu(){
 			;;
 			r)
 				printf "\\n"
-				if Check_Lock "menu"; then
-					Menu_RestartTimeServer
-				fi
+				Menu_RestartTimeServer
 				PressEnter
 				break
 			;;
@@ -1216,7 +1251,6 @@ Menu_ToggleOutputDataMode(){
 	elif [ "$(OutputDataMode "check")" = "average" ]; then
 		OutputDataMode "raw"
 	fi
-	Clear_Lock
 }
 
 Menu_ToggleOutputTimeMode(){
@@ -1225,7 +1259,6 @@ Menu_ToggleOutputTimeMode(){
 	elif [ "$(OutputTimeMode "check")" = "non-unix" ]; then
 		OutputTimeMode "unix"
 	fi
-	Clear_Lock
 }
 
 Menu_ToggleTimeServer(){
@@ -1245,7 +1278,6 @@ Menu_ToggleStorageLocation(){
 		ScriptStorageLocation "jffs"
 		Create_Symlinks
 	fi
-	Clear_Lock
 }
 
 Menu_Edit(){
@@ -1313,7 +1345,6 @@ Menu_RestartTimeServer(){
 	TIMESERVER_NAME="$(TimeServer "check")"
 	Print_Output "true" "Restarting $TIMESERVER_NAME..." "$PASS"
 	"/opt/etc/init.d/S77$TIMESERVER_NAME" restart
-	Clear_Lock
 }
 
 Menu_Update(){
@@ -1489,18 +1520,16 @@ case "$1" in
 	;;
 	service_event)
 		if [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME_LOWER" ]; then
-			Check_Lock
 			Menu_GenerateStats
 			exit 0
+		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME_LOWER""config" ]; then
+			Conf_FromSettings
+			exit 0
 		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME_LOWER""checkupdate" ]; then
-			Check_Lock
 			updatecheckresult="$(Update_Check)"
-			Clear_Lock
 			exit 0
 		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME_LOWER""doupdate" ]; then
-			Check_Lock
 			Update_Version "force" "unattended"
-			Clear_Lock
 			exit 0
 		fi
 		exit 0
@@ -1513,32 +1542,24 @@ case "$1" in
 		exit 0
 	;;
 	update)
-		Check_Lock
 		Update_Version "unattended"
-		Clear_Lock
 		exit 0
 	;;
 	forceupdate)
-		Check_Lock
 		Update_Version "force" "unattended"
-		Clear_Lock
 		exit 0
 	;;
 	setversion)
-		Check_Lock
 		Set_Version_Custom_Settings "local"
 		Set_Version_Custom_Settings "server" "$SCRIPT_VERSION"
-		Clear_Lock
 		if [ -z "$2" ]; then
 			exec "$0"
 		fi
 		exit 0
 	;;
 	checkupdate)
-		Check_Lock
 		#shellcheck disable=SC2034
 		updatecheckresult="$(Update_Check)"
-		Clear_Lock
 		exit 0
 	;;
 	uninstall)
@@ -1547,16 +1568,12 @@ case "$1" in
 		exit 0
 	;;
 	develop)
-		Check_Lock
 		sed -i 's/^readonly SCRIPT_BRANCH.*$/readonly SCRIPT_BRANCH="develop"/' "/jffs/scripts/$SCRIPT_NAME_LOWER"
-		Clear_Lock
 		exec "$0" "update"
 		exit 0
 	;;
 	stable)
-		Check_Lock
 		sed -i 's/^readonly SCRIPT_BRANCH.*$/readonly SCRIPT_BRANCH="master"/' "/jffs/scripts/$SCRIPT_NAME_LOWER"
-		Clear_Lock
 		exec "$0" "update"
 		exit 0
 	;;
