@@ -164,7 +164,6 @@ var $j=jQuery.noConflict(),maxNoCharts=9,currentNoCharts=0,ShowLines=GetCookie("
 <input autocomplete="off" autocapitalize="off" type="radio" name="ntpmerlin_storagelocation" id="ntpmerlin_storageloc_usb" class="input" value="usb">USB
 </td>
 </tr>
-
 <tr class="even" id="rowtimeserver">
 <th width="40%">Timeserver</th>
 <td class="settingvalue">
@@ -172,7 +171,6 @@ var $j=jQuery.noConflict(),maxNoCharts=9,currentNoCharts=0,ShowLines=GetCookie("
 <input autocomplete="off" autocapitalize="off" type="radio" name="ntpmerlin_timeserver" id="ntpmerlin_timeserver_chronyd" class="input" value="chronyd">Chrony
 </td>
 </tr>
-
 <tr class="apply_gen" valign="top" height="35px">
 <td colspan="2" style="background-color:rgb(77, 89, 93);">
 <input type="button" onclick="applyRule();" value="Save" class="button_gen" name="button">
@@ -207,6 +205,13 @@ var $j=jQuery.noConflict(),maxNoCharts=9,currentNoCharts=0,ShowLines=GetCookie("
 </table>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+<thead class="collapsible-jquery" id="table_charts">
+<tr>
+<td>Charts (click to expand/collapse)</td>
+</tr>
+</thead>
+<tr><td align="center" style="padding: 0px;">
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead class="collapsible-jquery" id="chart_offset">
 <tr>
 <td colspan="2">Offset (click to expand/collapse)</td>
@@ -228,7 +233,6 @@ var $j=jQuery.noConflict(),maxNoCharts=9,currentNoCharts=0,ShowLines=GetCookie("
 </td>
 </tr>
 </table>
-
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead class="collapsible-jquery" id="chart_sysjitter">
@@ -272,6 +276,9 @@ var $j=jQuery.noConflict(),maxNoCharts=9,currentNoCharts=0,ShowLines=GetCookie("
 <tr>
 <td colspan="2" align="center" style="padding: 0px;">
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;height:500px;padding-left:5px;"><canvas id="divLineChart_Frequency" height="500" /></div>
+</td>
+</tr>
+</table>
 </td>
 </tr>
 </table>
