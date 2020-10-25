@@ -310,7 +310,7 @@ Conf_FromSettings(){
 			
 			Generate_CSVs
 			
-			TimeServer "$(Timeserver "check")"
+			TimeServer "$(TimeServer "check")"
 			
 			Print_Output "true" "Merge of updated settings from WebUI completed successfully" "$PASS"
 		else
