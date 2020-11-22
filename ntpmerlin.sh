@@ -14,13 +14,15 @@
 ##                                                      ##
 ##########################################################
 
-### Start of script variables ###
-readonly SCRIPT_NAME="ntpMerlin"
+
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
+
+### Start of script variables ###
+readonly SCRIPT_NAME="ntpMerlin"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v3.0.0"
-readonly SCRIPT_BRANCH="master"
+readonly SCRIPT_VERSION="v3.1.0"
+readonly SCRIPT_BRANCH="develop"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
 readonly SCRIPT_WEBPAGE_DIR="$(readlink /www/user)"
