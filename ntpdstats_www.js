@@ -399,7 +399,7 @@ function AddEventHandlers(){
 			}
 		})
 	});
-
+	
 	$j(".collapsible-jquery").each(function(index,element){
 		if(GetCookie($j(this)[0].id,"string") == "collapsed"){
 			$j(this).siblings().toggle(false);
@@ -577,8 +577,7 @@ function applyRule(){
 	document.form.submit();
 }
 
-function GetVersionNumber(versiontype)
-{
+function GetVersionNumber(versiontype){
 	var versionprop;
 	if(versiontype == "local"){
 		versionprop = custom_settings.ntpmerlin_version_local;
