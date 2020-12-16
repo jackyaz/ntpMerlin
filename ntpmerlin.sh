@@ -349,6 +349,7 @@ Create_Dirs(){
 Create_Symlinks(){
 	rm -rf "${SCRIPT_WEB_DIR:?}/"* 2>/dev/null
 	
+	ln -s /tmp/detect_ntpmerlin.js "$SCRIPT_WEB_DIR/detect_ntpmerlin.js" 2>/dev/null
 	ln -s "$SCRIPT_STORAGE_DIR/ntpstatstext.js" "$SCRIPT_WEB_DIR/ntpstatstext.js" 2>/dev/null
 	
 	ln -s "$SCRIPT_CONF" "$SCRIPT_WEB_DIR/config.htm" 2>/dev/null
@@ -837,6 +838,8 @@ Get_TimeServer_Stats(){
 	ScriptStorageLocation load
 	Create_Symlinks
 	
+	echo 'var ntpstatus = "InProgress";' > /tmp/detect_ntpmerlin.js
+	
 	#shellcheck disable=SC2086
 	killall ntp 2>/dev/null
 	
@@ -888,6 +891,8 @@ Get_TimeServer_Stats(){
 	
 	echo "Stats last updated: $timenowfriendly" > /tmp/ntpstatstitle.txt
 	WriteStats_ToJS /tmp/ntpstatstitle.txt "$SCRIPT_STORAGE_DIR/ntpstatstext.js" SetNTPDStatsTitle statstitle
+	
+	echo 'var ntpstatus = "Done";' > /tmp/detect_ntpmerlin.js
 	
 	rm -f /tmp/ntpstatstitle.txt
 }
