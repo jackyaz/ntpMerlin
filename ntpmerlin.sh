@@ -461,20 +461,27 @@ Auto_Startup(){
 		create)
 			if [ -f /jffs/scripts/services-start ]; then
 				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/services-start)
-				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME_LOWER startup &"' # '"$SCRIPT_NAME" /jffs/scripts/services-start)
+				
+				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/services-start
+				fi
+			fi
+			if [ -f /jffs/scripts/post-mount ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/post-mount)
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME_LOWER startup"' "$@" & # '"$SCRIPT_NAME" /jffs/scripts/post-mount)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
-					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/services-start
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/post-mount
 				fi
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
-					echo "/jffs/scripts/$SCRIPT_NAME_LOWER startup &"' # '"$SCRIPT_NAME" >> /jffs/scripts/services-start
+					echo "/jffs/scripts/$SCRIPT_NAME_LOWER startup"' "$@" & # '"$SCRIPT_NAME" >> /jffs/scripts/post-mount
 				fi
 			else
-				echo "#!/bin/sh" > /jffs/scripts/services-start
-				echo "" >> /jffs/scripts/services-start
-				echo "/jffs/scripts/$SCRIPT_NAME_LOWER startup &"' # '"$SCRIPT_NAME" >> /jffs/scripts/services-start
-				chmod 0755 /jffs/scripts/services-start
+				echo "#!/bin/sh" > /jffs/scripts/post-mount
+				echo "" >> /jffs/scripts/post-mount
+				echo "/jffs/scripts/$SCRIPT_NAME_LOWER startup"' "$@" & # '"$SCRIPT_NAME" >> /jffs/scripts/post-mount
+				chmod 0755 /jffs/scripts/post-mount
 			fi
 		;;
 		delete)
@@ -483,6 +490,13 @@ Auto_Startup(){
 				
 				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
 					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/services-start
+				fi
+			fi
+			if [ -f /jffs/scripts/post-mount ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/post-mount)
+				
+				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/post-mount
 				fi
 			fi
 		;;
@@ -1232,6 +1246,25 @@ Menu_Install(){
 }
 
 Menu_Startup(){
+	if [ -z "$1" ]; then
+		Print_Output true "Missing argument for startup, not starting $SCRIPT_NAME" "$WARN"
+		exit 1
+	elif [ "$1" != "force" ]; then
+		if [ ! -f "$1/entware/bin/opkg" ]; then
+			Print_Output true "$1 does not contain Entware, not starting $SCRIPT_NAME" "$WARN"
+			exit 1
+		else
+			Print_Output true "$1 contains Entware, starting $SCRIPT_NAME" "$WARN"
+		fi
+	fi
+	
+	NTP_Ready
+	
+	Check_Lock
+	
+	if [ "$1" != "force" ]; then
+		sleep 7
+	fi
 	Create_Dirs
 	Conf_Exists
 	Set_Version_Custom_Settings local
@@ -1405,19 +1438,12 @@ Menu_Uninstall(){
 }
 
 NTP_Ready(){
-	if [ "$1" = "service_event" ]; then
-		if [ -n "$2" ] && [ "$(echo "$3" | grep -c "$SCRIPT_NAME_LOWER")" -eq 0 ]; then
-			exit 0
-		fi
-	elif [ "$1" = "ntpredirect" ]; then
-		return 0
-	fi
-	if [ "$(nvram get ntp_ready)" = "0" ]; then
+	if [ "$(nvram get ntp_ready)" -eq 0 ]; then
 		Check_Lock
 		ntpwaitcount="0"
-		while [ "$(nvram get ntp_ready)" = "0" ] && [ "$ntpwaitcount" -lt 300 ]; do
+		while [ "$(nvram get ntp_ready)" -eq 0 ] && [ "$ntpwaitcount" -lt 300 ]; do
 			ntpwaitcount="$((ntpwaitcount + 1))"
-			if [ "$ntpwaitcount" = "60" ]; then
+			if [ "$ntpwaitcount" -eq 60 ]; then
 				Print_Output true "Waiting for NTP to sync..." "$WARN"
 			fi
 			sleep 1
@@ -1435,13 +1461,7 @@ NTP_Ready(){
 
 ### function based on @Adamm00's Skynet USB wait function ###
 Entware_Ready(){
-	if [ "$1" = "service_event" ]; then
-		if [ -n "$2" ] && [ "$(echo "$3" | grep -c "$SCRIPT_NAME_LOWER")" -eq 0 ]; then
-			exit 0
-		fi
-	fi
-	
-	if [ ! -f /opt/bin/opkg ] && ! echo "$@" | grep -wqE "(install|uninstall|update|forceupdate|ntpredirect)"; then
+	if [ ! -f /opt/bin/opkg ]; then
 		Check_Lock
 		sleepcount=1
 		while [ ! -f /opt/bin/opkg ] && [ "$sleepcount" -le 10 ]; do
@@ -1461,9 +1481,6 @@ Entware_Ready(){
 }
 ### ###
 
-NTP_Ready "$@"
-Entware_Ready "$@"
-
 if [ -f "/opt/share/$SCRIPT_NAME_LOWER.d/config" ]; then
 	SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
 	SCRIPT_STORAGE_DIR="/opt/share/$SCRIPT_NAME_LOWER.d"
@@ -1475,14 +1492,13 @@ fi
 CSV_OUTPUT_DIR="$SCRIPT_STORAGE_DIR/csv"
 
 if [ -z "$1" ]; then
+	NTP_Ready
+	Entware_Ready
 	if [ ! -f /opt/bin/sqlite3 ]; then
 		Print_Output true "Installing required version of sqlite3 from Entware" "$PASS"
 		opkg update
 		opkg install sqlite3-cli
 	fi
-	
-	rm -f "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntpstatsdata.js" 2>/dev/null
-	rm -f "/jffs/addons/$SCRIPT_NAME_LOWER.d/.dbconverted" 2>/dev/null
 	
 	Create_Dirs
 	Conf_Exists
@@ -1505,17 +1521,19 @@ case "$1" in
 		exit 0
 	;;
 	startup)
-		Check_Lock
-		sleep 7
-		Menu_Startup
+		Menu_Startup "$2"
 		exit 0
 	;;
 	generate)
+		NTP_Ready
+		Entware_Ready
 		Check_Lock
 		Menu_GenerateStats
 		exit 0
 	;;
 	outputcsv)
+		NTP_Ready
+		Entware_Ready
 		Check_Lock
 		Generate_CSVs
 		Clear_Lock
@@ -1553,6 +1571,7 @@ case "$1" in
 		exit 0
 	;;
 	setversion)
+		Entware_Ready
 		Set_Version_Custom_Settings local
 		Set_Version_Custom_Settings server "$SCRIPT_VERSION"
 		if [ -z "$2" ]; then
