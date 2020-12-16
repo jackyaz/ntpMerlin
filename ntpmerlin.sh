@@ -86,6 +86,7 @@ Clear_Lock(){
 	rm -f "/tmp/$SCRIPT_NAME.lock" 2>/dev/null
 	return 0
 }
+############################################################################
 
 Set_Version_Custom_Settings(){
 	SETTINGSFILE=/jffs/addons/custom_settings.txt
@@ -210,7 +211,6 @@ Update_Version(){
 		exit 0
 	fi
 }
-############################################################################
 
 Update_File(){
 	if [ "$1" = "S77ntpd" ] || [ "$1" = "S77chronyd" ]; then
@@ -319,7 +319,6 @@ Conf_FromSettings(){
 		fi
 	fi
 }
-
 
 Create_Dirs(){
 	if [ ! -d "$SCRIPT_DIR" ]; then
@@ -806,7 +805,7 @@ WriteStats_ToJS(){
 	echo "function $3(){" > "$2"
 	html='document.getElementById("'"$4"'").innerHTML="'
 	while IFS='' read -r line || [ -n "$line" ]; do
-		html="$html""$line""\\r\\n"
+		html="${html}${line}\\r\\n"
 	done < "$1"
 	html="$html"'"'
 	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
