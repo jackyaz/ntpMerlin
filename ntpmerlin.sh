@@ -944,28 +944,37 @@ Generate_CSVs(){
 	
 	rm -f /tmp/ntp-stats.sql
 	
+	{
+		echo ".mode csv"
+		echo ".headers on"
+		echo ".output $CSV_OUTPUT_DIR/CompleteResults.htm"
+	} > /tmp/ntp-complete.sql
+	echo "SELECT [Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp] FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400*30) ORDER BY [Timestamp] DESC;" >> /tmp/ntp-complete.sql
+	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-complete.sql
+	rm -f /tmp/ntp-complete.sql
+	
 	dos2unix "$CSV_OUTPUT_DIR/"*.htm
 	
 	tmpoutputdir="/tmp/${SCRIPT_NAME_LOWER}results"
 	mkdir -p "$tmpoutputdir"
-	cp "$CSV_OUTPUT_DIR/"*.htm "$tmpoutputdir/."
+	mv "$CSV_OUTPUT_DIR/CompleteResults"*.htm "$tmpoutputdir/."
 	
 	if [ "$OUTPUTTIMEMODE" = "unix" ]; then
 		find "$tmpoutputdir/" -name '*.htm' -exec sh -c 'i="$1"; mv -- "$i" "${i%.htm}.csv"' _ {} \;
 	elif [ "$OUTPUTTIMEMODE" = "non-unix" ]; then
 		for i in "$tmpoutputdir/"*".htm"; do
-			awk -F"," 'NR==1 {OFS=","; print} NR>1 {OFS=","; $2=strftime("%Y-%m-%d %H:%M:%S", $2); print }' "$i" > "$i.out"
+			awk -F"," 'NR==1 {OFS=","; print} NR>1 {OFS=","; $1=strftime("%Y-%m-%d %H:%M:%S", $1); print }' "$i" > "$i.out"
 		done
 		
 		find "$tmpoutputdir/" -name '*.htm.out' -exec sh -c 'i="$1"; mv -- "$i" "${i%.htm.out}.csv"' _ {} \;
 		rm -f "$tmpoutputdir/"*.htm
 	fi
 	
-	if [ ! -f /opt/bin/7z ]; then
+	if [ ! -f /opt/bin/7za ]; then
 		opkg update
 		opkg install p7zip
 	fi
-	/opt/bin/7z a -y -bsp0 -bso0 -tzip "/tmp/${SCRIPT_NAME_LOWER}data.zip" "$tmpoutputdir/*"
+	/opt/bin/7za a -y -bsp0 -bso0 -tzip "/tmp/${SCRIPT_NAME_LOWER}data.zip" "$tmpoutputdir/*"
 	mv "/tmp/${SCRIPT_NAME_LOWER}data.zip" "$CSV_OUTPUT_DIR"
 	rm -rf "$tmpoutputdir"
 }
