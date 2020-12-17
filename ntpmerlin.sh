@@ -1445,6 +1445,9 @@ Menu_Uninstall(){
 	opkg remove --autoremove ntp-utils
 	opkg remove --autoremove chrony
 	
+	rm -f /opt/etc/init.d/S77ntpd
+	rm -f /opt/etc/init.d/S77chronyd
+	
 	rm -f "/jffs/scripts/$SCRIPT_NAME_LOWER" 2>/dev/null
 	Clear_Lock
 	Print_Output true "Uninstall completed" "$PASS"
