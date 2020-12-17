@@ -14,12 +14,13 @@
 ##                                                      ##
 ##########################################################
 
-### Start of script variables ###
-readonly SCRIPT_NAME="ntpMerlin"
 #shellcheck disable=SC2019
 #shellcheck disable=SC2018
+
+### Start of script variables ###
+readonly SCRIPT_NAME="ntpMerlin"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v3.0.0"
+readonly SCRIPT_VERSION="v3.1.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
@@ -62,13 +63,13 @@ Check_Lock(){
 	if [ -f "/tmp/$SCRIPT_NAME.lock" ]; then
 		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$SCRIPT_NAME.lock)))
 		if [ "$ageoflock" -gt 600 ]; then
-			Print_Output "true" "Stale lock file found (>600 seconds old) - purging lock" "$ERR"
+			Print_Output true "Stale lock file found (>600 seconds old) - purging lock" "$ERR"
 			kill "$(sed -n '1p' /tmp/$SCRIPT_NAME.lock)" >/dev/null 2>&1
 			Clear_Lock
 			echo "$$" > "/tmp/$SCRIPT_NAME.lock"
 			return 0
 		else
-			Print_Output "true" "Lock file found (age: $ageoflock seconds) - stopping to prevent duplicate runs" "$ERR"
+			Print_Output true "Lock file found (age: $ageoflock seconds) - stopping to prevent duplicate runs" "$ERR"
 			if [ -z "$1" ]; then
 				exit 1
 			else
@@ -85,9 +86,10 @@ Clear_Lock(){
 	rm -f "/tmp/$SCRIPT_NAME.lock" 2>/dev/null
 	return 0
 }
+############################################################################
 
 Set_Version_Custom_Settings(){
-	SETTINGSFILE="/jffs/addons/custom_settings.txt"
+	SETTINGSFILE=/jffs/addons/custom_settings.txt
 	case "$1" in
 		local)
 			if [ -f "$SETTINGSFILE" ]; then
@@ -122,18 +124,18 @@ Update_Check(){
 	echo 'var updatestatus = "InProgress";' > "$SCRIPT_WEB_DIR/detect_update.js"
 	doupdate="false"
 	localver=$(grep "SCRIPT_VERSION=" /jffs/scripts/"$SCRIPT_NAME_LOWER" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
-	/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | grep -qF "jackyaz" || { Print_Output "true" "404 error detected - stopping update" "$ERR"; return 1; }
+	/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | grep -qF "jackyaz" || { Print_Output true "404 error detected - stopping update" "$ERR"; return 1; }
 	serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 	if [ "$localver" != "$serverver" ]; then
 		doupdate="version"
-		Set_Version_Custom_Settings "server" "$serverver"
+		Set_Version_Custom_Settings server "$serverver"
 		echo 'var updatestatus = "'"$serverver"'";'  > "$SCRIPT_WEB_DIR/detect_update.js"
 	else
 		localmd5="$(md5sum "/jffs/scripts/$SCRIPT_NAME_LOWER" | awk '{print $1}')"
 		remotemd5="$(curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | md5sum | awk '{print $1}')"
 		if [ "$localmd5" != "$remotemd5" ]; then
 			doupdate="md5"
-			Set_Version_Custom_Settings "server" "$serverver-hotfix"
+			Set_Version_Custom_Settings server "$serverver-hotfix"
 			echo 'var updatestatus = "'"$serverver-hotfix"'";'  > "$SCRIPT_WEB_DIR/detect_update.js"
 		fi
 	fi
@@ -151,72 +153,71 @@ Update_Version(){
 		serverver="$(echo "$updatecheckresult" | cut -f3 -d',')"
 		
 		if [ "$isupdate" = "version" ]; then
-			Print_Output "true" "New version of $SCRIPT_NAME available - updating to $serverver" "$PASS"
+			Print_Output true "New version of $SCRIPT_NAME available - updating to $serverver" "$PASS"
 		elif [ "$isupdate" = "md5" ]; then
-			Print_Output "true" "MD5 hash of $SCRIPT_NAME does not match - downloading updated $serverver" "$PASS"
+			Print_Output true "MD5 hash of $SCRIPT_NAME does not match - downloading updated $serverver" "$PASS"
 		fi
 		
-		Update_File "shared-jy.tar.gz"
+		Update_File shared-jy.tar.gz
 		
 		if [ "$isupdate" != "false" ]; then
-			TIMESERVER_NAME="$(TimeServer "check")"
+			TIMESERVER_NAME="$(TimeServer check)"
 			if [ "$TIMESERVER_NAME" = "ntpd" ]; then
-				Update_File "S77ntpd"
-				Update_File "ntp.conf"
+				Update_File S77ntpd
+				Update_File ntp.conf
 			elif [ "$TIMESERVER_NAME" = "chronyd" ]; then
-				Update_File "S77chronyd"
-				Update_File "chrony.conf"
+				Update_File S77chronyd
+				Update_File chrony.conf
 			fi
 			
-			Update_File "ntpdstats_www.asp"
+			Update_File ntpdstats_www.asp
 			
-			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
+			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output true "$SCRIPT_NAME successfully updated"
 			chmod 0755 /jffs/scripts/"$SCRIPT_NAME_LOWER"
 			Clear_Lock
 			if [ -z "$1" ]; then
-				exec "$0" "setversion"
+				exec "$0" setversion
 			elif [ "$1" = "unattended" ]; then
-				exec "$0" "setversion" "unattended"
+				exec "$0" setversion unattended
 			fi
 			exit 0
 		else
-			Print_Output "true" "No new version - latest is $localver" "$WARN"
+			Print_Output true "No new version - latest is $localver" "$WARN"
 			Clear_Lock
 		fi
 	fi
 	
 	if [ "$1" = "force" ]; then
 		serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
-		Print_Output "true" "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
-		TIMESERVER_NAME="$(TimeServer "check")"
+		Print_Output true "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
+		TIMESERVER_NAME="$(TimeServer check)"
 		if [ "$TIMESERVER_NAME" = "ntpd" ]; then
-			Update_File "ntp.conf"
-			Update_File "S77ntpd"
+			Update_File ntp.conf
+			Update_File S77ntpd
 		elif [ "$TIMESERVER_NAME" = "chronyd" ]; then
-			Update_File "chrony.conf"
-			Update_File "S77chronyd"
+			Update_File chrony.conf
+			Update_File S77chronyd
 		fi
-		Update_File "ntpdstats_www.asp"
-		Update_File "shared-jy.tar.gz"
-		/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output "true" "$SCRIPT_NAME successfully updated"
+		Update_File ntpdstats_www.asp
+		Update_File shared-jy.tar.gz
+		/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output true "$SCRIPT_NAME successfully updated"
 		chmod 0755 /jffs/scripts/"$SCRIPT_NAME_LOWER"
 		Clear_Lock
 		if [ -z "$2" ]; then
-			exec "$0" "setversion"
+			exec "$0" setversion
 		elif [ "$2" = "unattended" ]; then
-			exec "$0" "setversion" "unattended"
+			exec "$0" setversion unattended
 		fi
 		exit 0
 	fi
 }
-############################################################################
 
 Update_File(){
 	if [ "$1" = "S77ntpd" ] || [ "$1" = "S77chronyd" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
 		if ! diff -q "$tmpfile" "/opt/etc/init.d/$1" >/dev/null 2>&1; then
-			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			Print_Output true "New version of $1 downloaded" "$PASS"
 			TimeServer_Customise
 		fi
 		rm -f "$tmpfile"
@@ -226,15 +227,15 @@ Update_File(){
 		if [ ! -f "$SCRIPT_STORAGE_DIR/$1" ]; then
 			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_STORAGE_DIR/$1.default"
 			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_STORAGE_DIR/$1"
-			Print_Output "true" "$SCRIPT_STORAGE_DIR/$1 does not exist, downloading now." "$PASS"
+			Print_Output true "$SCRIPT_STORAGE_DIR/$1 does not exist, downloading now." "$PASS"
 		elif [ -f "$SCRIPT_STORAGE_DIR/$1.default" ]; then
 			if ! diff -q "$tmpfile" "$SCRIPT_STORAGE_DIR/$1.default" >/dev/null 2>&1; then
 				Download_File "$SCRIPT_REPO/$1" "$SCRIPT_STORAGE_DIR/$1.default"
-				Print_Output "true" "New default version of $1 downloaded to $SCRIPT_STORAGE_DIR/$1.default, please compare against your $SCRIPT_STORAGE_DIR/$1" "$PASS"
+				Print_Output true "New default version of $1 downloaded to $SCRIPT_STORAGE_DIR/$1.default, please compare against your $SCRIPT_STORAGE_DIR/$1" "$PASS"
 			fi
 		else
 			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_STORAGE_DIR/$1.default"
-			Print_Output "true" "$SCRIPT_STORAGE_DIR/$1.default does not exist, downloading now. Please compare against your $SCRIPT_STORAGE_DIR/$1" "$PASS"
+			Print_Output true "$SCRIPT_STORAGE_DIR/$1.default does not exist, downloading now. Please compare against your $SCRIPT_STORAGE_DIR/$1" "$PASS"
 		fi
 		rm -f "$tmpfile"
 	elif [ "$1" = "ntpdstats_www.asp" ]; then
@@ -245,7 +246,7 @@ Update_File(){
 			sed -i "\\~$MyPage~d" /tmp/menuTree.js
 			rm -f "$SCRIPT_WEBPAGE_DIR/$MyPage" 2>/dev/null
 			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
-			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			Print_Output true "New version of $1 downloaded" "$PASS"
 			Mount_WebUI
 		fi
 		rm -f "$tmpfile"
@@ -255,7 +256,7 @@ Update_File(){
 			Download_File "$SHARED_REPO/$1.md5" "$SHARED_DIR/$1.md5"
 			tar -xzf "$SHARED_DIR/$1" -C "$SHARED_DIR"
 			rm -f "$SHARED_DIR/$1"
-			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			Print_Output true "New version of $1 downloaded" "$PASS"
 		else
 			localmd5="$(cat "$SHARED_DIR/$1.md5")"
 			remotemd5="$(curl -fsL --retry 3 "$SHARED_REPO/$1.md5")"
@@ -264,7 +265,7 @@ Update_File(){
 				Download_File "$SHARED_REPO/$1.md5" "$SHARED_DIR/$1.md5"
 				tar -xzf "$SHARED_DIR/$1" -C "$SHARED_DIR"
 				rm -f "$SHARED_DIR/$1"
-				Print_Output "true" "New version of $1 downloaded" "$PASS"
+				Print_Output true "New version of $1 downloaded" "$PASS"
 			fi
 		fi
 	else
@@ -278,7 +279,7 @@ Validate_Number(){
 	else
 		formatted="$(echo "$1" | sed -e 's/|/ /g')"
 		if [ -z "$3" ]; then
-			Print_Output "false" "$formatted - $2 is not a number" "$ERR"
+			Print_Output false "$formatted - $2 is not a number" "$ERR"
 		fi
 		return 1
 	fi
@@ -289,7 +290,7 @@ Conf_FromSettings(){
 	TMPFILE="/tmp/ntpmerlin_settings.txt"
 	if [ -f "$SETTINGSFILE" ]; then
 		if [ "$(grep "ntpmerlin_" $SETTINGSFILE | grep -v "version" -c)" -gt 0 ]; then
-			Print_Output "true" "Updated settings from WebUI found, merging into $SCRIPT_CONF" "$PASS"
+			Print_Output true "Updated settings from WebUI found, merging into $SCRIPT_CONF" "$PASS"
 			cp -a "$SCRIPT_CONF" "$SCRIPT_CONF.bak"
 			grep "ntpmerlin_" "$SETTINGSFILE" | grep -v "version" > "$TMPFILE"
 			sed -i "s/ntpmerlin_//g;s/ /=/g" "$TMPFILE"
@@ -305,20 +306,19 @@ Conf_FromSettings(){
 			rm -f "$TMPFILE"
 			rm -f "$SETTINGSFILE.bak"
 			
-			ScriptStorageLocation "$(ScriptStorageLocation "check")"
+			ScriptStorageLocation "$(ScriptStorageLocation check)"
 			Create_Symlinks
 			
 			Generate_CSVs
 			
-			TimeServer "$(TimeServer "check")"
+			TimeServer "$(TimeServer check)"
 			
-			Print_Output "true" "Merge of updated settings from WebUI completed successfully" "$PASS"
+			Print_Output true "Merge of updated settings from WebUI completed successfully" "$PASS"
 		else
-			Print_Output "false" "No updated settings from WebUI found, no merge into $SCRIPT_CONF necessary" "$PASS"
+			Print_Output false "No updated settings from WebUI found, no merge into $SCRIPT_CONF necessary" "$PASS"
 		fi
 	fi
 }
-
 
 Create_Dirs(){
 	if [ ! -d "$SCRIPT_DIR" ]; then
@@ -349,6 +349,7 @@ Create_Dirs(){
 Create_Symlinks(){
 	rm -rf "${SCRIPT_WEB_DIR:?}/"* 2>/dev/null
 	
+	ln -s /tmp/detect_ntpmerlin.js "$SCRIPT_WEB_DIR/detect_ntpmerlin.js" 2>/dev/null
 	ln -s "$SCRIPT_STORAGE_DIR/ntpstatstext.js" "$SCRIPT_WEB_DIR/ntpstatstext.js" 2>/dev/null
 	
 	ln -s "$SCRIPT_CONF" "$SCRIPT_WEB_DIR/config.htm" 2>/dev/null
@@ -387,7 +388,7 @@ Auto_ServiceEvent(){
 			if [ -f /jffs/scripts/service-event ]; then
 				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/service-event)
 				# shellcheck disable=SC2016
-				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME_LOWER service_event"' "$1" "$2" &'' # '"$SCRIPT_NAME" /jffs/scripts/service-event)
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME_LOWER service_event"' "$@" &'' # '"$SCRIPT_NAME" /jffs/scripts/service-event)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
 					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/service-event
@@ -395,13 +396,13 @@ Auto_ServiceEvent(){
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
 					# shellcheck disable=SC2016
-					echo "/jffs/scripts/$SCRIPT_NAME_LOWER service_event"' "$1" "$2" &'' # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
+					echo "/jffs/scripts/$SCRIPT_NAME_LOWER service_event"' "$@" &'' # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
 				fi
 			else
 				echo "#!/bin/sh" > /jffs/scripts/service-event
 				echo "" >> /jffs/scripts/service-event
 				# shellcheck disable=SC2016
-				echo "/jffs/scripts/$SCRIPT_NAME_LOWER service_event"' "$1" "$2" &'' # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
+				echo "/jffs/scripts/$SCRIPT_NAME_LOWER service_event"' "$@" &'' # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
 				chmod 0755 /jffs/scripts/service-event
 			fi
 		;;
@@ -460,20 +461,27 @@ Auto_Startup(){
 		create)
 			if [ -f /jffs/scripts/services-start ]; then
 				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/services-start)
-				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME_LOWER startup &"' # '"$SCRIPT_NAME" /jffs/scripts/services-start)
+				
+				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/services-start
+				fi
+			fi
+			if [ -f /jffs/scripts/post-mount ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/post-mount)
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME_LOWER startup"' "$@" & # '"$SCRIPT_NAME" /jffs/scripts/post-mount)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
-					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/services-start
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/post-mount
 				fi
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
-					echo "/jffs/scripts/$SCRIPT_NAME_LOWER startup &"' # '"$SCRIPT_NAME" >> /jffs/scripts/services-start
+					echo "/jffs/scripts/$SCRIPT_NAME_LOWER startup"' "$@" & # '"$SCRIPT_NAME" >> /jffs/scripts/post-mount
 				fi
 			else
-				echo "#!/bin/sh" > /jffs/scripts/services-start
-				echo "" >> /jffs/scripts/services-start
-				echo "/jffs/scripts/$SCRIPT_NAME_LOWER startup &"' # '"$SCRIPT_NAME" >> /jffs/scripts/services-start
-				chmod 0755 /jffs/scripts/services-start
+				echo "#!/bin/sh" > /jffs/scripts/post-mount
+				echo "" >> /jffs/scripts/post-mount
+				echo "/jffs/scripts/$SCRIPT_NAME_LOWER startup"' "$@" & # '"$SCRIPT_NAME" >> /jffs/scripts/post-mount
+				chmod 0755 /jffs/scripts/post-mount
 			fi
 		;;
 		delete)
@@ -482,6 +490,13 @@ Auto_Startup(){
 				
 				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
 					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/services-start
+				fi
+			fi
+			if [ -f /jffs/scripts/post-mount ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/post-mount)
+				
+				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/post-mount
 				fi
 			fi
 		;;
@@ -576,10 +591,10 @@ NTP_Redirect(){
 
 NTP_Firmware_Check(){
 	ENABLED_NTPD="$(nvram get ntpd_enable)"
-	if ! Validate_Number "" "$ENABLED_NTPD" "silent"; then ENABLED_NTPD=0; fi
+	if ! Validate_Number "" "$ENABLED_NTPD" silent; then ENABLED_NTPD=0; fi
 	
 	if [ "$ENABLED_NTPD" -eq 1 ]; then
-		Print_Output "true" "Built-in ntpd is enabled and will conflict, it will be disabled" "$WARN"
+		Print_Output true "Built-in ntpd is enabled and will conflict, it will be disabled" "$WARN"
 		nvram set ntpd_enable=0
 		nvram set ntpd_server_redir=0
 		nvram commit
@@ -607,18 +622,18 @@ Get_WebUI_Page(){
 Mount_WebUI(){
 	Get_WebUI_Page "$SCRIPT_DIR/ntpdstats_www.asp"
 	if [ "$MyPage" = "none" ]; then
-		Print_Output "true" "Unable to mount $SCRIPT_NAME WebUI page, exiting" "$CRIT"
+		Print_Output true "Unable to mount $SCRIPT_NAME WebUI page, exiting" "$CRIT"
 		Clear_Lock
 		exit 1
 	fi
-	Print_Output "true" "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
+	Print_Output true "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
 	cp -f "$SCRIPT_DIR/ntpdstats_www.asp" "$SCRIPT_WEBPAGE_DIR/$MyPage"
 	echo "ntpMerlin" > "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
 	
 	if [ "$(uname -o)" = "ASUSWRT-Merlin" ]; then
 		
-		if [ ! -f "/tmp/index_style.css" ]; then
-			cp -f "/www/index_style.css" "/tmp/"
+		if [ ! -f /tmp/index_style.css ]; then
+			cp -f /www/index_style.css /tmp/
 		fi
 		
 		if ! grep -q '.menu_Addons' /tmp/index_style.css ; then
@@ -628,8 +643,8 @@ Mount_WebUI(){
 		umount /www/index_style.css 2>/dev/null
 		mount -o bind /tmp/index_style.css /www/index_style.css
 		
-		if [ ! -f "/tmp/menuTree.js" ]; then
-			cp -f "/www/require/modules/menuTree.js" "/tmp/"
+		if [ ! -f /tmp/menuTree.js ]; then
+			cp -f /www/require/modules/menuTree.js /tmp/
 		fi
 		
 		sed -i "\\~$MyPage~d" /tmp/menuTree.js
@@ -650,7 +665,7 @@ Mount_WebUI(){
 }
 
 TimeServer_Customise(){
-	TIMESERVER_NAME="$(TimeServer "check")"
+	TIMESERVER_NAME="$(TimeServer check)"
 	if [ -f "/opt/etc/init.d/S77$TIMESERVER_NAME" ]; then
 		"/opt/etc/init.d/S77$TIMESERVER_NAME" stop
 	fi
@@ -671,7 +686,7 @@ TimeServer_Customise(){
 ScriptStorageLocation(){
 	case "$1" in
 		usb)
-			TIMESERVER_NAME="$(TimeServer "check")"
+			TIMESERVER_NAME="$(TimeServer check)"
 			sed -i 's/^STORAGELOCATION.*$/STORAGELOCATION=usb/' "$SCRIPT_CONF"
 			mkdir -p "/opt/share/$SCRIPT_NAME_LOWER.d/"
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/csv" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
@@ -681,12 +696,14 @@ ScriptStorageLocation(){
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntpdstats.db" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntp.conf" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntp.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart 2>/dev/null
 			SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
-			ScriptStorageLocation "load"
+			ScriptStorageLocation load
 		;;
 		jffs)
-			TIMESERVER_NAME="$(TimeServer "check")"
+			TIMESERVER_NAME="$(TimeServer check)"
 			sed -i 's/^STORAGELOCATION.*$/STORAGELOCATION=jffs/' "$SCRIPT_CONF"
 			mkdir -p "/jffs/addons/$SCRIPT_NAME_LOWER.d/"
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/csv" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
@@ -696,9 +713,11 @@ ScriptStorageLocation(){
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntpdstats.db" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntp.conf" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntp.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart 2>/dev/null
 			SCRIPT_CONF="/jffs/addons/$SCRIPT_NAME_LOWER.d/config"
-			ScriptStorageLocation "load"
+			ScriptStorageLocation load
 		;;
 		check)
 			STORAGELOCATION=$(grep "STORAGELOCATION" "$SCRIPT_CONF" | cut -f2 -d"=")
@@ -730,7 +749,7 @@ OutputDataMode(){
 		check)
 			OUTPUTDATAMODE=$(grep "OUTPUTDATAMODE" "$SCRIPT_CONF" | cut -f2 -d"=")
 			echo "$OUTPUTDATAMODE"
-			;;
+		;;
 	esac
 }
 
@@ -762,8 +781,8 @@ TimeServer(){
 				opkg install ntp-utils
 				opkg install ntpd
 			fi
-			Update_File "ntp.conf" >/dev/null 2>&1
-			Update_File "S77ntpd" >/dev/null 2>&1
+			Update_File ntp.conf >/dev/null 2>&1
+			Update_File S77ntpd >/dev/null 2>&1
 		;;
 		chronyd)
 			sed -i 's/^TIMESERVER.*$/TIMESERVER=chronyd/' "$SCRIPT_CONF"
@@ -773,8 +792,8 @@ TimeServer(){
 				opkg update
 				opkg install chrony
 			fi
-			Update_File "chrony.conf" >/dev/null 2>&1
-			Update_File "S77chronyd" >/dev/null 2>&1
+			Update_File chrony.conf >/dev/null 2>&1
+			Update_File S77chronyd >/dev/null 2>&1
 		;;
 		check)
 			TIMESERVER=$(grep "TIMESERVER" "$SCRIPT_CONF" | cut -f2 -d"=")
@@ -787,7 +806,7 @@ WriteStats_ToJS(){
 	echo "function $3(){" > "$2"
 	html='document.getElementById("'"$4"'").innerHTML="'
 	while IFS='' read -r line || [ -n "$line" ]; do
-		html="$html""$line""\\r\\n"
+		html="${html}${line}\\r\\n"
 	done < "$1"
 	html="$html"'"'
 	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
@@ -811,18 +830,20 @@ WriteSql_ToFile(){
 Get_TimeServer_Stats(){
 	Create_Dirs
 	Conf_Exists
-	Set_Version_Custom_Settings "local"
+	Set_Version_Custom_Settings local
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	NTP_Firmware_Check
-	ScriptStorageLocation "load"
+	ScriptStorageLocation load
 	Create_Symlinks
+	
+	echo 'var ntpstatus = "InProgress";' > /tmp/detect_ntpmerlin.js
 	
 	#shellcheck disable=SC2086
 	killall ntp 2>/dev/null
 	
-	TIMESERVER="$(TimeServer "check")"
+	TIMESERVER="$(TimeServer check)"
 	if [ "$TIMESERVER" = "ntpd" ]; then
 		tmpfile=/tmp/ntp-stats.$$
 		ntpq -4 -c rv | awk 'BEGIN{ RS=","}{ print }' > "$tmpfile"
@@ -868,15 +889,17 @@ Get_TimeServer_Stats(){
 	
 	Generate_CSVs
 	
-	echo "Stats last updated: $timenowfriendly" > "/tmp/ntpstatstitle.txt"
-	WriteStats_ToJS "/tmp/ntpstatstitle.txt" "$SCRIPT_STORAGE_DIR/ntpstatstext.js" "SetNTPDStatsTitle" "statstitle"
+	echo "Stats last updated: $timenowfriendly" > /tmp/ntpstatstitle.txt
+	WriteStats_ToJS /tmp/ntpstatstitle.txt "$SCRIPT_STORAGE_DIR/ntpstatstext.js" SetNTPDStatsTitle statstitle
 	
-	rm -f "/tmp/ntpstatstitle.txt"
+	echo 'var ntpstatus = "Done";' > /tmp/detect_ntpmerlin.js
+	
+	rm -f /tmp/ntpstatstitle.txt
 }
 
 Generate_CSVs(){
-	OUTPUTDATAMODE="$(OutputDataMode "check")"
-	OUTPUTTIMEMODE="$(OutputTimeMode "check")"
+	OUTPUTDATAMODE="$(OutputDataMode check)"
+	OUTPUTTIMEMODE="$(OutputTimeMode check)"
 	TZ=$(cat /etc/TZ)
 	export TZ
 	timenow=$(date +"%s")
@@ -888,8 +911,8 @@ Generate_CSVs(){
 		{
 			echo ".mode csv"
 			echo ".headers on"
-			echo ".output $CSV_OUTPUT_DIR/$metric""daily"".htm"
-			echo "select '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value from ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
+			echo ".output $CSV_OUTPUT_DIR/${metric}daily.htm"
+			echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
 		} > /tmp/ntp-stats.sql
 		
 		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
@@ -899,8 +922,8 @@ Generate_CSVs(){
 			{
 				echo ".mode csv"
 				echo ".headers on"
-				echo ".output $CSV_OUTPUT_DIR/$metric""weekly"".htm"
-				echo "select '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value from ntpstats WHERE [Timestamp] >= ($timenow - 86400*7);"
+				echo ".output $CSV_OUTPUT_DIR/${metric}weekly.htm"
+				echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400*7);"
 			} > /tmp/ntp-stats.sql
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
@@ -908,54 +931,63 @@ Generate_CSVs(){
 			{
 				echo ".mode csv"
 				echo ".headers on"
-				echo ".output $CSV_OUTPUT_DIR/$metric""monthly"".htm"
-				echo "select '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value from ntpstats WHERE [Timestamp] >= ($timenow - 86400*30);"
+				echo ".output $CSV_OUTPUT_DIR/${metric}monthly.htm"
+				echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400*30);"
 			} > /tmp/ntp-stats.sql
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
 		elif [ "$OUTPUTDATAMODE" = "average" ]; then
-			WriteSql_ToFile "$metric" "ntpstats" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/ntp-stats.sql" "$timenow"
+			WriteSql_ToFile "$metric" ntpstats 1 7 "$CSV_OUTPUT_DIR/$metric" weekly /tmp/ntp-stats.sql "$timenow"
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
 			
-			WriteSql_ToFile "$metric" "ntpstats" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/ntp-stats.sql" "$timenow"
+			WriteSql_ToFile "$metric" ntpstats 3 30 "$CSV_OUTPUT_DIR/$metric" monthly /tmp/ntp-stats.sql "$timenow"
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
 		fi
 	done
 	
-	rm -f "/tmp/ntp-stats.sql"
+	rm -f /tmp/ntp-stats.sql
+	
+	{
+		echo ".mode csv"
+		echo ".headers on"
+		echo ".output $CSV_OUTPUT_DIR/CompleteResults.htm"
+	} > /tmp/ntp-complete.sql
+	echo "SELECT [Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp] FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400*30) ORDER BY [Timestamp] DESC;" >> /tmp/ntp-complete.sql
+	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-complete.sql
+	rm -f /tmp/ntp-complete.sql
 	
 	dos2unix "$CSV_OUTPUT_DIR/"*.htm
 	
-	tmpoutputdir="/tmp/""$SCRIPT_NAME_LOWER""results"
+	tmpoutputdir="/tmp/${SCRIPT_NAME_LOWER}results"
 	mkdir -p "$tmpoutputdir"
-	cp "$CSV_OUTPUT_DIR/"*.htm "$tmpoutputdir/."
+	mv "$CSV_OUTPUT_DIR/CompleteResults"*.htm "$tmpoutputdir/."
 	
 	if [ "$OUTPUTTIMEMODE" = "unix" ]; then
 		find "$tmpoutputdir/" -name '*.htm' -exec sh -c 'i="$1"; mv -- "$i" "${i%.htm}.csv"' _ {} \;
 	elif [ "$OUTPUTTIMEMODE" = "non-unix" ]; then
 		for i in "$tmpoutputdir/"*".htm"; do
-			awk -F"," 'NR==1 {OFS=","; print} NR>1 {OFS=","; $2=strftime("%Y-%m-%d %H:%M:%S", $2); print }' "$i" > "$i.out"
+			awk -F"," 'NR==1 {OFS=","; print} NR>1 {OFS=","; $1=strftime("%Y-%m-%d %H:%M:%S", $1); print }' "$i" > "$i.out"
 		done
 		
 		find "$tmpoutputdir/" -name '*.htm.out' -exec sh -c 'i="$1"; mv -- "$i" "${i%.htm.out}.csv"' _ {} \;
 		rm -f "$tmpoutputdir/"*.htm
 	fi
 	
-	if [ ! -f /opt/bin/7z ]; then
+	if [ ! -f /opt/bin/7za ]; then
 		opkg update
 		opkg install p7zip
 	fi
-	/opt/bin/7z a -y -bsp0 -bso0 -tzip "/tmp/""$SCRIPT_NAME_LOWER""data.zip" "$tmpoutputdir/*"
-	mv "/tmp/""$SCRIPT_NAME_LOWER""data.zip" "$CSV_OUTPUT_DIR"
+	/opt/bin/7za a -y -bsp0 -bso0 -tzip "/tmp/${SCRIPT_NAME_LOWER}data.zip" "$tmpoutputdir/*"
+	mv "/tmp/${SCRIPT_NAME_LOWER}data.zip" "$CSV_OUTPUT_DIR"
 	rm -rf "$tmpoutputdir"
 }
 
 Shortcut_ntpMerlin(){
 	case $1 in
 		create)
-			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/$SCRIPT_NAME_LOWER" ] && [ -f "/jffs/scripts/$SCRIPT_NAME_LOWER" ]; then
+			if [ -d /opt/bin ] && [ ! -f "/opt/bin/$SCRIPT_NAME_LOWER" ] && [ -f "/jffs/scripts/$SCRIPT_NAME_LOWER" ]; then
 				ln -s /jffs/scripts/"$SCRIPT_NAME_LOWER" /opt/bin
 				chmod 0755 /opt/bin/"$SCRIPT_NAME_LOWER"
 			fi
@@ -971,7 +1003,7 @@ Shortcut_ntpMerlin(){
 PressEnter(){
 	while true; do
 		printf "Press enter to continue..."
-		read -r "key"
+		read -r key
 		case "$key" in
 			*)
 				break
@@ -984,14 +1016,14 @@ PressEnter(){
 ScriptHeader(){
 	clear
 	DST_ENABLED="$(nvram get time_zone_dst)"
-	if ! Validate_Number "" "$DST_ENABLED" "silent"; then DST_ENABLED=0; fi
-	if [ "$DST_ENABLED" -eq "0" ]; then
+	if ! Validate_Number "" "$DST_ENABLED" silent; then DST_ENABLED=0; fi
+	if [ "$DST_ENABLED" -eq 0 ]; then
 		DST_ENABLED="Inactive"
 	else
 		DST_ENABLED="Active"
 	fi
 	
-	TIMESERVER_NAME_MENU="$(TimeServer "check")"
+	TIMESERVER_NAME_MENU="$(TimeServer check)"
 	CONFFILE_MENU=""
 	if [ "$TIMESERVER_NAME_MENU" = "ntpd" ]; then
 		CONFFILE_MENU="$SCRIPT_STORAGE_DIR/ntp.conf"
@@ -1041,14 +1073,14 @@ MainMenu(){
 	else
 		NTP_REDIRECT_ENABLED="Disabled"
 	fi
-	TIMESERVER_NAME_MENU="$(TimeServer "check")"
+	TIMESERVER_NAME_MENU="$(TimeServer check)"
 	
 	printf "1.    Generate updated %s graphs now\\n\\n" "$SCRIPT_NAME"
 	printf "2.    Toggle redirect of all NTP traffic to %s\\n      (currently %s)\\n\\n" "$SCRIPT_NAME" "$NTP_REDIRECT_ENABLED"
 	printf "3.    Edit %s config\\n\\n" "$SCRIPT_NAME"
-	printf "4.    Toggle data output mode\\n      Currently \\e[1m%s\\e[0m values will be used for weekly and monthly charts\\n\\n" "$(OutputDataMode "check")"
-	printf "5.    Toggle time output mode\\n      Currently \\e[1m%s\\e[0m time values will be used for CSV exports\\n\\n" "$(OutputTimeMode "check")"
-	printf "s.    Toggle storage location for stats and config\\n      Current location is \\e[1m%s\\e[0m \\n\\n" "$(ScriptStorageLocation "check")"
+	printf "4.    Toggle data output mode\\n      Currently \\e[1m%s\\e[0m values will be used for weekly and monthly charts\\n\\n" "$(OutputDataMode check)"
+	printf "5.    Toggle time output mode\\n      Currently \\e[1m%s\\e[0m time values will be used for CSV exports\\n\\n" "$(OutputTimeMode check)"
+	printf "s.    Toggle storage location for stats and config\\n      Current location is \\e[1m%s\\e[0m \\n\\n" "$(ScriptStorageLocation check)"
 	printf "t.    Switch timeserver between ntpd and chronyd\\n      Currently using \\e[1m%s\\e[0m\\n\\n" "$TIMESERVER_NAME_MENU"
 	printf "r.    Restart %s\\n\\n" "$TIMESERVER_NAME_MENU"
 	printf "u.    Check for updates\\n"
@@ -1061,11 +1093,11 @@ MainMenu(){
 	
 	while true; do
 		printf "Choose an option:    "
-		read -r "menu"
+		read -r menu
 		case "$menu" in
 			1)
 				printf "\\n"
-				if Check_Lock "menu"; then
+				if Check_Lock menu; then
 					Menu_GenerateStats
 				fi
 				PressEnter
@@ -1079,7 +1111,7 @@ MainMenu(){
 			;;
 			3)
 				printf "\\n"
-				if Check_Lock "menu"; then
+				if Check_Lock menu; then
 					Menu_Edit
 				fi
 				break
@@ -1101,7 +1133,7 @@ MainMenu(){
 			;;
 			t)
 				printf "\\n"
-				if Check_Lock "menu"; then
+				if Check_Lock menu; then
 					Menu_ToggleTimeServer
 				fi
 				break
@@ -1114,7 +1146,7 @@ MainMenu(){
 			;;
 			u)
 				printf "\\n"
-				if Check_Lock "menu"; then
+				if Check_Lock menu; then
 					Menu_Update
 				fi
 				PressEnter
@@ -1122,7 +1154,7 @@ MainMenu(){
 			;;
 			uf)
 				printf "\\n"
-				if Check_Lock "menu"; then
+				if Check_Lock menu; then
 					Menu_ForceUpdate
 				fi
 				PressEnter
@@ -1136,7 +1168,7 @@ MainMenu(){
 			z)
 				while true; do
 					printf "\\n\\e[1mAre you sure you want to uninstall %s? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
-					read -r "confirm"
+					read -r confirm
 					case "$confirm" in
 						y|Y)
 							Menu_Uninstall
@@ -1164,24 +1196,24 @@ Check_Requirements(){
 	if [ "$(nvram get jffs2_scripts)" -ne 1 ]; then
 		nvram set jffs2_scripts=1
 		nvram commit
-		Print_Output "true" "Custom JFFS Scripts enabled" "$WARN"
+		Print_Output true "Custom JFFS Scripts enabled" "$WARN"
 	fi
 	
-	if [ ! -f "/opt/bin/opkg" ]; then
-		Print_Output "true" "Entware not detected!" "$ERR"
+	if [ ! -f /opt/bin/opkg ]; then
+		Print_Output true "Entware not detected!" "$ERR"
 		CHECKSFAILED="true"
 	fi
 	
-	if ! Firmware_Version_Check "install" ; then
-		Print_Output "true" "Unsupported firmware version detected" "$ERR"
-		Print_Output "true" "$SCRIPT_NAME requires Merlin 384.15/384.13_4 or Fork 43E5 (or later)" "$ERR"
+	if ! Firmware_Version_Check install ; then
+		Print_Output true "Unsupported firmware version detected" "$ERR"
+		Print_Output true "$SCRIPT_NAME requires Merlin 384.15/384.13_4 or Fork 43E5 (or later)" "$ERR"
 		CHECKSFAILED="true"
 	fi
 	
 	NTP_Firmware_Check
 	
 	if [ "$CHECKSFAILED" = "false" ]; then
-		Print_Output "true" "Installing required packages from Entware" "$PASS"
+		Print_Output true "Installing required packages from Entware" "$PASS"
 		opkg update
 		opkg install sqlite3-cli
 		opkg install p7zip
@@ -1194,13 +1226,13 @@ Check_Requirements(){
 }
 
 Menu_Install(){
-	Print_Output "true" "Welcome to $SCRIPT_NAME $SCRIPT_VERSION, a script by JackYaz"
+	Print_Output true "Welcome to $SCRIPT_NAME $SCRIPT_VERSION, a script by JackYaz"
 	sleep 1
 	
-	Print_Output "true" "Checking your router meets the requirements for $SCRIPT_NAME"
+	Print_Output true "Checking your router meets the requirements for $SCRIPT_NAME"
 	
 	if ! Check_Requirements; then
-		Print_Output "true" "Requirements for $SCRIPT_NAME not met, please see above for the reason(s)" "$CRIT"
+		Print_Output true "Requirements for $SCRIPT_NAME not met, please see above for the reason(s)" "$CRIT"
 		PressEnter
 		Clear_Lock
 		rm -f "/jffs/scripts/$SCRIPT_NAME_LOWER" 2>/dev/null
@@ -1209,13 +1241,13 @@ Menu_Install(){
 	
 	Create_Dirs
 	Conf_Exists
-	Set_Version_Custom_Settings "local"
-	ScriptStorageLocation "load"
+	Set_Version_Custom_Settings local
+	ScriptStorageLocation load
 	Create_Symlinks
 	
 	Download_File "$SCRIPT_REPO/ntp.conf" "$SCRIPT_STORAGE_DIR/ntp.conf"
-	Update_File "ntpdstats_www.asp"
-	Update_File "shared-jy.tar.gz"
+	Update_File ntpdstats_www.asp
+	Update_File shared-jy.tar.gz
 	
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
@@ -1227,10 +1259,29 @@ Menu_Install(){
 }
 
 Menu_Startup(){
+	if [ -z "$1" ]; then
+		Print_Output true "Missing argument for startup, not starting $SCRIPT_NAME" "$WARN"
+		exit 1
+	elif [ "$1" != "force" ]; then
+		if [ ! -f "$1/entware/bin/opkg" ]; then
+			Print_Output true "$1 does not contain Entware, not starting $SCRIPT_NAME" "$WARN"
+			exit 1
+		else
+			Print_Output true "$1 contains Entware, starting $SCRIPT_NAME" "$WARN"
+		fi
+	fi
+	
+	NTP_Ready
+	
+	Check_Lock
+	
+	if [ "$1" != "force" ]; then
+		sleep 7
+	fi
 	Create_Dirs
 	Conf_Exists
-	Set_Version_Custom_Settings "local"
-	ScriptStorageLocation "load"
+	Set_Version_Custom_Settings local
+	ScriptStorageLocation load
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
@@ -1247,36 +1298,36 @@ Menu_GenerateStats(){
 }
 
 Menu_ToggleOutputDataMode(){
-	if [ "$(OutputDataMode "check")" = "raw" ]; then
-		OutputDataMode "average"
-	elif [ "$(OutputDataMode "check")" = "average" ]; then
-		OutputDataMode "raw"
+	if [ "$(OutputDataMode check)" = "raw" ]; then
+		OutputDataMode average
+	elif [ "$(OutputDataMode check)" = "average" ]; then
+		OutputDataMode raw
 	fi
 }
 
 Menu_ToggleOutputTimeMode(){
-	if [ "$(OutputTimeMode "check")" = "unix" ]; then
-		OutputTimeMode "non-unix"
-	elif [ "$(OutputTimeMode "check")" = "non-unix" ]; then
-		OutputTimeMode "unix"
+	if [ "$(OutputTimeMode check)" = "unix" ]; then
+		OutputTimeMode non-unix
+	elif [ "$(OutputTimeMode check)" = "non-unix" ]; then
+		OutputTimeMode unix
 	fi
 }
 
 Menu_ToggleTimeServer(){
-	if [ "$(TimeServer "check")" = "ntpd" ]; then
-		TimeServer "chronyd"
-	elif [ "$(TimeServer "check")" = "chronyd" ]; then
-		TimeServer "ntpd"
+	if [ "$(TimeServer check)" = "ntpd" ]; then
+		TimeServer chronyd
+	elif [ "$(TimeServer check)" = "chronyd" ]; then
+		TimeServer ntpd
 	fi
 	Clear_Lock
 }
 
 Menu_ToggleStorageLocation(){
-	if [ "$(ScriptStorageLocation "check")" = "jffs" ]; then
-		ScriptStorageLocation "usb"
+	if [ "$(ScriptStorageLocation check)" = "jffs" ]; then
+		ScriptStorageLocation usb
 		Create_Symlinks
-	elif [ "$(ScriptStorageLocation "check")" = "usb" ]; then
-		ScriptStorageLocation "jffs"
+	elif [ "$(ScriptStorageLocation check)" = "usb" ]; then
+		ScriptStorageLocation jffs
 		Create_Symlinks
 	fi
 }
@@ -1292,7 +1343,7 @@ Menu_Edit(){
 	
 	while true; do
 		printf "\\n\\e[1mChoose an option:\\e[0m    "
-		read -r "editor"
+		read -r editor
 		case "$editor" in
 			1)
 				texteditor="nano -K"
@@ -1313,7 +1364,7 @@ Menu_Edit(){
 	done
 	
 	if [ "$exitmenu" != "true" ]; then
-		TIMESERVER_NAME="$(TimeServer "check")"
+		TIMESERVER_NAME="$(TimeServer check)"
 		CONFFILE=""
 		if [ "$TIMESERVER_NAME" = "ntpd" ]; then
 			CONFFILE="$SCRIPT_STORAGE_DIR/ntp.conf"
@@ -1343,8 +1394,8 @@ Menu_ToggleNTPRedirect(){
 }
 
 Menu_RestartTimeServer(){
-	TIMESERVER_NAME="$(TimeServer "check")"
-	Print_Output "true" "Restarting $TIMESERVER_NAME..." "$PASS"
+	TIMESERVER_NAME="$(TimeServer check)"
+	Print_Output true "Restarting $TIMESERVER_NAME..." "$PASS"
 	"/opt/etc/init.d/S77$TIMESERVER_NAME" restart
 }
 
@@ -1359,7 +1410,7 @@ Menu_ForceUpdate(){
 }
 
 Menu_Uninstall(){
-	Print_Output "true" "Removing $SCRIPT_NAME..." "$PASS"
+	Print_Output true "Removing $SCRIPT_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
 	Auto_ServiceEvent delete 2>/dev/null
@@ -1376,56 +1427,49 @@ Menu_Uninstall(){
 	rm -f "$SCRIPT_DIR/ntpdstats_www.asp" 2>/dev/null
 	rm -rf "$SCRIPT_WEB_DIR" 2>/dev/null
 	
-	while true; do
-		printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
-		read -r "confirm"
-		case "$confirm" in
-			y|Y)
-				rm -rf "$SCRIPT_DIR" 2>/dev/null
-				rm -rf "$SCRIPT_STORAGE_DIR" 2>/dev/null
-				break
-			;;
-			*)
-				break
-			;;
-		esac
-	done
+	printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
+	read -r confirm
+	case "$confirm" in
+		y|Y)
+			rm -rf "$SCRIPT_DIR" 2>/dev/null
+			rm -rf "$SCRIPT_STORAGE_DIR" 2>/dev/null
+		;;
+		*)
+			:
+		;;
+	esac
 	Shortcut_ntpMerlin delete
-	TIMESERVER_NAME="$(TimeServer "check")"
+	TIMESERVER_NAME="$(TimeServer check)"
 	"/opt/etc/init.d/S77$TIMESERVER_NAME" stop
 	opkg remove --autoremove ntpd
 	opkg remove --autoremove ntp-utils
 	opkg remove --autoremove chrony
 	
+	rm -f /opt/etc/init.d/S77ntpd
+	rm -f /opt/etc/init.d/S77chronyd
+	
 	rm -f "/jffs/scripts/$SCRIPT_NAME_LOWER" 2>/dev/null
 	Clear_Lock
-	Print_Output "true" "Uninstall completed" "$PASS"
+	Print_Output true "Uninstall completed" "$PASS"
 }
 
 NTP_Ready(){
-	if [ "$1" = "service_event" ]; then
-		if [ -n "$2" ] && [ "$(echo "$3" | grep -c "$SCRIPT_NAME_LOWER")" -eq 0 ]; then
-			exit 0
-		fi
-	elif [ "$1" = "ntpredirect" ]; then
-		return 0
-	fi
-	if [ "$(nvram get ntp_ready)" = "0" ]; then
+	if [ "$(nvram get ntp_ready)" -eq 0 ]; then
 		Check_Lock
 		ntpwaitcount="0"
-		while [ "$(nvram get ntp_ready)" = "0" ] && [ "$ntpwaitcount" -lt "300" ]; do
+		while [ "$(nvram get ntp_ready)" -eq 0 ] && [ "$ntpwaitcount" -lt 300 ]; do
 			ntpwaitcount="$((ntpwaitcount + 1))"
-			if [ "$ntpwaitcount" = "60" ]; then
-				Print_Output "true" "Waiting for NTP to sync..." "$WARN"
+			if [ "$ntpwaitcount" -eq 60 ]; then
+				Print_Output true "Waiting for NTP to sync..." "$WARN"
 			fi
 			sleep 1
 		done
-		if [ "$ntpwaitcount" -ge "300" ]; then
-			Print_Output "true" "NTP failed to sync after 5 minutes. Please resolve!" "$CRIT"
+		if [ "$ntpwaitcount" -ge 300 ]; then
+			Print_Output true "NTP failed to sync after 5 minutes. Please resolve!" "$CRIT"
 			Clear_Lock
 			exit 1
 		else
-			Print_Output "true" "NTP synced, $SCRIPT_NAME will now continue" "$PASS"
+			Print_Output true "NTP synced, $SCRIPT_NAME will now continue" "$PASS"
 			Clear_Lock
 		fi
 	fi
@@ -1433,34 +1477,25 @@ NTP_Ready(){
 
 ### function based on @Adamm00's Skynet USB wait function ###
 Entware_Ready(){
-	if [ "$1" = "service_event" ]; then
-		if [ -n "$2" ] && [ "$(echo "$3" | grep -c "$SCRIPT_NAME_LOWER")" -eq 0 ]; then
-			exit 0
-		fi
-	fi
-	
-	if [ ! -f "/opt/bin/opkg" ] && ! echo "$@" | grep -wqE "(install|uninstall|update|forceupdate|ntpredirect)"; then
+	if [ ! -f /opt/bin/opkg ]; then
 		Check_Lock
 		sleepcount=1
-		while [ ! -f "/opt/bin/opkg" ] && [ "$sleepcount" -le 10 ]; do
-			Print_Output "true" "Entware not found, sleeping for 10s (attempt $sleepcount of 10)" "$ERR"
+		while [ ! -f /opt/bin/opkg ] && [ "$sleepcount" -le 10 ]; do
+			Print_Output true "Entware not found, sleeping for 10s (attempt $sleepcount of 10)" "$ERR"
 			sleepcount="$((sleepcount + 1))"
 			sleep 10
 		done
-		if [ ! -f "/opt/bin/opkg" ]; then
-			Print_Output "true" "Entware not found and is required for $SCRIPT_NAME to run, please resolve" "$CRIT"
+		if [ ! -f /opt/bin/opkg ]; then
+			Print_Output true "Entware not found and is required for $SCRIPT_NAME to run, please resolve" "$CRIT"
 			Clear_Lock
 			exit 1
 		else
-			Print_Output "true" "Entware found, $SCRIPT_NAME will now continue" "$PASS"
+			Print_Output true "Entware found, $SCRIPT_NAME will now continue" "$PASS"
 			Clear_Lock
 		fi
 	fi
 }
 ### ###
-
-NTP_Ready "$@"
-Entware_Ready "$@"
 
 if [ -f "/opt/share/$SCRIPT_NAME_LOWER.d/config" ]; then
 	SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
@@ -1473,19 +1508,18 @@ fi
 CSV_OUTPUT_DIR="$SCRIPT_STORAGE_DIR/csv"
 
 if [ -z "$1" ]; then
+	NTP_Ready
+	Entware_Ready
 	if [ ! -f /opt/bin/sqlite3 ]; then
-		Print_Output "true" "Installing required version of sqlite3 from Entware" "$PASS"
+		Print_Output true "Installing required version of sqlite3 from Entware" "$PASS"
 		opkg update
 		opkg install sqlite3-cli
 	fi
 	
-	rm -f "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntpstatsdata.js" 2>/dev/null
-	rm -f "/jffs/addons/$SCRIPT_NAME_LOWER.d/.dbconverted" 2>/dev/null
-	
 	Create_Dirs
 	Conf_Exists
-	Set_Version_Custom_Settings "local"
-	ScriptStorageLocation "load"
+	Set_Version_Custom_Settings local
+	ScriptStorageLocation load
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
@@ -1503,17 +1537,19 @@ case "$1" in
 		exit 0
 	;;
 	startup)
-		Check_Lock
-		sleep 7
-		Menu_Startup
+		Menu_Startup "$2"
 		exit 0
 	;;
 	generate)
+		NTP_Ready
+		Entware_Ready
 		Check_Lock
 		Menu_GenerateStats
 		exit 0
 	;;
 	outputcsv)
+		NTP_Ready
+		Entware_Ready
 		Check_Lock
 		Generate_CSVs
 		Clear_Lock
@@ -1527,40 +1563,40 @@ case "$1" in
 			Conf_FromSettings
 			exit 0
 		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME_LOWER""checkupdate" ]; then
-			updatecheckresult="$(Update_Check)"
+			Update_Check
 			exit 0
 		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME_LOWER""doupdate" ]; then
-			Update_Version "force" "unattended"
+			Update_Version force unattended
 			exit 0
 		fi
 		exit 0
 	;;
 	ntpredirect)
-		Print_Output "true" "Sleeping for 5s to allow firewall/nat startup to be completed..." "$PASS"
+		Print_Output true "Sleeping for 5s to allow firewall/nat startup to be completed..." "$PASS"
 		sleep 5
 		Auto_NAT create
 		NTP_Redirect create
 		exit 0
 	;;
 	update)
-		Update_Version "unattended"
+		Update_Version unattended
 		exit 0
 	;;
 	forceupdate)
-		Update_Version "force" "unattended"
+		Update_Version force unattended
 		exit 0
 	;;
 	setversion)
-		Set_Version_Custom_Settings "local"
-		Set_Version_Custom_Settings "server" "$SCRIPT_VERSION"
+		Entware_Ready
+		Set_Version_Custom_Settings local
+		Set_Version_Custom_Settings server "$SCRIPT_VERSION"
 		if [ -z "$2" ]; then
 			exec "$0"
 		fi
 		exit 0
 	;;
 	checkupdate)
-		#shellcheck disable=SC2034
-		updatecheckresult="$(Update_Check)"
+		Update_Check
 		exit 0
 	;;
 	uninstall)
@@ -1570,12 +1606,12 @@ case "$1" in
 	;;
 	develop)
 		sed -i 's/^readonly SCRIPT_BRANCH.*$/readonly SCRIPT_BRANCH="develop"/' "/jffs/scripts/$SCRIPT_NAME_LOWER"
-		exec "$0" "update"
+		Update_Version force
 		exit 0
 	;;
 	stable)
 		sed -i 's/^readonly SCRIPT_BRANCH.*$/readonly SCRIPT_BRANCH="master"/' "/jffs/scripts/$SCRIPT_NAME_LOWER"
-		exec "$0" "update"
+		Update_Version force
 		exit 0
 	;;
 	*)

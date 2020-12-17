@@ -329,6 +329,10 @@ function SetGlobalDataset(txtchartname,dataobject){
 	window[txtchartname] = dataobject;
 	currentNoCharts++;
 	if(currentNoCharts == maxNoCharts){
+		document.getElementById("ntpupdate_text").innerHTML = "";
+		showhide("imgNTPUpdate", false);
+		showhide("ntpupdate_text", false);
+		showhide("btnUpdateStats", true);
 		for(i = 0; i < metriclist.length; i++){
 			$j("#"+metriclist[i]+"_Period").val(GetCookie(metriclist[i]+"_Period","number"));
 			Draw_Chart(metriclist[i],titlelist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
@@ -399,7 +403,7 @@ function AddEventHandlers(){
 			}
 		})
 	});
-
+	
 	$j(".collapsible-jquery").each(function(index,element){
 		if(GetCookie($j(this)[0].id,"string") == "collapsed"){
 			$j(this).siblings().toggle(false);
@@ -517,11 +521,11 @@ function update_status(){
 		dataType: 'script',
 		timeout: 3000,
 		error:	function(xhr){
-			setTimeout('update_status();', 1000);
+			setTimeout(update_status, 1000);
 		},
 		success: function(){
 			if (updatestatus == "InProgress"){
-				setTimeout('update_status();', 1000);
+				setTimeout(update_status, 1000);
 			}
 			else{
 				document.getElementById("imgChkUpdate").style.display = "none";
@@ -543,10 +547,10 @@ function update_status(){
 
 function CheckUpdate(){
 	showhide("btnChkUpdate", false);
-	document.formChkVer.action_script.value="start_ntpmerlincheckupdate"
-	document.formChkVer.submit();
+	document.formScriptActions.action_script.value="start_ntpmerlincheckupdate"
+	document.formScriptActions.submit();
 	document.getElementById("imgChkUpdate").style.display = "";
-	setTimeout("update_status();", 2000);
+	setTimeout(update_status, 2000);
 }
 
 function DoUpdate(){
@@ -558,16 +562,50 @@ function DoUpdate(){
 	document.form.submit();
 }
 
-function UpdateStats(){
-	var action_script_tmp = "start_ntpmerlin";
-	document.form.action_script.value = action_script_tmp;
-	var restart_time = 15;
-	document.form.action_wait.value = restart_time;
-	showLoading();
-	document.form.submit();
+function update_ntpstats(){
+	$j.ajax({
+		url: '/ext/ntpmerlin/detect_ntpmerlin.js',
+		dataType: 'script',
+		timeout: 1000,
+		error: function(xhr){
+			setTimeout(update_ntpstats, 1000);
+		},
+		success: function(){
+			if (ntpstatus == "InProgress"){
+				setTimeout(update_ntpstats, 1000);
+			}
+			else if (ntpstatus == "Done"){
+				document.getElementById("ntpupdate_text").innerHTML = "Refreshing charts...";
+				PostNTPUpdate();
+			}
+		}
+	});
 }
 
-function applyRule(){
+function PostNTPUpdate(){
+	currentNoCharts = 0;
+	reload_js('/ext/ntpmerlin/ntpstatstext.js');
+	$j("#Time_Format").val(GetCookie("Time_Format","number"));
+	SetNTPDStatsTitle();
+	setTimeout(RedrawAllCharts, 3000);
+}
+
+function reload_js(src){
+	$j('script[src="' + src + '"]').remove();
+	$j('<script>').attr('src', src+'?cachebuster='+ new Date().getTime()).appendTo('head');
+}
+
+function UpdateStats(){
+	showhide("btnUpdateStats", false);
+	document.formScriptActions.action_script.value="start_ntpmerlin";
+	document.formScriptActions.submit();
+	document.getElementById("ntpupdate_text").innerHTML = "Retrieving timeserver stats";
+	showhide("imgNTPUpdate", true);
+	showhide("ntpupdate_text", true);
+	setTimeout(update_ntpstats, 2000);
+}
+
+function SaveConfig(){
 	document.getElementById('amng_custom').value = JSON.stringify($j('form').serializeObject())
 	var action_script_tmp = "start_ntpmerlinconfig";
 	document.form.action_script.value = action_script_tmp;
@@ -577,8 +615,7 @@ function applyRule(){
 	document.form.submit();
 }
 
-function GetVersionNumber(versiontype)
-{
+function GetVersionNumber(versiontype){
 	var versionprop;
 	if(versiontype == "local"){
 		versionprop = custom_settings.ntpmerlin_version_local;
@@ -600,25 +637,14 @@ function get_conf_file(){
 		url: '/ext/ntpmerlin/config.htm',
 		dataType: 'text',
 		error: function(xhr){
-			setTimeout("get_conf_file();", 1000);
+			setTimeout(get_conf_file, 1000);
 		},
 		success: function(data){
 			var configdata=data.split("\n");
 			configdata = configdata.filter(Boolean);
 			
 			for (var i = 0; i < configdata.length; i++){
-				if (configdata[i].indexOf("OUTPUTDATAMODE") != -1){
-					document.form.ntpmerlin_outputdatamode.value=configdata[i].split("=")[1].replace(/(\r\n|\n|\r)/gm,"");
-				}
-				else if (configdata[i].indexOf("OUTPUTTIMEMODE") != -1){
-					document.form.ntpmerlin_outputtimemode.value=configdata[i].split("=")[1].replace(/(\r\n|\n|\r)/gm,"");
-				}
-				else if (configdata[i].indexOf("STORAGELOCATION") != -1){
-					document.form.ntpmerlin_storagelocation.value=configdata[i].split("=")[1].replace(/(\r\n|\n|\r)/gm,"");
-				}
-				else if (configdata[i].indexOf("TIMESERVER") != -1){
-					document.form.ntpmerlin_timeserver.value=configdata[i].split("=")[1].replace(/(\r\n|\n|\r)/gm,"");
-				}
+				eval("document.form.ntpmerlin_"+configdata[i].split("=")[0].toLowerCase()).value = configdata[i].split("=")[1].replace(/(\r\n|\n|\r)/gm,"");
 			}
 		}
 	});
