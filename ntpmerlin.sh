@@ -984,7 +984,7 @@ Generate_CSVs(){
 	rm -rf "$tmpoutputdir"
 }
 
-Shortcut_ntpMerlin(){
+Shortcut_Script(){
 	case $1 in
 		create)
 			if [ -d /opt/bin ] && [ ! -f "/opt/bin/$SCRIPT_NAME_LOWER" ] && [ -f "/jffs/scripts/$SCRIPT_NAME_LOWER" ]; then
@@ -1252,7 +1252,7 @@ Menu_Install(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	Shortcut_ntpMerlin create
+	Shortcut_Script create
 	TimeServer_Customise
 	Get_TimeServer_Stats
 	Clear_Lock
@@ -1287,7 +1287,7 @@ Menu_Startup(){
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	NTP_Firmware_Check
-	Shortcut_ntpMerlin create
+	Shortcut_Script create
 	Mount_WebUI
 	Clear_Lock
 }
@@ -1438,7 +1438,7 @@ Menu_Uninstall(){
 			:
 		;;
 	esac
-	Shortcut_ntpMerlin delete
+	Shortcut_Script delete
 	TIMESERVER_NAME="$(TimeServer check)"
 	"/opt/etc/init.d/S77$TIMESERVER_NAME" stop
 	opkg remove --autoremove ntpd
@@ -1524,7 +1524,7 @@ if [ -z "$1" ]; then
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	Shortcut_ntpMerlin create
+	Shortcut_Script create
 	ScriptHeader
 	MainMenu
 	exit 0
