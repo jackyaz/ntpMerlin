@@ -877,20 +877,7 @@ Get_TimeServer_Stats(){
 	timenow=$(date +"%s")
 	timenowfriendly=$(date +"%c")
 	
-	if [ ! -f "$SCRIPT_STORAGE_DIR/.tableupgraded" ]; then
-		{
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Frequency] TO [Sys_Jitter2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Sys_Jitter] TO [Clk_Jitter2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Jitter] TO [Clk_Wander2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Wander] TO [Frequency2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Sys_Jitter2] TO [Sys_Jitter];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Jitter2] TO [Clk_Jitter];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Wander2] TO [Clk_Wander];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Frequency2] TO [Frequency];"
-		} > /tmp/ntp-stats.sql
-		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql >/dev/null 2>&1
-		touch "$SCRIPT_STORAGE_DIR/.tableupgraded"
-	fi
+	Process_Upgrade
 	
 	{
 		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([StatID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
@@ -1020,6 +1007,23 @@ Shortcut_Script(){
 			fi
 		;;
 	esac
+}
+
+Process_Upgrade(){
+	if [ ! -f "$SCRIPT_STORAGE_DIR/.tableupgraded" ]; then
+		{
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Frequency] TO [Sys_Jitter2];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Sys_Jitter] TO [Clk_Jitter2];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Jitter] TO [Clk_Wander2];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Wander] TO [Frequency2];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Sys_Jitter2] TO [Sys_Jitter];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Jitter2] TO [Clk_Jitter];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Wander2] TO [Clk_Wander];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Frequency2] TO [Frequency];"
+		} > /tmp/ntp-stats.sql
+		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql >/dev/null 2>&1
+		touch "$SCRIPT_STORAGE_DIR/.tableupgraded"
+	fi
 }
 
 PressEnter(){
@@ -1547,6 +1551,7 @@ if [ -z "$1" ]; then
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_Script create
+	Process_Upgrade
 	ScriptHeader
 	MainMenu
 	exit 0
