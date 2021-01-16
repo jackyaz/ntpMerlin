@@ -1,6 +1,6 @@
 var $j = jQuery.noConflict(); //avoid conflicts on John's fork (state.js)
 
-var maxNoCharts = 9;
+var maxNoCharts = 6;
 var currentNoCharts = 0;
 
 var ShowLines=GetCookie("ShowLines","string");
@@ -14,14 +14,13 @@ Chart.Tooltip.positioners.cursor = function(chartElements, coordinates){
 	return coordinates;
 };
 
-var metriclist = ["Offset","SysJitter","Frequency"];
-var titlelist = ["Offset","Jitter","Drift"];
-var measureunitlist = ["ms","ms","ppm"];
+var metriclist = ["Offset","Drift"];
+var measureunitlist = ["ms","ppm"];
 var chartlist = ["daily","weekly","monthly"];
 var timeunitlist = ["hour","day","day"];
 var intervallist = [24,7,30];
-var bordercolourlist = ["#fc8500","#42ecf5","#ffffff"];
-var backgroundcolourlist = ["rgba(252,133,0,0.5)","rgba(66,236,245,0.5)","rgba(255,255,255,0.5)"];
+var bordercolourlist = ["#fc8500","#ffffff"];
+var backgroundcolourlist = ["rgba(252,133,0,0.5)","rgba(255,255,255,0.5)"];
 
 function keyHandler(e){
 	if (e.keyCode == 27){
@@ -320,7 +319,7 @@ function ToggleFill(){
 function RedrawAllCharts(){
 	for(i = 0; i < metriclist.length; i++){
 		for (i2 = 0; i2 < chartlist.length; i2++){
-			d3.csv('/ext/ntpmerlin/csv/'+metriclist[i].replace("SysJitter","Sys_Jitter")+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
+			d3.csv('/ext/ntpmerlin/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
 		}
 	}
 }
@@ -335,7 +334,7 @@ function SetGlobalDataset(txtchartname,dataobject){
 		showhide("btnUpdateStats", true);
 		for(i = 0; i < metriclist.length; i++){
 			$j("#"+metriclist[i]+"_Period").val(GetCookie(metriclist[i]+"_Period","number"));
-			Draw_Chart(metriclist[i],titlelist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
+			Draw_Chart(metriclist[i],metriclist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
 		}
 	}
 }
@@ -656,13 +655,10 @@ function changeChart(e){
 	SetCookie(e.id,value);
 	
 	if(name == "Offset"){
-		Draw_Chart("Offset",titlelist[0],measureunitlist[0],bordercolourlist[0],backgroundcolourlist[0]);
+		Draw_Chart("Offset",metriclist[0],measureunitlist[0],bordercolourlist[0],backgroundcolourlist[0]);
 	}
-	else if(name == "SysJitter"){
-		Draw_Chart("SysJitter",titlelist[1],measureunitlist[1],bordercolourlist[1],backgroundcolourlist[1]);
-	}
-	else if(name == "Frequency"){
-		Draw_Chart("Frequency",titlelist[2],measureunitlist[2],bordercolourlist[2],backgroundcolourlist[2]);
+	else if(name == "Drift"){
+		Draw_Chart("Drift",metriclist[2],measureunitlist[2],bordercolourlist[2],backgroundcolourlist[2]);
 	}
 }
 
@@ -671,6 +667,6 @@ function changeAllCharts(e){
 	name = e.id.substring(0, e.id.indexOf("_"));
 	SetCookie(e.id,value);
 	for (i = 0; i < metriclist.length; i++){
-		Draw_Chart(metriclist[i],titlelist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
+		Draw_Chart(metriclist[i],metriclist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
 	}
 }
