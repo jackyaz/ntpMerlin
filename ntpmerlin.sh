@@ -898,6 +898,9 @@ Get_TimeServer_Stats(){
 }
 
 Generate_CSVs(){
+	rm -f "$CSV_OUTPUT_DIR/Sys_Jitter"*
+	rm -f "$CSV_OUTPUT_DIR/Frequency"*
+	
 	OUTPUTDATAMODE="$(OutputDataMode check)"
 	OUTPUTTIMEMODE="$(OutputTimeMode check)"
 	TZ=$(cat /etc/TZ)
@@ -905,13 +908,17 @@ Generate_CSVs(){
 	timenow=$(date +"%s")
 	timenowfriendly=$(date +"%c")
 	
-	metriclist="Offset Sys_Jitter Frequency"
+	metriclist="Offset Frequency"
 	
 	for metric in $metriclist; do
+		FILENAME="$metric"
+		if [ "$metric" = "Frequency" ]; then
+			FILENAME="Drift"
+		fi
 		{
 			echo ".mode csv"
 			echo ".headers on"
-			echo ".output $CSV_OUTPUT_DIR/${metric}daily.htm"
+			echo ".output $CSV_OUTPUT_DIR/${FILENAME}daily.htm"
 			echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
 		} > /tmp/ntp-stats.sql
 		
@@ -922,7 +929,7 @@ Generate_CSVs(){
 			{
 				echo ".mode csv"
 				echo ".headers on"
-				echo ".output $CSV_OUTPUT_DIR/${metric}weekly.htm"
+				echo ".output $CSV_OUTPUT_DIR/${FILENAME}weekly.htm"
 				echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400*7);"
 			} > /tmp/ntp-stats.sql
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
@@ -931,17 +938,17 @@ Generate_CSVs(){
 			{
 				echo ".mode csv"
 				echo ".headers on"
-				echo ".output $CSV_OUTPUT_DIR/${metric}monthly.htm"
+				echo ".output $CSV_OUTPUT_DIR/${FILENAME}monthly.htm"
 				echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400*30);"
 			} > /tmp/ntp-stats.sql
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
 		elif [ "$OUTPUTDATAMODE" = "average" ]; then
-			WriteSql_ToFile "$metric" ntpstats 1 7 "$CSV_OUTPUT_DIR/$metric" weekly /tmp/ntp-stats.sql "$timenow"
+			WriteSql_ToFile "$metric" ntpstats 1 7 "$CSV_OUTPUT_DIR/$FILENAME" weekly /tmp/ntp-stats.sql "$timenow"
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
 			
-			WriteSql_ToFile "$metric" ntpstats 3 30 "$CSV_OUTPUT_DIR/$metric" monthly /tmp/ntp-stats.sql "$timenow"
+			WriteSql_ToFile "$metric" ntpstats 3 30 "$CSV_OUTPUT_DIR/$FILENAME" monthly /tmp/ntp-stats.sql "$timenow"
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
 		fi
