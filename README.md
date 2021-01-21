@@ -43,7 +43,7 @@ If this does not work, you will need to use the full path:
 
 ## Screenshots
 
-![WebUI](https://puu.sh/GFJGB/ea90b33f61.png)
+![WebUI](https://puu.sh/H93BK/957e542b10.png)
 
 ![CLI UI](https://puu.sh/GFJD7/b48a8bf2bf.png)
 
