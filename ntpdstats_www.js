@@ -88,12 +88,12 @@ function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundco
 		title: { display: true, text: txttitle },
 		tooltips: {
 			callbacks: {
-					title: function (tooltipItem, data){ return (moment(tooltipItem[0].xLabel,"X").format(timetooltipformat)); },
-					label: function (tooltipItem, data){ return round(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y,3).toFixed(3) + ' ' + txtunity;}
-				},
-				mode: 'point',
-				position: 'cursor',
-				intersect: true
+				title: function (tooltipItem, data){ return (moment(tooltipItem[0].xLabel,"X").format(timetooltipformat)); },
+				label: function (tooltipItem, data){ return round(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y,3).toFixed(3) + ' ' + txtunity;}
+			},
+			mode: 'point',
+			position: 'cursor',
+			intersect: true
 		},
 		scales: {
 			xAxes: [{
@@ -112,7 +112,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundco
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
-				scaleLabel: { display: false, labelString: txttitle },
+				scaleLabel: { display: false, labelString: txtunity },
 				ticks: {
 					display: true,
 					callback: function (value, index, values){
@@ -336,6 +336,7 @@ function SetGlobalDataset(txtchartname,dataobject){
 			$j("#"+metriclist[i]+"_Period").val(GetCookie(metriclist[i]+"_Period","number"));
 			Draw_Chart(metriclist[i],metriclist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
 		}
+		AddEventHandlers();
 	}
 }
 
@@ -434,16 +435,29 @@ function SetCurrentPage(){
 	document.form.current_page.value = window.location.pathname.substring(1);
 }
 
+function ErrorCSVExport(){
+	document.getElementById("aExport").href="javascript:alert(\"Error exporting CSV, please refresh the page and try again\")";
+}
+
+function ParseCSVExport(data){
+	var csvContent = "Timestamp,Offset,Frequency,Sys_Jitter,Clk_Jitter,Clk_Wander,Rootdisp\n";
+	for(var i = 0; i < data.length; i++){
+		var dataString = data[i].Timestamp+","+data[i].Offset+","+data[i].Frequency+","+data[i].Sys_Jitter+","+data[i].Clk_Jitter+","+data[i].Clk_Wander+","+data[i].Rootdisp;
+		csvContent += i < data.length-1 ? dataString + '\n' : dataString;
+	}
+	document.getElementById("aExport").href="data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
+}
+
 function initial(){
 	SetCurrentPage();
 	LoadCustomSettings();
 	show_menu();
 	get_conf_file();
+	d3.csv('/ext/ntpmerlin/csv/CompleteResults.htm').then(function(data){ParseCSVExport(data);}).catch(function(){ErrorCSVExport();});
 	$j("#Time_Format").val(GetCookie("Time_Format","number"));
 	ScriptUpdateLayout();
 	SetNTPDStatsTitle();
 	RedrawAllCharts();
-	AddEventHandlers();
 }
 
 function ScriptUpdateLayout(){
@@ -507,11 +521,6 @@ function ToggleDragZoom(button){
 		button.value = buttonvalue;
 		chartobj.update();
 	}
-}
-
-function ExportCSV(){
-	location.href = "/ext/ntpmerlin/csv/ntpmerlindata.zip";
-	return 0;
 }
 
 function update_status(){
@@ -658,7 +667,7 @@ function changeChart(e){
 		Draw_Chart("Offset",metriclist[0],measureunitlist[0],bordercolourlist[0],backgroundcolourlist[0]);
 	}
 	else if(name == "Drift"){
-		Draw_Chart("Drift",metriclist[2],measureunitlist[2],bordercolourlist[2],backgroundcolourlist[2]);
+		Draw_Chart("Drift",metriclist[1],measureunitlist[1],bordercolourlist[1],backgroundcolourlist[1]);
 	}
 }
 
