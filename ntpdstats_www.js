@@ -1,6 +1,6 @@
 var $j = jQuery.noConflict(); //avoid conflicts on John's fork (state.js)
 
-var maxNoCharts = 9;
+var maxNoCharts = 6;
 var currentNoCharts = 0;
 
 var ShowLines=GetCookie("ShowLines","string");
@@ -14,14 +14,13 @@ Chart.Tooltip.positioners.cursor = function(chartElements, coordinates){
 	return coordinates;
 };
 
-var metriclist = ["Offset","SysJitter","Frequency"];
-var titlelist = ["Offset","Jitter","Drift"];
-var measureunitlist = ["ms","ms","ppm"];
+var metriclist = ["Offset","Drift"];
+var measureunitlist = ["ms","ppm"];
 var chartlist = ["daily","weekly","monthly"];
 var timeunitlist = ["hour","day","day"];
 var intervallist = [24,7,30];
-var bordercolourlist = ["#fc8500","#42ecf5","#ffffff"];
-var backgroundcolourlist = ["rgba(252,133,0,0.5)","rgba(66,236,245,0.5)","rgba(255,255,255,0.5)"];
+var bordercolourlist = ["#fc8500","#ffffff"];
+var backgroundcolourlist = ["rgba(252,133,0,0.5)","rgba(255,255,255,0.5)"];
 
 function keyHandler(e){
 	if (e.keyCode == 27){
@@ -89,12 +88,12 @@ function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundco
 		title: { display: true, text: txttitle },
 		tooltips: {
 			callbacks: {
-					title: function (tooltipItem, data){ return (moment(tooltipItem[0].xLabel,"X").format(timetooltipformat)); },
-					label: function (tooltipItem, data){ return round(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y,3).toFixed(3) + ' ' + txtunity;}
-				},
-				mode: 'point',
-				position: 'cursor',
-				intersect: true
+				title: function (tooltipItem, data){ return (moment(tooltipItem[0].xLabel,"X").format(timetooltipformat)); },
+				label: function (tooltipItem, data){ return round(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y,3).toFixed(3) + ' ' + txtunity;}
+			},
+			mode: 'point',
+			position: 'cursor',
+			intersect: true
 		},
 		scales: {
 			xAxes: [{
@@ -113,7 +112,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundco
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
-				scaleLabel: { display: false, labelString: txttitle },
+				scaleLabel: { display: false, labelString: txtunity },
 				ticks: {
 					display: true,
 					callback: function (value, index, values){
@@ -320,7 +319,7 @@ function ToggleFill(){
 function RedrawAllCharts(){
 	for(i = 0; i < metriclist.length; i++){
 		for (i2 = 0; i2 < chartlist.length; i2++){
-			d3.csv('/ext/ntpmerlin/csv/'+metriclist[i].replace("SysJitter","Sys_Jitter")+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
+			d3.csv('/ext/ntpmerlin/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
 		}
 	}
 }
@@ -335,8 +334,9 @@ function SetGlobalDataset(txtchartname,dataobject){
 		showhide("btnUpdateStats", true);
 		for(i = 0; i < metriclist.length; i++){
 			$j("#"+metriclist[i]+"_Period").val(GetCookie(metriclist[i]+"_Period","number"));
-			Draw_Chart(metriclist[i],titlelist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
+			Draw_Chart(metriclist[i],metriclist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
 		}
+		AddEventHandlers();
 	}
 }
 
@@ -435,16 +435,29 @@ function SetCurrentPage(){
 	document.form.current_page.value = window.location.pathname.substring(1);
 }
 
+function ErrorCSVExport(){
+	document.getElementById("aExport").href="javascript:alert(\"Error exporting CSV, please refresh the page and try again\")";
+}
+
+function ParseCSVExport(data){
+	var csvContent = "Timestamp,Offset,Frequency,Sys_Jitter,Clk_Jitter,Clk_Wander,Rootdisp\n";
+	for(var i = 0; i < data.length; i++){
+		var dataString = data[i].Timestamp+","+data[i].Offset+","+data[i].Frequency+","+data[i].Sys_Jitter+","+data[i].Clk_Jitter+","+data[i].Clk_Wander+","+data[i].Rootdisp;
+		csvContent += i < data.length-1 ? dataString + '\n' : dataString;
+	}
+	document.getElementById("aExport").href="data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
+}
+
 function initial(){
 	SetCurrentPage();
 	LoadCustomSettings();
 	show_menu();
 	get_conf_file();
+	d3.csv('/ext/ntpmerlin/csv/CompleteResults.htm').then(function(data){ParseCSVExport(data);}).catch(function(){ErrorCSVExport();});
 	$j("#Time_Format").val(GetCookie("Time_Format","number"));
 	ScriptUpdateLayout();
 	SetNTPDStatsTitle();
 	RedrawAllCharts();
-	AddEventHandlers();
 }
 
 function ScriptUpdateLayout(){
@@ -508,11 +521,6 @@ function ToggleDragZoom(button){
 		button.value = buttonvalue;
 		chartobj.update();
 	}
-}
-
-function ExportCSV(){
-	location.href = "/ext/ntpmerlin/csv/ntpmerlindata.zip";
-	return 0;
 }
 
 function update_status(){
@@ -656,13 +664,10 @@ function changeChart(e){
 	SetCookie(e.id,value);
 	
 	if(name == "Offset"){
-		Draw_Chart("Offset",titlelist[0],measureunitlist[0],bordercolourlist[0],backgroundcolourlist[0]);
+		Draw_Chart("Offset",metriclist[0],measureunitlist[0],bordercolourlist[0],backgroundcolourlist[0]);
 	}
-	else if(name == "SysJitter"){
-		Draw_Chart("SysJitter",titlelist[1],measureunitlist[1],bordercolourlist[1],backgroundcolourlist[1]);
-	}
-	else if(name == "Frequency"){
-		Draw_Chart("Frequency",titlelist[2],measureunitlist[2],bordercolourlist[2],backgroundcolourlist[2]);
+	else if(name == "Drift"){
+		Draw_Chart("Drift",metriclist[1],measureunitlist[1],bordercolourlist[1],backgroundcolourlist[1]);
 	}
 }
 
@@ -671,6 +676,6 @@ function changeAllCharts(e){
 	name = e.id.substring(0, e.id.indexOf("_"));
 	SetCookie(e.id,value);
 	for (i = 0; i < metriclist.length; i++){
-		Draw_Chart(metriclist[i],titlelist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
+		Draw_Chart(metriclist[i],metriclist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
 	}
 }

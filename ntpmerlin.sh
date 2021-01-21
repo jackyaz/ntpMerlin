@@ -20,7 +20,7 @@
 ### Start of script variables ###
 readonly SCRIPT_NAME="ntpMerlin"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v3.1.0"
+readonly SCRIPT_VERSION="v3.2.0"
 SCRIPT_BRANCH="master"
 SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
@@ -859,15 +859,15 @@ Get_TimeServer_Stats(){
 		tmpfile=/tmp/chrony-stats.$$
 		chronyc tracking > "$tmpfile"
 		
-		[ -n "$(grep Last "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}')" ] && NOFFSET=$(grep Last "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}') || NOFFSET=0
+		[ -n "$(grep "Last offset" "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}')" ] && NOFFSET=$(grep Last "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}') || NOFFSET=0
 		[ -n "$(grep Frequency "$tmpfile" | awk 'BEGIN{FS=" "}{print $3}')" ] && NFREQ=$(grep Frequency "$tmpfile" | awk 'BEGIN{FS=" "}{print $3}') || NFREQ=0
-		[ -n "$(grep System "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}')" ] && NCJIT=$(grep System "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}') || NCJIT=0
+		[ -n "$(grep System "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}')" ] && NSJIT=$(grep System "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}') || NSJIT=0
 		[ -n "$(grep Skew "$tmpfile" | awk 'BEGIN{FS=" "}{print $3}')" ] && NWANDER=$(grep Skew "$tmpfile" | awk 'BEGIN{FS=" "}{print $3}') || NWANDER=0
 		[ -n "$(grep dispersion "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}')" ] && NDISPER=$(grep dispersion "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}') || NDISPER=0
 		
 		NOFFSET="$(echo "$NOFFSET" | awk '{printf ($1*1000)}')"
-		NCJIT="$(echo "$NCJIT" | awk '{printf ($1*1000)}')"
-		NSJIT="$NCJIT"
+		NSJIT="$(echo "$NSJIT" | awk '{printf ($1*1000)}')"
+		NCJIT="0"
 		NDISPER="$(echo "$NDISPER" | awk '{printf ($1*1000)}')"
 		rm -f "$tmpfile"
 	fi
@@ -877,9 +877,11 @@ Get_TimeServer_Stats(){
 	timenow=$(date +"%s")
 	timenowfriendly=$(date +"%c")
 	
+	Process_Upgrade
+	
 	{
 		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([StatID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
-		echo "INSERT INTO ntpstats ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) values($timenow,$NOFFSET,$NSJIT,$NCJIT,$NWANDER,$NFREQ,$NDISPER);"
+		echo "INSERT INTO ntpstats ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) values($timenow,$NOFFSET,$NFREQ,$NSJIT,$NCJIT,$NWANDER,$NDISPER);"
 	} > /tmp/ntp-stats.sql
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
@@ -898,6 +900,9 @@ Get_TimeServer_Stats(){
 }
 
 Generate_CSVs(){
+	rm -f "$CSV_OUTPUT_DIR/Sys_Jitter"*
+	rm -f "$CSV_OUTPUT_DIR/Frequency"*
+	
 	OUTPUTDATAMODE="$(OutputDataMode check)"
 	OUTPUTTIMEMODE="$(OutputTimeMode check)"
 	TZ=$(cat /etc/TZ)
@@ -905,13 +910,17 @@ Generate_CSVs(){
 	timenow=$(date +"%s")
 	timenowfriendly=$(date +"%c")
 	
-	metriclist="Offset Sys_Jitter Frequency"
+	metriclist="Offset Frequency"
 	
 	for metric in $metriclist; do
+		FILENAME="$metric"
+		if [ "$metric" = "Frequency" ]; then
+			FILENAME="Drift"
+		fi
 		{
 			echo ".mode csv"
 			echo ".headers on"
-			echo ".output $CSV_OUTPUT_DIR/${metric}daily.htm"
+			echo ".output $CSV_OUTPUT_DIR/${FILENAME}daily.htm"
 			echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
 		} > /tmp/ntp-stats.sql
 		
@@ -922,7 +931,7 @@ Generate_CSVs(){
 			{
 				echo ".mode csv"
 				echo ".headers on"
-				echo ".output $CSV_OUTPUT_DIR/${metric}weekly.htm"
+				echo ".output $CSV_OUTPUT_DIR/${FILENAME}weekly.htm"
 				echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400*7);"
 			} > /tmp/ntp-stats.sql
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
@@ -931,17 +940,17 @@ Generate_CSVs(){
 			{
 				echo ".mode csv"
 				echo ".headers on"
-				echo ".output $CSV_OUTPUT_DIR/${metric}monthly.htm"
+				echo ".output $CSV_OUTPUT_DIR/${FILENAME}monthly.htm"
 				echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400*30);"
 			} > /tmp/ntp-stats.sql
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
 		elif [ "$OUTPUTDATAMODE" = "average" ]; then
-			WriteSql_ToFile "$metric" ntpstats 1 7 "$CSV_OUTPUT_DIR/$metric" weekly /tmp/ntp-stats.sql "$timenow"
+			WriteSql_ToFile "$metric" ntpstats 1 7 "$CSV_OUTPUT_DIR/$FILENAME" weekly /tmp/ntp-stats.sql "$timenow"
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
 			
-			WriteSql_ToFile "$metric" ntpstats 3 30 "$CSV_OUTPUT_DIR/$metric" monthly /tmp/ntp-stats.sql "$timenow"
+			WriteSql_ToFile "$metric" ntpstats 3 30 "$CSV_OUTPUT_DIR/$FILENAME" monthly /tmp/ntp-stats.sql "$timenow"
 			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 			rm -f /tmp/ntp-stats.sql
 		fi
@@ -962,7 +971,7 @@ Generate_CSVs(){
 	
 	tmpoutputdir="/tmp/${SCRIPT_NAME_LOWER}results"
 	mkdir -p "$tmpoutputdir"
-	mv "$CSV_OUTPUT_DIR/CompleteResults"*.htm "$tmpoutputdir/."
+	mv "$CSV_OUTPUT_DIR/CompleteResults.htm" "$tmpoutputdir/CompleteResults.htm"
 	
 	if [ "$OUTPUTTIMEMODE" = "unix" ]; then
 		find "$tmpoutputdir/" -name '*.htm' -exec sh -c 'i="$1"; mv -- "$i" "${i%.htm}.csv"' _ {} \;
@@ -975,12 +984,8 @@ Generate_CSVs(){
 		rm -f "$tmpoutputdir/"*.htm
 	fi
 	
-	if [ ! -f /opt/bin/7za ]; then
-		opkg update
-		opkg install p7zip
-	fi
-	/opt/bin/7za a -y -bsp0 -bso0 -tzip "/tmp/${SCRIPT_NAME_LOWER}data.zip" "$tmpoutputdir/*"
-	mv "/tmp/${SCRIPT_NAME_LOWER}data.zip" "$CSV_OUTPUT_DIR"
+	mv "$tmpoutputdir/CompleteResults.csv" "$CSV_OUTPUT_DIR/CompleteResults.htm"
+	rm -f "$CSV_OUTPUT_DIR/ntpmerlindata.zip"
 	rm -rf "$tmpoutputdir"
 }
 
@@ -998,6 +1003,23 @@ Shortcut_Script(){
 			fi
 		;;
 	esac
+}
+
+Process_Upgrade(){
+	if [ ! -f "$SCRIPT_STORAGE_DIR/.tableupgraded" ]; then
+		{
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Frequency] TO [Sys_Jitter2];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Sys_Jitter] TO [Clk_Jitter2];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Jitter] TO [Clk_Wander2];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Wander] TO [Frequency2];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Sys_Jitter2] TO [Sys_Jitter];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Jitter2] TO [Clk_Jitter];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Wander2] TO [Clk_Wander];"
+			echo "ALTER TABLE ntpstats RENAME COLUMN [Frequency2] TO [Frequency];"
+		} > /tmp/ntp-stats.sql
+		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql >/dev/null 2>&1
+		touch "$SCRIPT_STORAGE_DIR/.tableupgraded"
+	fi
 }
 
 PressEnter(){
@@ -1216,7 +1238,6 @@ Check_Requirements(){
 		Print_Output true "Installing required packages from Entware" "$PASS"
 		opkg update
 		opkg install sqlite3-cli
-		opkg install p7zip
 		opkg install ntp-utils
 		opkg install ntpd
 		return 0
@@ -1525,6 +1546,7 @@ if [ -z "$1" ]; then
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_Script create
+	Process_Upgrade
 	ScriptHeader
 	MainMenu
 	exit 0
