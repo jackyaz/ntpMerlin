@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/jackyaz/ntpMerlin.svg?branch=master)](https://travis-ci.com/jackyaz/ntpMerlin)
 
 ## v3.2.0
-### Updated on 2020-01-20
+### Updated on 2020-01-21
 ## About
 ntpMerlin implements an NTP time server for AsusWRT Merlin with charts for daily, weekly and monthly summaries of performance. A choice between ntpd and chrony is available.
 
