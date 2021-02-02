@@ -20,8 +20,8 @@
 ### Start of script variables ###
 readonly SCRIPT_NAME="ntpMerlin"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v3.2.0"
-SCRIPT_BRANCH="master"
+readonly SCRIPT_VERSION="v3.2.1"
+SCRIPT_BRANCH="develop"
 SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
 readonly SCRIPT_WEBPAGE_DIR="$(readlink /www/user)"
@@ -161,6 +161,7 @@ Update_Version(){
 		Update_File shared-jy.tar.gz
 		
 		if [ "$isupdate" != "false" ]; then
+			Update_File timeserverd
 			TIMESERVER_NAME="$(TimeServer check)"
 			if [ "$TIMESERVER_NAME" = "ntpd" ]; then
 				Update_File S77ntpd
@@ -190,6 +191,7 @@ Update_Version(){
 	if [ "$1" = "force" ]; then
 		serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 		Print_Output true "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
+		Update_File timeserverd
 		TIMESERVER_NAME="$(TimeServer check)"
 		if [ "$TIMESERVER_NAME" = "ntpd" ]; then
 			Update_File ntp.conf
@@ -248,6 +250,16 @@ Update_File(){
 			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
 			Print_Output true "New version of $1 downloaded" "$PASS"
 			Mount_WebUI
+		fi
+		rm -f "$tmpfile"
+	elif [ "$1" = "timeserverd" ]; then
+		tmpfile="/tmp/$1"
+		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
+			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
+			chmod 0755 "$SCRIPT_DIR/$1"
+			Print_Output true "New version of $1 downloaded" "$PASS"
+			TimeServer_Customise
 		fi
 		rm -f "$tmpfile"
 	elif [ "$1" = "shared-jy.tar.gz" ]; then
@@ -1269,6 +1281,7 @@ Menu_Install(){
 	Download_File "$SCRIPT_REPO/ntp.conf" "$SCRIPT_STORAGE_DIR/ntp.conf"
 	Update_File ntpdstats_www.asp
 	Update_File shared-jy.tar.gz
+	Update_File timeserverd
 	
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null

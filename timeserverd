@@ -1,0 +1,61 @@
+#!/bin/sh
+#shellcheck disable=SC2039
+trap '' SIGHUP
+
+# Wait for NTP before starting
+logger -st "timeserverd" "Waiting for NTP to sync before starting..."
+ntptimer=0
+while [ "$(nvram get ntp_ready)" -eq 0 ] && [ "$ntptimer" -lt 300 ]; do
+	ntptimer=$((ntptimer+1))
+	sleep 1
+done
+
+if [ "$ntptimer" -ge 300 ]; then
+	logger -st "timeserverd" "NTP failed to sync after 5 minutes - please check immediately!"
+	exit 1
+fi
+
+if [ -f "/opt/share/ntpmerlin.d/config" ]; then
+	SCRIPT_STORAGE_DIR="/opt/share/ntpmerlin.d"
+else
+	SCRIPT_STORAGE_DIR="/jffs/addons/ntpmerlin.d"
+fi
+
+if [ "$1" = "S77ntpd" ]; then
+	ntpd -c "$SCRIPT_STORAGE_DIR/ntp.conf" -g > /dev/null 2>&1 &
+	
+	while true; do
+		sleep 5
+		if [ "$(pidof ntpd | wc -w)" -lt 1 ]; then
+			logger -t "timeserverd" "ntpd dead, restarting..."
+			killall -q ntpd
+			sleep 5
+			ntpd -c "$SCRIPT_STORAGE_DIR/ntp.conf" -g > /dev/null 2>&1 &
+			logger -t "timeserverd" "ntpd restarted"
+		fi
+	done
+elif [ "$1" = "S77chronyd" ]; then
+	if [ -f "/opt/etc/init.d/S06chronyd" ]; then
+		rm -f "/opt/etc/init.d/S06chronyd"
+	fi
+	
+	mkdir -p /opt/var/lib/chrony
+	mkdir -p /opt/var/run/chrony
+	chown -R nobody:nobody /opt/var/lib/chrony
+	chown -R nobody:nobody /opt/var/run/chrony
+	chmod -R 770 /opt/var/lib/chrony
+	chmod -R 770 /opt/var/run/chrony
+	
+	chronyd -r -u nobody -f "$SCRIPT_STORAGE_DIR/chrony.conf" > /dev/null 2>&1 &
+	
+	while true; do
+		sleep 5
+		if [ "$(pidof chronyd | wc -w)" -lt 1 ]; then
+			logger -t "timeserverd" "chronyd dead, restarting..."
+			killall -q chronyd
+			sleep 5
+			ntpd -c "$SCRIPT_STORAGE_DIR/ntp.conf" -g > /dev/null 2>&1 &
+			logger -t "timeserverd" "chronyd restarted"
+		fi
+	done
+fi
