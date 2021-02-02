@@ -1032,6 +1032,9 @@ Process_Upgrade(){
 		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql >/dev/null 2>&1
 		touch "$SCRIPT_STORAGE_DIR/.tableupgraded"
 	fi
+	if [ ! -f "$SCRIPT_DIR/timeserverd" ]; then
+		Update_File timeserverd
+	fi
 }
 
 PressEnter(){
