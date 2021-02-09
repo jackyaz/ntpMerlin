@@ -54,7 +54,7 @@ elif [ "$1" = "S77chronyd" ]; then
 			logger -t "timeserverd" "chronyd dead, restarting..."
 			killall -q chronyd
 			sleep 5
-			ntpd -c "$SCRIPT_STORAGE_DIR/ntp.conf" -g > /dev/null 2>&1 &
+			chronyd -r -u nobody -f "$SCRIPT_STORAGE_DIR/chrony.conf" > /dev/null 2>&1 &
 			logger -t "timeserverd" "chronyd restarted"
 		fi
 	done
