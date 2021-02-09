@@ -3,10 +3,9 @@
 ln -s /jffs/addons/ntpmerlin.d/timeserverd /opt/bin 2>/dev/null
 chmod 0755 /opt/bin/timeserverd
 
-if [ "$1" = "stop" ] || [ "$1" = "kill" ]; then
+if [ "$1" = "restart" ] || [ "$1" = "stop" ] || [ "$1" = "kill" ]; then
 	killall -q timeserverd
 	killall -q chronyd
-	sleep 5
 fi
 
 
