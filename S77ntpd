@@ -6,6 +6,7 @@ chmod 0755 /opt/bin/timeserverd
 if [ "$1" = "stop" ] || [ "$1" = "kill" ]; then
 	killall -q timeserverd
 	killall -q ntpd
+	sleep 5
 fi
 
 ENABLED=yes
