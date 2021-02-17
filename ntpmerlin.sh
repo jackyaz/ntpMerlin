@@ -1491,6 +1491,9 @@ Menu_Uninstall(){
 	rm -f /opt/etc/init.d/S77ntpd
 	rm -f /opt/etc/init.d/S77chronyd
 	
+	sed -i '/ntpmerlin_version_local/d' "$SETTINGSFILE"
+	sed -i '/ntpmerlin_version_server/d' "$SETTINGSFILE"
+	
 	rm -f "/jffs/scripts/$SCRIPT_NAME_LOWER" 2>/dev/null
 	Clear_Lock
 	Print_Output true "Uninstall completed" "$PASS"
