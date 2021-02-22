@@ -1486,6 +1486,7 @@ Menu_Uninstall(){
 	rm -f /opt/etc/init.d/S77ntpd
 	rm -f /opt/etc/init.d/S77chronyd
 	
+	SETTINGSFILE=/jffs/addons/custom_settings.txt
 	sed -i '/ntpmerlin_version_local/d' "$SETTINGSFILE"
 	sed -i '/ntpmerlin_version_server/d' "$SETTINGSFILE"
 	
