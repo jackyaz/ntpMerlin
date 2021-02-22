@@ -1293,7 +1293,7 @@ Menu_Install(){
 	ScriptStorageLocation load
 	Create_Symlinks
 	
-	Download_File "$SCRIPT_REPO/ntp.conf" "$SCRIPT_STORAGE_DIR/ntp.conf"
+	Update_File ntp.conf
 	Update_File ntpdstats_www.asp
 	Update_File shared-jy.tar.gz
 	Update_File timeserverd
