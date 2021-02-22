@@ -691,7 +691,7 @@ Mount_WebUI(){
 TimeServer_Customise(){
 	TIMESERVER_NAME="$(TimeServer check)"
 	if [ -f "/opt/etc/init.d/S77$TIMESERVER_NAME" ]; then
-		"/opt/etc/init.d/S77$TIMESERVER_NAME" stop
+		"/opt/etc/init.d/S77$TIMESERVER_NAME" stop >/dev/null 2>&1
 	fi
 	rm -f "/opt/etc/init.d/S77$TIMESERVER_NAME"
 	Download_File "$SCRIPT_REPO/S77$TIMESERVER_NAME" "/opt/etc/init.d/S77$TIMESERVER_NAME"
@@ -704,7 +704,7 @@ TimeServer_Customise(){
 		chmod -R 770 /opt/var/lib/chrony
 		chmod -R 770 /opt/var/run/chrony
 	fi
-	"/opt/etc/init.d/S77$TIMESERVER_NAME" start
+	"/opt/etc/init.d/S77$TIMESERVER_NAME" start >/dev/null 2>&1
 }
 
 ScriptStorageLocation(){
@@ -722,7 +722,7 @@ ScriptStorageLocation(){
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntp.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
-			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart 2>/dev/null
+			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 			SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation load
 		;;
@@ -739,7 +739,7 @@ ScriptStorageLocation(){
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntp.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
-			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart 2>/dev/null
+			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 			SCRIPT_CONF="/jffs/addons/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation load
 		;;
@@ -798,7 +798,7 @@ TimeServer(){
 	case "$1" in
 		ntpd)
 			sed -i 's/^TIMESERVER.*$/TIMESERVER=ntpd/' "$SCRIPT_CONF"
-			/opt/etc/init.d/S77chronyd stop
+			/opt/etc/init.d/S77chronyd stop >/dev/null 2>&1
 			rm -f /opt/etc/init.d/S77chronyd
 			if [ ! -f /opt/sbin/ntpd ]; then
 				opkg update
@@ -810,7 +810,7 @@ TimeServer(){
 		;;
 		chronyd)
 			sed -i 's/^TIMESERVER.*$/TIMESERVER=chronyd/' "$SCRIPT_CONF"
-			/opt/etc/init.d/S77ntpd stop
+			/opt/etc/init.d/S77ntpd stop >/dev/null 2>&1
 			rm -f /opt/etc/init.d/S77ntpd
 			if [ ! -f /opt/sbin/chronyd ]; then
 				opkg update
@@ -1424,7 +1424,7 @@ Menu_Edit(){
 		$texteditor "$CONFFILE"
 		newmd5="$(md5sum "$CONFFILE" | awk '{print $1}')"
 		if [ "$oldmd5" != "$newmd5" ]; then
-			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart
+			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 		fi
 	fi
 	Clear_Lock
@@ -1445,7 +1445,7 @@ Menu_ToggleNTPRedirect(){
 Menu_RestartTimeServer(){
 	TIMESERVER_NAME="$(TimeServer check)"
 	Print_Output true "Restarting $TIMESERVER_NAME..." "$PASS"
-	"/opt/etc/init.d/S77$TIMESERVER_NAME" restart
+	"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 }
 
 Menu_Update(){
@@ -1478,7 +1478,7 @@ Menu_Uninstall(){
 	
 	Shortcut_Script delete
 	TIMESERVER_NAME="$(TimeServer check)"
-	"/opt/etc/init.d/S77$TIMESERVER_NAME" stop
+	"/opt/etc/init.d/S77$TIMESERVER_NAME" stop >/dev/null 2>&1
 	opkg remove --autoremove ntpd
 	opkg remove --autoremove ntp-utils
 	opkg remove --autoremove chrony
