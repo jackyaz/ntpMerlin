@@ -616,7 +616,7 @@ NTP_Firmware_Check(){
 		nvram set ntpd_enable=0
 		nvram set ntpd_server_redir=0
 		nvram commit
-		service restart_time
+		service restart_ntpd
 		service restart_firewall
 		return 1
 	else
