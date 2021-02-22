@@ -243,10 +243,16 @@ Update_File(){
 	elif [ "$1" = "ntpdstats_www.asp" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
-		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
-			Get_WebUI_Page "$SCRIPT_DIR/$1"
-			sed -i "\\~$MyPage~d" /tmp/menuTree.js
-			rm -f "$SCRIPT_WEBPAGE_DIR/$MyPage" 2>/dev/null
+		if [ -f "$SCRIPT_DIR/$1" ]; then
+			if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
+				Get_WebUI_Page "$SCRIPT_DIR/$1"
+				sed -i "\\~$MyPage~d" /tmp/menuTree.js
+				rm -f "$SCRIPT_WEBPAGE_DIR/$MyPage" 2>/dev/null
+				Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
+				Print_Output true "New version of $1 downloaded" "$PASS"
+				Mount_WebUI
+			fi
+		else
 			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
 			Print_Output true "New version of $1 downloaded" "$PASS"
 			Mount_WebUI
@@ -594,8 +600,8 @@ NTP_Redirect(){
 			Auto_DNSMASQ create 2>/dev/null
 		;;
 		delete)
-			iptables -t nat -D PREROUTING -i br0 -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
-			iptables -t nat -D PREROUTING -i br0 -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			iptables -t nat -D PREROUTING -i br0 -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
+			iptables -t nat -D PREROUTING -i br0 -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 			Auto_DNSMASQ delete 2>/dev/null
 		;;
 	esac
@@ -685,7 +691,7 @@ Mount_WebUI(){
 TimeServer_Customise(){
 	TIMESERVER_NAME="$(TimeServer check)"
 	if [ -f "/opt/etc/init.d/S77$TIMESERVER_NAME" ]; then
-		"/opt/etc/init.d/S77$TIMESERVER_NAME" stop
+		"/opt/etc/init.d/S77$TIMESERVER_NAME" stop >/dev/null 2>&1
 	fi
 	rm -f "/opt/etc/init.d/S77$TIMESERVER_NAME"
 	Download_File "$SCRIPT_REPO/S77$TIMESERVER_NAME" "/opt/etc/init.d/S77$TIMESERVER_NAME"
@@ -698,7 +704,7 @@ TimeServer_Customise(){
 		chmod -R 770 /opt/var/lib/chrony
 		chmod -R 770 /opt/var/run/chrony
 	fi
-	"/opt/etc/init.d/S77$TIMESERVER_NAME" start
+	"/opt/etc/init.d/S77$TIMESERVER_NAME" start >/dev/null 2>&1
 }
 
 ScriptStorageLocation(){
@@ -716,7 +722,7 @@ ScriptStorageLocation(){
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntp.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
-			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart 2>/dev/null
+			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 			SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation load
 		;;
@@ -733,7 +739,7 @@ ScriptStorageLocation(){
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntp.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
-			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart 2>/dev/null
+			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 			SCRIPT_CONF="/jffs/addons/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation load
 		;;
@@ -792,7 +798,7 @@ TimeServer(){
 	case "$1" in
 		ntpd)
 			sed -i 's/^TIMESERVER.*$/TIMESERVER=ntpd/' "$SCRIPT_CONF"
-			/opt/etc/init.d/S77chronyd stop
+			/opt/etc/init.d/S77chronyd stop >/dev/null 2>&1
 			rm -f /opt/etc/init.d/S77chronyd
 			if [ ! -f /opt/sbin/ntpd ]; then
 				opkg update
@@ -804,7 +810,7 @@ TimeServer(){
 		;;
 		chronyd)
 			sed -i 's/^TIMESERVER.*$/TIMESERVER=chronyd/' "$SCRIPT_CONF"
-			/opt/etc/init.d/S77ntpd stop
+			/opt/etc/init.d/S77ntpd stop >/dev/null 2>&1
 			rm -f /opt/etc/init.d/S77ntpd
 			if [ ! -f /opt/sbin/chronyd ]; then
 				opkg update
@@ -1287,7 +1293,7 @@ Menu_Install(){
 	ScriptStorageLocation load
 	Create_Symlinks
 	
-	Download_File "$SCRIPT_REPO/ntp.conf" "$SCRIPT_STORAGE_DIR/ntp.conf"
+	Update_File ntp.conf
 	Update_File ntpdstats_www.asp
 	Update_File shared-jy.tar.gz
 	Update_File timeserverd
@@ -1418,7 +1424,7 @@ Menu_Edit(){
 		$texteditor "$CONFFILE"
 		newmd5="$(md5sum "$CONFFILE" | awk '{print $1}')"
 		if [ "$oldmd5" != "$newmd5" ]; then
-			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart
+			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 		fi
 	fi
 	Clear_Lock
@@ -1439,7 +1445,7 @@ Menu_ToggleNTPRedirect(){
 Menu_RestartTimeServer(){
 	TIMESERVER_NAME="$(TimeServer check)"
 	Print_Output true "Restarting $TIMESERVER_NAME..." "$PASS"
-	"/opt/etc/init.d/S77$TIMESERVER_NAME" restart
+	"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 }
 
 Menu_Update(){
@@ -1470,6 +1476,19 @@ Menu_Uninstall(){
 	rm -f "$SCRIPT_DIR/ntpdstats_www.asp" 2>/dev/null
 	rm -rf "$SCRIPT_WEB_DIR" 2>/dev/null
 	
+	Shortcut_Script delete
+	TIMESERVER_NAME="$(TimeServer check)"
+	"/opt/etc/init.d/S77$TIMESERVER_NAME" stop >/dev/null 2>&1
+	opkg remove --autoremove ntpd
+	opkg remove --autoremove ntp-utils
+	opkg remove --autoremove chrony
+	
+	rm -f /opt/etc/init.d/S77ntpd
+	rm -f /opt/etc/init.d/S77chronyd
+	
+	sed -i '/ntpmerlin_version_local/d' "$SETTINGSFILE"
+	sed -i '/ntpmerlin_version_server/d' "$SETTINGSFILE"
+	
 	printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
 	read -r confirm
 	case "$confirm" in
@@ -1481,18 +1500,6 @@ Menu_Uninstall(){
 			:
 		;;
 	esac
-	Shortcut_Script delete
-	TIMESERVER_NAME="$(TimeServer check)"
-	"/opt/etc/init.d/S77$TIMESERVER_NAME" stop
-	opkg remove --autoremove ntpd
-	opkg remove --autoremove ntp-utils
-	opkg remove --autoremove chrony
-	
-	rm -f /opt/etc/init.d/S77ntpd
-	rm -f /opt/etc/init.d/S77chronyd
-	
-	sed -i '/ntpmerlin_version_local/d' "$SETTINGSFILE"
-	sed -i '/ntpmerlin_version_server/d' "$SETTINGSFILE"
 	
 	rm -f "/jffs/scripts/$SCRIPT_NAME_LOWER" 2>/dev/null
 	Clear_Lock

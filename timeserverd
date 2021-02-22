@@ -35,8 +35,9 @@ if [ "$1" = "S77ntpd" ]; then
 		fi
 	done
 elif [ "$1" = "S77chronyd" ]; then
-	if [ -f "/opt/etc/init.d/S06chronyd" ]; then
-		rm -f "/opt/etc/init.d/S06chronyd"
+	if [ -f /opt/etc/init.d/S06chronyd ]; then
+		/opt/etc/init.d/S06chronyd stop
+		rm -f /opt/etc/init.d/S06chronyd
 	fi
 	
 	mkdir -p /opt/var/lib/chrony
