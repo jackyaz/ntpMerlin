@@ -243,10 +243,16 @@ Update_File(){
 	elif [ "$1" = "ntpdstats_www.asp" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
-		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
-			Get_WebUI_Page "$SCRIPT_DIR/$1"
-			sed -i "\\~$MyPage~d" /tmp/menuTree.js
-			rm -f "$SCRIPT_WEBPAGE_DIR/$MyPage" 2>/dev/null
+		if [ -f "$SCRIPT_DIR/$1" ]; then
+			if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
+				Get_WebUI_Page "$SCRIPT_DIR/$1"
+				sed -i "\\~$MyPage~d" /tmp/menuTree.js
+				rm -f "$SCRIPT_WEBPAGE_DIR/$MyPage" 2>/dev/null
+				Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
+				Print_Output true "New version of $1 downloaded" "$PASS"
+				Mount_WebUI
+			fi
+		else
 			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
 			Print_Output true "New version of $1 downloaded" "$PASS"
 			Mount_WebUI
@@ -594,8 +600,8 @@ NTP_Redirect(){
 			Auto_DNSMASQ create 2>/dev/null
 		;;
 		delete)
-			iptables -t nat -D PREROUTING -i br0 -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
-			iptables -t nat -D PREROUTING -i br0 -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			iptables -t nat -D PREROUTING -i br0 -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
+			iptables -t nat -D PREROUTING -i br0 -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 			Auto_DNSMASQ delete 2>/dev/null
 		;;
 	esac
@@ -1470,17 +1476,6 @@ Menu_Uninstall(){
 	rm -f "$SCRIPT_DIR/ntpdstats_www.asp" 2>/dev/null
 	rm -rf "$SCRIPT_WEB_DIR" 2>/dev/null
 	
-	printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
-	read -r confirm
-	case "$confirm" in
-		y|Y)
-			rm -rf "$SCRIPT_DIR" 2>/dev/null
-			rm -rf "$SCRIPT_STORAGE_DIR" 2>/dev/null
-		;;
-		*)
-			:
-		;;
-	esac
 	Shortcut_Script delete
 	TIMESERVER_NAME="$(TimeServer check)"
 	"/opt/etc/init.d/S77$TIMESERVER_NAME" stop
@@ -1493,6 +1488,18 @@ Menu_Uninstall(){
 	
 	sed -i '/ntpmerlin_version_local/d' "$SETTINGSFILE"
 	sed -i '/ntpmerlin_version_server/d' "$SETTINGSFILE"
+	
+	printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
+	read -r confirm
+	case "$confirm" in
+		y|Y)
+			rm -rf "$SCRIPT_DIR" 2>/dev/null
+			rm -rf "$SCRIPT_STORAGE_DIR" 2>/dev/null
+		;;
+		*)
+			:
+		;;
+	esac
 	
 	rm -f "/jffs/scripts/$SCRIPT_NAME_LOWER" 2>/dev/null
 	Clear_Lock
