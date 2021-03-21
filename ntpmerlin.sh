@@ -597,11 +597,24 @@ NTP_Redirect(){
 			iptables -t nat -D PREROUTING -i br0 -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 			iptables -t nat -A PREROUTING -i br0 -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
 			iptables -t nat -A PREROUTING -i br0 -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
+			
+			## drop attempts for clients trying to avoid redirect
+			iptables -I FORWARD -i br0 -p tcp --dport 123 -j REJECT
+			iptables -I FORWARD -i br0 -p udp --dport 123 -j REJECT
+			ip6tables -I FORWARD -i br0 -p tcp --dport 123 -j REJECT
+			ip6tables -I FORWARD -i br0 -p udp --dport 123 -j REJECT
+			##
 			Auto_DNSMASQ create 2>/dev/null
 		;;
 		delete)
 			iptables -t nat -D PREROUTING -i br0 -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 			iptables -t nat -D PREROUTING -i br0 -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
+			
+			iptables -I FORWARD -i br0 -p tcp --dport 123 -j REJECT
+			iptables -I FORWARD -i br0 -p udp --dport 123 -j REJECT
+			ip6tables -D FORWARD -i br0 -p tcp --dport 123 -j REJECT
+			ip6tables -D FORWARD -i br0 -p udp --dport 123 -j REJECT
+			##
 			Auto_DNSMASQ delete 2>/dev/null
 		;;
 	esac
