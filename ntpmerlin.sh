@@ -597,18 +597,23 @@ NTP_Redirect(){
 			iptables -t nat -D PREROUTING -i br0 -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 			iptables -t nat -A PREROUTING -i br0 -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
 			iptables -t nat -A PREROUTING -i br0 -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)"
-			## dirty hack because ip6tables doesn't support redirecting
-			ip6tables -I OUTPUT -p tcp --dport 123 -j DROP
-			ip6tables -I OUTPUT -p udp --dport 123 -j DROP
+			
+			## drop attempts for clients trying to avoid redirect
+			iptables -I FORWARD -i br0 -p tcp --dport 123 -j REJECT
+			iptables -I FORWARD -i br0 -p udp --dport 123 -j REJECT
+			ip6tables -I FORWARD -i br0 -p tcp --dport 123 -j REJECT
+			ip6tables -I FORWARD -i br0 -p udp --dport 123 -j REJECT
 			##
 			Auto_DNSMASQ create 2>/dev/null
 		;;
 		delete)
 			iptables -t nat -D PREROUTING -i br0 -p udp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 			iptables -t nat -D PREROUTING -i br0 -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
-			## dirty hack because ip6tables doesn't support redirecting
-			ip6tables -I OUTPUT -p tcp --dport 123 -j ACCEPT
-			ip6tables -I OUTPUT -p udp --dport 123 -j ACCEPT
+			
+			iptables -I FORWARD -i br0 -p tcp --dport 123 -j REJECT
+			iptables -I FORWARD -i br0 -p udp --dport 123 -j REJECT
+			ip6tables -D FORWARD -i br0 -p tcp --dport 123 -j REJECT
+			ip6tables -D FORWARD -i br0 -p udp --dport 123 -j REJECT
 			##
 			Auto_DNSMASQ delete 2>/dev/null
 		;;
