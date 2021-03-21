@@ -598,8 +598,14 @@ NTP_Redirect(){
 				iptables -t nat "$ACTION" PREROUTING -i br0 -p tcp --dport 123 -j DNAT --to "$(nvram get lan_ipaddr)" 2>/dev/null
 				
 				## drop attempts for clients trying to avoid redirect
-				iptables "$ACTION" FORWARD -i br0 -p tcp --dport 123 -j REJECT 2>/dev/null
-				iptables "$ACTION" FORWARD -i br0 -p udp --dport 123 -j REJECT 2>/dev/null
+				if [ "$ACTION" = "-I" ]; then
+					FWRDSTART="$(iptables -nvL FORWARD --line | grep -E "all.*state RELATED,ESTABLISHED" | tail -1 | awk '{print $1}')"
+					if [ -n "$(iptables -nvL FORWARD --line | grep -E "YazFiFORWARD" | tail -1 | awk '{print $1}')" ]; then
+						FWRDSTART="$(($(iptables -nvL FORWARD --line | grep -E "YazFiFORWARD" | tail -1 | awk '{print $1}') + 1))"
+					fi
+					iptables "$ACTION" FORWARD "$FWRDSTART" -i br0 -p tcp --dport 123 -j REJECT 2>/dev/null
+					iptables "$ACTION" FORWARD "$FWRDSTART" -i br0 -p udp --dport 123 -j REJECT 2>/dev/null
+				fi
 				ip6tables "$ACTION" FORWARD -i br0 -p tcp --dport 123 -j REJECT 2>/dev/null
 				ip6tables "$ACTION" FORWARD -i br0 -p udp --dport 123 -j REJECT 2>/dev/null
 				##
