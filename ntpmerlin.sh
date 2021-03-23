@@ -1576,6 +1576,44 @@ Entware_Ready(){
 }
 ### ###
 
+Show_About(){
+	cat <<EOF
+About
+  $SCRIPT_NAME implements an NTP time server for AsusWRT Merlin
+  with charts for daily, weekly and monthly summaries of performance.
+  A choice between ntpd and chrony is available.
+License
+  $SCRIPT_NAME is free to use under the GNU General Public License
+  version 3 (GPL-3.0) https://opensource.org/licenses/GPL-3.0
+Help & Support
+  https://www.snbforums.com/forums/asuswrt-merlin-addons.60/?prefix_id=22
+Source code
+  https://github.com/jackyaz/$SCRIPT_NAME
+EOF
+	printf "\\n"
+}
+### ###
+
+### function based on @dave14305's FlexQoS show_help function ###
+Show_Help(){
+	cat <<EOF
+Available commands:
+  $SCRIPT_NAME_LOWER about              explains functionality
+  $SCRIPT_NAME_LOWER update             checks for updates
+  $SCRIPT_NAME_LOWER forceupdate        updates to latest version (force update)
+  $SCRIPT_NAME_LOWER startup force      runs startup actions such as mount WebUI tab
+  $SCRIPT_NAME_LOWER install            installs script
+  $SCRIPT_NAME_LOWER uninstall          uninstalls script
+  $SCRIPT_NAME_LOWER generate           get modem stats and logs. also runs outputcsv
+  $SCRIPT_NAME_LOWER outputcsv          create CSVs from database, used by WebUI and export
+  $SCRIPT_NAME_LOWER ntpredirect        apply firewall rules to intercept and redirect NTP traffic
+  $SCRIPT_NAME_LOWER develop            switch to development branch
+  $SCRIPT_NAME_LOWER stable             switch to stable branch
+EOF
+	printf "\\n"
+}
+### ###
+
 if [ -f "/opt/share/$SCRIPT_NAME_LOWER.d/config" ]; then
 	SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
 	SCRIPT_STORAGE_DIR="/opt/share/$SCRIPT_NAME_LOWER.d"
@@ -1701,6 +1739,16 @@ case "$1" in
 		Menu_Uninstall
 		exit 0
 	;;
+	about)
+		ScriptHeader
+		Show_About
+		exit 0
+	;;
+	help)
+		ScriptHeader
+		Show_Help
+		exit 0
+	;;
 	develop)
 		SCRIPT_BRANCH="develop"
 		SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
@@ -1714,7 +1762,8 @@ case "$1" in
 		exit 0
 	;;
 	*)
-		echo "Command not recognised, please try again"
-		exit 1
+		ScriptHeader
+		Print_Output false "Command not recognised." "$ERR"
+		Print_Output false "For a list of available commands run: $SCRIPT_NAME_LOWER help"
 	;;
 esac
