@@ -44,10 +44,8 @@ readonly PASS="\\e[32m"
 Print_Output(){
 	if [ "$1" = "true" ]; then
 		logger -t "$SCRIPT_NAME" "$2"
-		printf "\\e[1m$3%s: $2\\e[0m\\n\\n" "$SCRIPT_NAME"
-	else
-		printf "\\e[1m$3%s: $2\\e[0m\\n\\n" "$SCRIPT_NAME"
 	fi
+	printf "\\e[1m${3}%s\\e[0m\\n\\n" "$2"
 }
 
 Firmware_Version_Check(){
@@ -89,19 +87,19 @@ Clear_Lock(){
 ############################################################################
 
 Set_Version_Custom_Settings(){
-	SETTINGSFILE=/jffs/addons/custom_settings.txt
+	SETTINGSFILE="/jffs/addons/custom_settings.txt"
 	case "$1" in
 		local)
 			if [ -f "$SETTINGSFILE" ]; then
 				if [ "$(grep -c "ntpmerlin_version_local" $SETTINGSFILE)" -gt 0 ]; then
-					if [ "$SCRIPT_VERSION" != "$(grep "ntpmerlin_version_local" /jffs/addons/custom_settings.txt | cut -f2 -d' ')" ]; then
-						sed -i "s/ntpmerlin_version_local.*/ntpmerlin_version_local $SCRIPT_VERSION/" "$SETTINGSFILE"
+					if [ "$2" != "$(grep "ntpmerlin_version_local" /jffs/addons/custom_settings.txt | cut -f2 -d' ')" ]; then
+						sed -i "s/ntpmerlin_version_local.*/ntpmerlin_version_local $2/" "$SETTINGSFILE"
 					fi
 				else
-					echo "ntpmerlin_version_local $SCRIPT_VERSION" >> "$SETTINGSFILE"
+					echo "ntpmerlin_version_local $2" >> "$SETTINGSFILE"
 				fi
 			else
-				echo "ntpmerlin_version_local $SCRIPT_VERSION" >> "$SETTINGSFILE"
+				echo "ntpmerlin_version_local $2" >> "$SETTINGSFILE"
 			fi
 		;;
 		server)
@@ -123,7 +121,7 @@ Set_Version_Custom_Settings(){
 Update_Check(){
 	echo 'var updatestatus = "InProgress";' > "$SCRIPT_WEB_DIR/detect_update.js"
 	doupdate="false"
-	localver=$(grep "SCRIPT_VERSION=" /jffs/scripts/"$SCRIPT_NAME_LOWER" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
+	localver=$(grep "SCRIPT_VERSION=" "/jffs/scripts/$SCRIPT_NAME_LOWER" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 	/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | grep -qF "jackyaz" || { Print_Output true "404 error detected - stopping update" "$ERR"; return 1; }
 	serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 	if [ "$localver" != "$serverver" ]; then
@@ -292,13 +290,9 @@ Update_File(){
 }
 
 Validate_Number(){
-	if [ "$2" -eq "$2" ] 2>/dev/null; then
+	if [ "$1" -eq "$1" ] 2>/dev/null; then
 		return 0
 	else
-		formatted="$(echo "$1" | sed -e 's/|/ /g')"
-		if [ -z "$3" ]; then
-			Print_Output false "$formatted - $2 is not a number" "$ERR"
-		fi
 		return 1
 	fi
 }
@@ -628,7 +622,7 @@ NTP_Redirect(){
 
 NTP_Firmware_Check(){
 	ENABLED_NTPD="$(nvram get ntpd_enable)"
-	if ! Validate_Number "" "$ENABLED_NTPD" silent; then ENABLED_NTPD=0; fi
+	if ! Validate_Number "$ENABLED_NTPD"; then ENABLED_NTPD=0; fi
 	
 	if [ "$ENABLED_NTPD" -eq 1 ]; then
 		Print_Output true "Built-in ntpd is enabled and will conflict, it will be disabled" "$WARN"
@@ -658,6 +652,7 @@ Get_WebUI_Page(){
 
 ### locking mechanism code credit to Martineau (@MartineauUK) ###
 Mount_WebUI(){
+	Print_Output true "Mounting WebUI tab for $SCRIPT_NAME" "$PASS"
 	LOCKFILE=/tmp/addonwebui.lock
 	FD=386
 	eval exec "$FD>$LOCKFILE"
@@ -670,7 +665,7 @@ Mount_WebUI(){
 	fi
 	
 	cp -f "$SCRIPT_DIR/ntpdstats_www.asp" "$SCRIPT_WEBPAGE_DIR/$MyPage"
-	echo "ntpMerlin" > "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
+	echo "$SCRIPT_NAME" > "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
 	
 	if [ "$(uname -o)" = "ASUSWRT-Merlin" ]; then
 		if [ ! -f /tmp/index_style.css ]; then
@@ -698,7 +693,7 @@ Mount_WebUI(){
 		if ! grep -q "javascript:window.open('/ext/shared-jy/redirect.htm'" /tmp/menuTree.js ; then
 			sed -i "s~ext/shared-jy/redirect.htm~javascript:window.open('/ext/shared-jy/redirect.htm','_blank')~" /tmp/menuTree.js
 		fi
-		sed -i "/url: \"javascript:window.open('\/ext\/shared-jy\/redirect.htm'/i {url: \"$MyPage\", tabName: \"ntpMerlin\"}," /tmp/menuTree.js
+		sed -i "/url: \"javascript:window.open('\/ext\/shared-jy\/redirect.htm'/i {url: \"$MyPage\", tabName: \"$SCRIPT_NAME\"}," /tmp/menuTree.js
 		
 		umount /www/require/modules/menuTree.js 2>/dev/null
 		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
@@ -864,7 +859,7 @@ WriteSql_ToFile(){
 	{
 		echo ".mode csv"
 		echo ".headers on"
-		echo ".output $5$6.htm"
+		echo ".output ${5}${6}.htm"
 	} >> "$7"
 	
 	echo "SELECT '$1' Metric, Min([Timestamp]) Time, IFNULL(Avg(printf('%f', $1)),'NaN') Value FROM $2 WHERE ([Timestamp] >= $timenow - ($multiplier*$maxcount)) GROUP BY ([Timestamp]/($multiplier));" >> "$7"
@@ -873,7 +868,6 @@ WriteSql_ToFile(){
 Get_TimeServer_Stats(){
 	Create_Dirs
 	Conf_Exists
-	Set_Version_Custom_Settings local
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
@@ -1036,13 +1030,13 @@ Shortcut_Script(){
 	case $1 in
 		create)
 			if [ -d /opt/bin ] && [ ! -f "/opt/bin/$SCRIPT_NAME_LOWER" ] && [ -f "/jffs/scripts/$SCRIPT_NAME_LOWER" ]; then
-				ln -s /jffs/scripts/"$SCRIPT_NAME_LOWER" /opt/bin
-				chmod 0755 /opt/bin/"$SCRIPT_NAME_LOWER"
+				ln -s "/jffs/scripts/$SCRIPT_NAME_LOWER" /opt/bin
+				chmod 0755 "/opt/bin/$SCRIPT_NAME_LOWER"
 			fi
 		;;
 		delete)
 			if [ -f "/opt/bin/$SCRIPT_NAME_LOWER" ]; then
-				rm -f /opt/bin/"$SCRIPT_NAME_LOWER"
+				rm -f "/opt/bin/$SCRIPT_NAME_LOWER"
 			fi
 		;;
 	esac
@@ -1084,7 +1078,7 @@ PressEnter(){
 ScriptHeader(){
 	clear
 	DST_ENABLED="$(nvram get time_zone_dst)"
-	if ! Validate_Number "" "$DST_ENABLED" silent; then DST_ENABLED=0; fi
+	if ! Validate_Number "$DST_ENABLED"; then DST_ENABLED=0; fi
 	if [ "$DST_ENABLED" -eq 0 ]; then
 		DST_ENABLED="Inactive"
 	else
@@ -1160,20 +1154,29 @@ MainMenu(){
 	printf "\\n"
 	
 	while true; do
-		printf "Choose an option:    "
+		printf "Choose an option:  "
 		read -r menu
 		case "$menu" in
 			1)
 				printf "\\n"
 				if Check_Lock menu; then
-					Menu_GenerateStats
+					Get_TimeServer_Stats
+					Clear_Lock
 				fi
 				PressEnter
 				break
 			;;
 			2)
 				printf "\\n"
-				Menu_ToggleNTPRedirect
+				if Auto_NAT check; then
+					Auto_NAT delete
+					NTP_Redirect delete
+					printf "\\e[1mNTP Redirect has been disabled\\e[0m\\n\\n"
+				else
+					Auto_NAT create
+					NTP_Redirect create
+					printf "\\e[1mNTP Redirect has been enabled\\e[0m\\n\\n"
+				fi
 				PressEnter
 				break
 			;;
@@ -1186,36 +1189,58 @@ MainMenu(){
 			;;
 			4)
 				printf "\\n"
-				Menu_ToggleOutputDataMode
+				if [ "$(OutputDataMode check)" = "raw" ]; then
+					OutputDataMode average
+				elif [ "$(OutputDataMode check)" = "average" ]; then
+					OutputDataMode raw
+				fi
 				break
 			;;
 			5)
 				printf "\\n"
-				Menu_ToggleOutputTimeMode
+				if [ "$(OutputTimeMode check)" = "unix" ]; then
+					OutputTimeMode non-unix
+				elif [ "$(OutputTimeMode check)" = "non-unix" ]; then
+					OutputTimeMode unix
+				fi
 				break
 			;;
 			s)
 				printf "\\n"
-				Menu_ToggleStorageLocation
+				if [ "$(ScriptStorageLocation check)" = "jffs" ]; then
+					ScriptStorageLocation usb
+					Create_Symlinks
+				elif [ "$(ScriptStorageLocation check)" = "usb" ]; then
+					ScriptStorageLocation jffs
+					Create_Symlinks
+				fi
 				break
 			;;
 			t)
 				printf "\\n"
 				if Check_Lock menu; then
-					Menu_ToggleTimeServer
+					if [ "$(TimeServer check)" = "ntpd" ]; then
+						TimeServer chronyd
+					elif [ "$(TimeServer check)" = "chronyd" ]; then
+						TimeServer ntpd
+					fi
+					Clear_Lock
 				fi
 				break
 			;;
 			r)
 				printf "\\n"
-				Menu_RestartTimeServer
+				TIMESERVER_NAME="$(TimeServer check)"
+				Print_Output true "Restarting $TIMESERVER_NAME..." "$PASS"
+				"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 				PressEnter
 				break
 			;;
 			u)
 				printf "\\n"
 				if Check_Lock menu; then
-					Menu_Update
+					Update_Version
+					Clear_Lock
 				fi
 				PressEnter
 				break
@@ -1223,7 +1248,8 @@ MainMenu(){
 			uf)
 				printf "\\n"
 				if Check_Lock menu; then
-					Menu_ForceUpdate
+					Update_Version force
+					Clear_Lock
 				fi
 				PressEnter
 				break
@@ -1235,7 +1261,7 @@ MainMenu(){
 			;;
 			z)
 				while true; do
-					printf "\\n\\e[1mAre you sure you want to uninstall %s? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
+					printf "\\n\\e[1mAre you sure you want to uninstall %s? (y/n)\\e[0m  " "$SCRIPT_NAME"
 					read -r confirm
 					case "$confirm" in
 						y|Y)
@@ -1268,20 +1294,20 @@ Check_Requirements(){
 	fi
 	
 	if [ ! -f /opt/bin/opkg ]; then
-		Print_Output true "Entware not detected!" "$ERR"
+		Print_Output false "Entware not detected!" "$ERR"
 		CHECKSFAILED="true"
 	fi
 	
 	if ! Firmware_Version_Check install ; then
-		Print_Output true "Unsupported firmware version detected" "$ERR"
-		Print_Output true "$SCRIPT_NAME requires Merlin 384.15/384.13_4 or Fork 43E5 (or later)" "$ERR"
+		Print_Output false "Unsupported firmware version detected" "$ERR"
+		Print_Output false "$SCRIPT_NAME requires Merlin 384.15/384.13_4 or Fork 43E5 (or later)" "$ERR"
 		CHECKSFAILED="true"
 	fi
 	
 	NTP_Firmware_Check
 	
 	if [ "$CHECKSFAILED" = "false" ]; then
-		Print_Output true "Installing required packages from Entware" "$PASS"
+		Print_Output false "Installing required packages from Entware" "$PASS"
 		opkg update
 		opkg install sqlite3-cli
 		opkg install ntp-utils
@@ -1296,10 +1322,10 @@ Menu_Install(){
 	Print_Output true "Welcome to $SCRIPT_NAME $SCRIPT_VERSION, a script by JackYaz"
 	sleep 1
 	
-	Print_Output true "Checking your router meets the requirements for $SCRIPT_NAME"
+	Print_Output false "Checking your router meets the requirements for $SCRIPT_NAME"
 	
 	if ! Check_Requirements; then
-		Print_Output true "Requirements for $SCRIPT_NAME not met, please see above for the reason(s)" "$CRIT"
+		Print_Output false "Requirements for $SCRIPT_NAME not met, please see above for the reason(s)" "$CRIT"
 		PressEnter
 		Clear_Lock
 		rm -f "/jffs/scripts/$SCRIPT_NAME_LOWER" 2>/dev/null
@@ -1308,7 +1334,8 @@ Menu_Install(){
 	
 	Create_Dirs
 	Conf_Exists
-	Set_Version_Custom_Settings local
+	Set_Version_Custom_Settings local "$SCRIPT_VERSION"
+	Set_Version_Custom_Settings server "$SCRIPT_VERSION"
 	ScriptStorageLocation load
 	Create_Symlinks
 	
@@ -1348,7 +1375,6 @@ Menu_Startup(){
 	fi
 	Create_Dirs
 	Conf_Exists
-	Set_Version_Custom_Settings local
 	ScriptStorageLocation load
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
@@ -1358,46 +1384,6 @@ Menu_Startup(){
 	Shortcut_Script create
 	Mount_WebUI
 	Clear_Lock
-}
-
-Menu_GenerateStats(){
-	Get_TimeServer_Stats
-	Clear_Lock
-}
-
-Menu_ToggleOutputDataMode(){
-	if [ "$(OutputDataMode check)" = "raw" ]; then
-		OutputDataMode average
-	elif [ "$(OutputDataMode check)" = "average" ]; then
-		OutputDataMode raw
-	fi
-}
-
-Menu_ToggleOutputTimeMode(){
-	if [ "$(OutputTimeMode check)" = "unix" ]; then
-		OutputTimeMode non-unix
-	elif [ "$(OutputTimeMode check)" = "non-unix" ]; then
-		OutputTimeMode unix
-	fi
-}
-
-Menu_ToggleTimeServer(){
-	if [ "$(TimeServer check)" = "ntpd" ]; then
-		TimeServer chronyd
-	elif [ "$(TimeServer check)" = "chronyd" ]; then
-		TimeServer ntpd
-	fi
-	Clear_Lock
-}
-
-Menu_ToggleStorageLocation(){
-	if [ "$(ScriptStorageLocation check)" = "jffs" ]; then
-		ScriptStorageLocation usb
-		Create_Symlinks
-	elif [ "$(ScriptStorageLocation check)" = "usb" ]; then
-		ScriptStorageLocation jffs
-		Create_Symlinks
-	fi
 }
 
 Menu_Edit(){
@@ -1410,7 +1396,7 @@ Menu_Edit(){
 	printf "\\ne.    Exit to main menu\\n"
 	
 	while true; do
-		printf "\\n\\e[1mChoose an option:\\e[0m    "
+		printf "\\n\\e[1mChoose an option:\\e[0m  "
 		read -r editor
 		case "$editor" in
 			1)
@@ -1449,34 +1435,6 @@ Menu_Edit(){
 	Clear_Lock
 }
 
-Menu_ToggleNTPRedirect(){
-	if Auto_NAT check; then
-		Auto_NAT delete
-		NTP_Redirect delete
-		printf "\\e[1mNTP Redirect has been disabled\\e[0m\\n\\n"
-	else
-		Auto_NAT create
-		NTP_Redirect create
-		printf "\\e[1mNTP Redirect has been enabled\\e[0m\\n\\n"
-	fi
-}
-
-Menu_RestartTimeServer(){
-	TIMESERVER_NAME="$(TimeServer check)"
-	Print_Output true "Restarting $TIMESERVER_NAME..." "$PASS"
-	"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
-}
-
-Menu_Update(){
-	Update_Version
-	Clear_Lock
-}
-
-Menu_ForceUpdate(){
-	Update_Version force
-	Clear_Lock
-}
-
 Menu_Uninstall(){
 	Print_Output true "Removing $SCRIPT_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
@@ -1485,6 +1443,10 @@ Menu_Uninstall(){
 	Auto_NAT delete
 	NTP_Redirect delete
 	
+	LOCKFILE=/tmp/addonwebui.lock
+	FD=386
+	eval exec "$FD>$LOCKFILE"
+	flock -x "$FD"
 	Get_WebUI_Page "$SCRIPT_DIR/ntpdstats_www.asp"
 	if [ -n "$MyPage" ] && [ "$MyPage" != "none" ] && [ -f "/tmp/menuTree.js" ]; then
 		sed -i "\\~$MyPage~d" /tmp/menuTree.js
@@ -1492,6 +1454,7 @@ Menu_Uninstall(){
 		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
 		rm -rf "{$SCRIPT_WEBPAGE_DIR:?}/$MyPage"
 	fi
+	flock -u "$FD"
 	rm -f "$SCRIPT_DIR/ntpdstats_www.asp" 2>/dev/null
 	rm -rf "$SCRIPT_WEB_DIR" 2>/dev/null
 	
@@ -1505,11 +1468,11 @@ Menu_Uninstall(){
 	rm -f /opt/etc/init.d/S77ntpd
 	rm -f /opt/etc/init.d/S77chronyd
 	
-	SETTINGSFILE=/jffs/addons/custom_settings.txt
+	SETTINGSFILE="/jffs/addons/custom_settings.txt"
 	sed -i '/ntpmerlin_version_local/d' "$SETTINGSFILE"
 	sed -i '/ntpmerlin_version_server/d' "$SETTINGSFILE"
 	
-	printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
+	printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m  " "$SCRIPT_NAME"
 	read -r confirm
 	case "$confirm" in
 		y|Y)
@@ -1591,7 +1554,6 @@ if [ -z "$1" ]; then
 	
 	Create_Dirs
 	Conf_Exists
-	Set_Version_Custom_Settings local
 	ScriptStorageLocation load
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
@@ -1618,7 +1580,8 @@ case "$1" in
 		NTP_Ready
 		Entware_Ready
 		Check_Lock
-		Menu_GenerateStats
+		Get_TimeServer_Stats
+		Clear_Lock
 		exit 0
 	;;
 	outputcsv)
@@ -1631,7 +1594,9 @@ case "$1" in
 	;;
 	service_event)
 		if [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME_LOWER" ]; then
-			Menu_GenerateStats
+			Check_Lock
+			Get_TimeServer_Stats
+			Clear_Lock
 			exit 0
 		elif [ "$2" = "start" ] && [ "$3" = "${SCRIPT_NAME_LOWER}config" ]; then
 			Conf_FromSettings
@@ -1653,20 +1618,36 @@ case "$1" in
 		exit 0
 	;;
 	update)
-		Update_Version unattended
+		Update_Version
 		exit 0
 	;;
 	forceupdate)
-		Update_Version force unattended
+		Update_Version force
 		exit 0
 	;;
 	setversion)
-		Set_Version_Custom_Settings local
+		Create_Dirs
+		Conf_Exists
+		ScriptStorageLocation load
+		Create_Symlinks
+		Auto_Startup create 2>/dev/null
+		Auto_Cron create 2>/dev/null
+		Auto_ServiceEvent create 2>/dev/null
+		Shortcut_Script create
+		Set_Version_Custom_Settings local "$SCRIPT_VERSION"
 		Set_Version_Custom_Settings server "$SCRIPT_VERSION"
-		if [ -z "$2" ]; then
-			exec "$0"
-		fi
-		exit 0
+		Process_Upgrade
+	;;
+	postupdate)
+		Create_Dirs
+		Conf_Exists
+		ScriptStorageLocation load
+		Create_Symlinks
+		Auto_Startup create 2>/dev/null
+		Auto_Cron create 2>/dev/null
+		Auto_ServiceEvent create 2>/dev/null
+		Shortcut_Script create
+		Process_Upgrade
 	;;
 	checkupdate)
 		Update_Check
