@@ -23,7 +23,7 @@ var bordercolourlist = ["#fc8500","#ffffff"];
 var backgroundcolourlist = ["rgba(252,133,0,0.5)","rgba(255,255,255,0.5)"];
 
 function keyHandler(e){
-	if (e.keyCode == 27){
+	if(e.keyCode == 27){
 		$j(document).off("keydown");
 		ResetZoom();
 	}
@@ -58,7 +58,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundco
 	var dataobject = window[txtchartname+chartperiod];
 	
 	if(typeof dataobject === 'undefined' || dataobject === null){ Draw_Chart_NoData(txtchartname); return; }
-	if (dataobject.length == 0){ Draw_Chart_NoData(txtchartname); return; }
+	if(dataobject.length == 0){ Draw_Chart_NoData(txtchartname); return; }
 	
 	var chartLabels = dataobject.map(function(d){return d.Metric});
 	var chartData = dataobject.map(function(d){return {x: d.Time, y: d.Value}});
@@ -68,13 +68,13 @@ function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundco
 	var timetooltipformat = getTimeFormat($j("#Time_Format option:selected").val(),"tooltip");
 	
 	factor=0;
-	if (txtunitx=="hour"){
+	if(txtunitx=="hour"){
 		factor=60*60*1000;
 	}
-	else if (txtunitx=="day"){
+	else if(txtunitx=="day"){
 		factor=60*60*24*1000;
 	}
-	if (objchartname != undefined) objchartname.destroy();
+	if(objchartname != undefined) objchartname.destroy();
 	var ctx = document.getElementById("divLineChart_"+txtchartname).getContext("2d");
 	var lineOptions = {
 		segmentShowStroke : false,
@@ -294,7 +294,7 @@ function ToggleLines(){
 		SetCookie("ShowLines","");
 	}
 	for(i = 0; i < metriclist.length; i++){
-		for (i3 = 0; i3 < 3; i3++){
+		for(i3 = 0; i3 < 3; i3++){
 			window["LineChart_"+metriclist[i]].options.annotation.annotations[i3].type=ShowLines;
 		}
 		window["LineChart_"+metriclist[i]].update();
@@ -318,7 +318,7 @@ function ToggleFill(){
 
 function RedrawAllCharts(){
 	for(i = 0; i < metriclist.length; i++){
-		for (i2 = 0; i2 < chartlist.length; i2++){
+		for(i2 = 0; i2 < chartlist.length; i2++){
 			d3.csv('/ext/ntpmerlin/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
 		}
 	}
@@ -344,7 +344,7 @@ function getTimeFormat(value,format){
 	var timeformat;
 	
 	if(format == "axis"){
-		if (value == 0){
+		if(value == 0){
 			timeformat = {
 				millisecond: 'HH:mm:ss.SSS',
 				second: 'HH:mm:ss',
@@ -352,7 +352,7 @@ function getTimeFormat(value,format){
 				hour: 'HH:mm'
 			}
 		}
-		else if (value == 1){
+		else if(value == 1){
 			timeformat = {
 				millisecond: 'h:mm:ss.SSS A',
 				second: 'h:mm:ss A',
@@ -362,10 +362,10 @@ function getTimeFormat(value,format){
 		}
 	}
 	else if(format == "tooltip"){
-		if (value == 0){
+		if(value == 0){
 			timeformat = "YYYY-MM-DD HH:mm:ss";
 		}
-		else if (value == 1){
+		else if(value == 1){
 			timeformat = "YYYY-MM-DD h:mm:ss A";
 		}
 	}
@@ -375,7 +375,7 @@ function getTimeFormat(value,format){
 
 function GetCookie(cookiename,returntype){
 	var s;
-	if ((s = cookie.get("ntp_"+cookiename)) != null){
+	if((s = cookie.get("ntp_"+cookiename)) != null){
 		return cookie.get("ntp_"+cookiename);
 	}
 	else{
@@ -389,7 +389,7 @@ function GetCookie(cookiename,returntype){
 }
 
 function SetCookie(cookiename,cookievalue){
-	cookie.set("ntp_"+cookiename, cookievalue, 31);
+	cookie.set("ntp_"+cookiename, cookievalue, 10 * 365);
 }
 
 function AddEventHandlers(){
@@ -418,12 +418,12 @@ $j.fn.serializeObject = function(){
 	var o = custom_settings;
 	var a = this.serializeArray();
 	$j.each(a, function(){
-		if (o[this.name] !== undefined && this.name.indexOf("ntpmerlin") != -1 && this.name.indexOf("version") == -1){
-			if (!o[this.name].push){
+		if(o[this.name] !== undefined && this.name.indexOf("ntpmerlin") != -1 && this.name.indexOf("version") == -1){
+			if(!o[this.name].push){
 				o[this.name] = [o[this.name]];
 			}
 			o[this.name].push(this.value || '');
-		} else if (this.name.indexOf("ntpmerlin") != -1 && this.name.indexOf("version") == -1){
+		} else if(this.name.indexOf("ntpmerlin") != -1 && this.name.indexOf("version") == -1){
 			o[this.name] = this.value || '';
 		}
 	});
@@ -466,7 +466,7 @@ function ScriptUpdateLayout(){
 	$j("#scripttitle").text($j("#scripttitle").text()+" - "+localver);
 	$j("#ntpmerlin_version_local").text(localver);
 	
-	if (localver != serverver && serverver != "N/A"){
+	if(localver != serverver && serverver != "N/A"){
 		$j("#ntpmerlin_version_server").text("Updated version available: "+serverver);
 		showhide("btnChkUpdate", false);
 		showhide("ntpmerlin_version_server", true);
@@ -480,9 +480,9 @@ function reload(){
 
 function getChartPeriod(period){
 	var chartperiod = "daily";
-	if (period == 0) chartperiod = "daily";
-	else if (period == 1) chartperiod = "weekly";
-	else if (period == 2) chartperiod = "monthly";
+	if(period == 0) chartperiod = "daily";
+	else if(period == 1) chartperiod = "weekly";
+	else if(period == 2) chartperiod = "monthly";
 	return chartperiod;
 }
 
@@ -532,7 +532,7 @@ function update_status(){
 			setTimeout(update_status, 1000);
 		},
 		success: function(){
-			if (updatestatus == "InProgress"){
+			if(updatestatus == "InProgress"){
 				setTimeout(update_status, 1000);
 			}
 			else{
@@ -562,10 +562,8 @@ function CheckUpdate(){
 }
 
 function DoUpdate(){
-	var action_script_tmp = "start_ntpmerlindoupdate";
-	document.form.action_script.value = action_script_tmp;
-	var restart_time = 10;
-	document.form.action_wait.value = restart_time;
+	document.form.action_script.value = "start_ntpmerlindoupdate";
+	document.form.action_wait.value = 10;
 	showLoading();
 	document.form.submit();
 }
@@ -579,10 +577,10 @@ function update_ntpstats(){
 			setTimeout(update_ntpstats, 1000);
 		},
 		success: function(){
-			if (ntpstatus == "InProgress"){
+			if(ntpstatus == "InProgress"){
 				setTimeout(update_ntpstats, 1000);
 			}
-			else if (ntpstatus == "Done"){
+			else if(ntpstatus == "Done"){
 				document.getElementById("ntpupdate_text").innerHTML = "Refreshing charts...";
 				PostNTPUpdate();
 			}
@@ -615,10 +613,8 @@ function UpdateStats(){
 
 function SaveConfig(){
 	document.getElementById('amng_custom').value = JSON.stringify($j('form').serializeObject())
-	var action_script_tmp = "start_ntpmerlinconfig";
-	document.form.action_script.value = action_script_tmp;
-	var restart_time = 10;
-	document.form.action_wait.value = restart_time;
+	document.form.action_script.value = "start_ntpmerlinconfig";
+	document.form.action_wait.value = 10;
 	showLoading();
 	document.form.submit();
 }
@@ -651,7 +647,7 @@ function get_conf_file(){
 			var configdata=data.split("\n");
 			configdata = configdata.filter(Boolean);
 			
-			for (var i = 0; i < configdata.length; i++){
+			for(var i = 0; i < configdata.length; i++){
 				eval("document.form.ntpmerlin_"+configdata[i].split("=")[0].toLowerCase()).value = configdata[i].split("=")[1].replace(/(\r\n|\n|\r)/gm,"");
 			}
 		}
@@ -675,7 +671,7 @@ function changeAllCharts(e){
 	value = e.value * 1;
 	name = e.id.substring(0, e.id.indexOf("_"));
 	SetCookie(e.id,value);
-	for (i = 0; i < metriclist.length; i++){
+	for(i = 0; i < metriclist.length; i++){
 		Draw_Chart(metriclist[i],metriclist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
 	}
 }
