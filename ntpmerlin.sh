@@ -1718,6 +1718,9 @@ case "$1" in
 		Set_Version_Custom_Settings local "$SCRIPT_VERSION"
 		Set_Version_Custom_Settings server "$SCRIPT_VERSION"
 		Process_Upgrade
+		if Auto_NAT check; then
+			NTP_Redirect create
+		fi
 	;;
 	postupdate)
 		Create_Dirs
@@ -1729,6 +1732,9 @@ case "$1" in
 		Auto_ServiceEvent create 2>/dev/null
 		Shortcut_Script create
 		Process_Upgrade
+		if Auto_NAT check; then
+			NTP_Redirect create
+		fi
 	;;
 	checkupdate)
 		Update_Check
