@@ -165,6 +165,7 @@ Update_Version(){
 			read -r confirm
 			case "$confirm" in
 				y|Y)
+					printf "\\n"
 					Update_File shared-jy.tar.gz
 					Update_File timeserverd
 					TIMESERVER_NAME="$(TimeServer check)"
