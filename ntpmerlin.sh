@@ -180,7 +180,7 @@ Update_Version(){
 					Update_File ntpdstats_www.asp
 					
 					/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME_LOWER.sh" -o "/jffs/scripts/$SCRIPT_NAME_LOWER" && Print_Output true "$SCRIPT_NAME successfully updated"
-					chmod 0755 /jffs/scripts/"$SCRIPT_NAME_LOWER"
+					chmod 0755 "/jffs/scripts/$SCRIPT_NAME_LOWER"
 					Set_Version_Custom_Settings local "$serverver"
 					Set_Version_Custom_Settings server "$serverver"
 					Clear_Lock
