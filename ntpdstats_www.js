@@ -293,8 +293,8 @@ function ToggleLines(){
 		ShowLines = "";
 		SetCookie("ShowLines","");
 	}
-	for(i = 0; i < metriclist.length; i++){
-		for(i3 = 0; i3 < 3; i3++){
+	for(var i = 0; i < metriclist.length; i++){
+		for(var i3 = 0; i3 < 3; i3++){
 			window["LineChart_"+metriclist[i]].options.annotation.annotations[i3].type=ShowLines;
 		}
 		window["LineChart_"+metriclist[i]].update();
@@ -310,15 +310,15 @@ function ToggleFill(){
 		ShowFill = "false";
 		SetCookie("ShowFill","false");
 	}
-	for(i = 0; i < metriclist.length; i++){
+	for(var i = 0; i < metriclist.length; i++){
 		window["LineChart_"+metriclist[i]].data.datasets[0].fill=ShowFill;
 		window["LineChart_"+metriclist[i]].update();
 	}
 }
 
 function RedrawAllCharts(){
-	for(i = 0; i < metriclist.length; i++){
-		for(i2 = 0; i2 < chartlist.length; i2++){
+	for(var i = 0; i < metriclist.length; i++){
+		for(var i2 = 0; i2 < chartlist.length; i2++){
 			d3.csv('/ext/ntpmerlin/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
 		}
 	}
@@ -332,7 +332,7 @@ function SetGlobalDataset(txtchartname,dataobject){
 		showhide("imgNTPUpdate", false);
 		showhide("ntpupdate_text", false);
 		showhide("btnUpdateStats", true);
-		for(i = 0; i < metriclist.length; i++){
+		for(var i = 0; i < metriclist.length; i++){
 			$j("#"+metriclist[i]+"_Period").val(GetCookie(metriclist[i]+"_Period","number"));
 			Draw_Chart(metriclist[i],metriclist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
 		}
@@ -486,7 +486,7 @@ function getChartPeriod(period){
 }
 
 function ResetZoom(){
-	for(i = 0; i < metriclist.length; i++){
+	for(var i = 0; i < metriclist.length; i++){
 		var chartobj = window["LineChart_"+metriclist[i]];
 		if(typeof chartobj === 'undefined' || chartobj === null){ continue; }
 		chartobj.resetZoom();
@@ -512,7 +512,7 @@ function ToggleDragZoom(button){
 		buttonvalue = "Drag Zoom On";
 	}
 	
-	for(i = 0; i < metriclist.length; i++){
+	for(var i = 0; i < metriclist.length; i++){
 		var chartobj = window["LineChart_"+metriclist[i]];
 		if(typeof chartobj === 'undefined' || chartobj === null){ continue; }
 		chartobj.options.plugins.zoom.zoom.drag = drag;
@@ -670,7 +670,7 @@ function changeAllCharts(e){
 	value = e.value * 1;
 	name = e.id.substring(0, e.id.indexOf("_"));
 	SetCookie(e.id,value);
-	for(i = 0; i < metriclist.length; i++){
+	for(var i = 0; i < metriclist.length; i++){
 		Draw_Chart(metriclist[i],metriclist[i],measureunitlist[i],bordercolourlist[i],backgroundcolourlist[i]);
 	}
 }
