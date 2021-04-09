@@ -1117,6 +1117,8 @@ Process_Upgrade(){
 				opkg install chrony-nts >/dev/null 2>&1
 				Update_File chrony.conf >/dev/null 2>&1
 				Update_File S77chronyd >/dev/null 2>&1
+			else
+				Print_Output true "chrony-nts not found in Entware for your router" "$WARN"
 			fi
 			touch "$SCRIPT_STORAGE_DIR/.chronyugraded"
 		fi
