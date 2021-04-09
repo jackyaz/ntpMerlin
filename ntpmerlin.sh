@@ -1112,6 +1112,7 @@ Process_Upgrade(){
 			if [ -n "$(opkg info chrony-nts)" ]; then
 				Print_Output true "chrony-nts is available, replacing chrony with chrony-nts..." "$PASS"
 				/opt/etc/init.d/S77chronyd stop >/dev/null 2>&1
+				rm -f /opt/etc/init.d/S77chronyd
 				opkg remove chrony >/dev/null 2>&1
 				opkg install chrony-nts >/dev/null 2>&1
 				Update_File chrony.conf >/dev/null 2>&1
