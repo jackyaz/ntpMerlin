@@ -1097,22 +1097,6 @@ Shortcut_Script(){
 }
 
 Process_Upgrade(){
-	if [ ! -f "$SCRIPT_STORAGE_DIR/.tableupgraded" ]; then
-		{
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Frequency] TO [Sys_Jitter2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Sys_Jitter] TO [Clk_Jitter2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Jitter] TO [Clk_Wander2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Wander] TO [Frequency2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Sys_Jitter2] TO [Sys_Jitter];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Jitter2] TO [Clk_Jitter];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Wander2] TO [Clk_Wander];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Frequency2] TO [Frequency];"
-		} > /tmp/ntp-stats.sql
-		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql >/dev/null 2>&1
-		touch "$SCRIPT_STORAGE_DIR/.tableupgraded"
-	fi
-	if [ ! -f "$SCRIPT_DIR/timeserverd" ]; then
-		Update_File timeserverd
 	fi
 }
 
