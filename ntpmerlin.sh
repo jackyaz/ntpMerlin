@@ -882,7 +882,11 @@ TimeServer(){
 			rm -f /opt/etc/init.d/S77ntpd
 			if [ ! -f /opt/sbin/chronyd ]; then
 				opkg update
-				opkg install chrony
+				if [ -n "$(opkg info chrony-nts)" ]; then
+					opkg install chrony-nts
+				else
+					opkg install chrony
+				fi
 			fi
 			Update_File chrony.conf >/dev/null 2>&1
 			Update_File S77chronyd >/dev/null 2>&1
