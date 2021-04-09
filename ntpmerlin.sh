@@ -1107,12 +1107,13 @@ Shortcut_Script(){
 Process_Upgrade(){
 	if [ ! -f "$SCRIPT_STORAGE_DIR/.chronyugraded" ]; then
 		if [ "$(TimeServer check)" = "chronyd" ]; then
-			Print_Output true "Checking if chrony-nts is available for your router..."
-			opkg update
+			Print_Output true "Checking if chrony-nts is available for your router..." "$PASS"
+			opkg update >/dev/null 2>&1
 			if [ -n "$(opkg info chrony-nts)" ]; then
-				Print_Output true "chrony-nts is available, replacing chrony with chrony-nts..."
-				opkg remove chrony
-				opkg install chrony-nts
+				Print_Output true "chrony-nts is available, replacing chrony with chrony-nts..." "$PASS"
+				/opt/etc/init.d/S77chronyd stop >/dev/null 2>&1
+				opkg remove chrony >/dev/null 2>&1
+				opkg install chrony-nts >/dev/null 2>&1
 				Update_File chrony.conf >/dev/null 2>&1
 				Update_File S77chronyd >/dev/null 2>&1
 			fi
