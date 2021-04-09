@@ -789,6 +789,7 @@ ScriptStorageLocation(){
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/.tableupgraded" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/.chronyugraded" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 			SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation load
@@ -807,6 +808,7 @@ ScriptStorageLocation(){
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/.tableupgraded" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/opt/share/$SCRIPT_NAME_LOWER.d/.chronyugraded" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 			SCRIPT_CONF="/jffs/addons/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation load
@@ -884,8 +886,10 @@ TimeServer(){
 				opkg update
 				if [ -n "$(opkg info chrony-nts)" ]; then
 					opkg install chrony-nts
+					touch "$SCRIPT_STORAGE_DIR/.chronyugraded"
 				else
 					opkg install chrony
+					touch "$SCRIPT_STORAGE_DIR/.chronyugraded"
 				fi
 			fi
 			Update_File chrony.conf >/dev/null 2>&1
@@ -1101,6 +1105,19 @@ Shortcut_Script(){
 }
 
 Process_Upgrade(){
+	if [ ! -f "$SCRIPT_STORAGE_DIR/.chronyugraded" ]; then
+		if [ "$(TimeServer check)" = "chronyd" ]; then
+			Print_Output true "Checking if chrony-nts is available for your router..."
+			opkg update
+			if [ -n "$(opkg info chrony-nts)" ]; then
+				Print_Output true "chrony-nts is available, replacing chrony with chrony-nts..."
+				opkg remove chrony
+				opkg install chrony-nts
+				Update_File chrony.conf >/dev/null 2>&1
+				Update_File S77chronyd >/dev/null 2>&1
+			fi
+			touch "$SCRIPT_STORAGE_DIR/.chronyugraded"
+		fi
 	fi
 }
 
