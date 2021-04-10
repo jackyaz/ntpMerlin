@@ -23,7 +23,7 @@
 ### Start of script variables ###
 readonly SCRIPT_NAME="ntpMerlin"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v3.2.3"
+readonly SCRIPT_VERSION="v3.3.0"
 SCRIPT_BRANCH="master"
 SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
@@ -789,6 +789,7 @@ ScriptStorageLocation(){
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/.tableupgraded" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/.chronyugraded" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 			SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation load
@@ -807,6 +808,7 @@ ScriptStorageLocation(){
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/.tableupgraded" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/opt/share/$SCRIPT_NAME_LOWER.d/.chronyugraded" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 			SCRIPT_CONF="/jffs/addons/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation load
@@ -882,7 +884,13 @@ TimeServer(){
 			rm -f /opt/etc/init.d/S77ntpd
 			if [ ! -f /opt/sbin/chronyd ]; then
 				opkg update
-				opkg install chrony
+				if [ -n "$(opkg info chrony-nts)" ]; then
+					opkg install chrony-nts
+					touch "$SCRIPT_STORAGE_DIR/.chronyugraded"
+				else
+					opkg install chrony
+					touch "$SCRIPT_STORAGE_DIR/.chronyugraded"
+				fi
 			fi
 			Update_File chrony.conf >/dev/null 2>&1
 			Update_File S77chronyd >/dev/null 2>&1
@@ -1097,22 +1105,23 @@ Shortcut_Script(){
 }
 
 Process_Upgrade(){
-	if [ ! -f "$SCRIPT_STORAGE_DIR/.tableupgraded" ]; then
-		{
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Frequency] TO [Sys_Jitter2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Sys_Jitter] TO [Clk_Jitter2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Jitter] TO [Clk_Wander2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Wander] TO [Frequency2];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Sys_Jitter2] TO [Sys_Jitter];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Jitter2] TO [Clk_Jitter];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Clk_Wander2] TO [Clk_Wander];"
-			echo "ALTER TABLE ntpstats RENAME COLUMN [Frequency2] TO [Frequency];"
-		} > /tmp/ntp-stats.sql
-		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql >/dev/null 2>&1
-		touch "$SCRIPT_STORAGE_DIR/.tableupgraded"
-	fi
-	if [ ! -f "$SCRIPT_DIR/timeserverd" ]; then
-		Update_File timeserverd
+	if [ ! -f "$SCRIPT_STORAGE_DIR/.chronyugraded" ]; then
+		if [ "$(TimeServer check)" = "chronyd" ]; then
+			Print_Output true "Checking if chrony-nts is available for your router..." "$PASS"
+			opkg update >/dev/null 2>&1
+			if [ -n "$(opkg info chrony-nts)" ]; then
+				Print_Output true "chrony-nts is available, replacing chrony with chrony-nts..." "$PASS"
+				/opt/etc/init.d/S77chronyd stop >/dev/null 2>&1
+				rm -f /opt/etc/init.d/S77chronyd
+				opkg remove chrony >/dev/null 2>&1
+				opkg install chrony-nts >/dev/null 2>&1
+				Update_File chrony.conf >/dev/null 2>&1
+				Update_File S77chronyd >/dev/null 2>&1
+			else
+				Print_Output true "chrony-nts not found in Entware for your router" "$WARN"
+			fi
+			touch "$SCRIPT_STORAGE_DIR/.chronyugraded"
+		fi
 	fi
 }
 
