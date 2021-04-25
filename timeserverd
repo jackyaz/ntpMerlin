@@ -3,15 +3,16 @@
 trap '' SIGHUP
 
 # Wait for NTP before starting
-logger -st "timeserverd" "Waiting for NTP to sync before starting..."
-ntptimer=0
-while [ "$(nvram get ntp_ready)" -eq 0 ] && [ "$ntptimer" -lt 300 ]; do
-	ntptimer=$((ntptimer+1))
-	sleep 1
+logger -st timeserverd "Waiting for NTP to sync before starting..."
+ntpwaitcount=0
+while [ "$(nvram get ntp_ready)" -eq 0 ] && [ "$ntpwaitcount" -lt 600 ]; do
+	ntpwaitcount="$((ntpwaitcount + 30))"
+	Print_Output true "Waiting for NTP to sync..." "$WARN"
+	sleep 30
 done
 
-if [ "$ntptimer" -ge 300 ]; then
-	logger -st "timeserverd" "NTP failed to sync after 5 minutes - please check immediately!"
+if [ "$ntpwaitcount" -ge 600 ]; then
+	logger -st timeserverd "NTP failed to sync after 10 minutes - please check immediately!"
 	exit 1
 fi
 
