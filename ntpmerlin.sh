@@ -14,13 +14,14 @@
 ##                                                      ##
 ##########################################################
 
-#############        Shellcheck directives      ##########
+###############       Shellcheck directives      #############
+# shellcheck disable=SC2009
 # shellcheck disable=SC2016
 # shellcheck disable=SC2018
 # shellcheck disable=SC2019
 # shellcheck disable=SC2059
 # shellcheck disable=SC2086
-##########################################################
+##############################################################
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="ntpMerlin"
@@ -981,15 +982,12 @@ Get_TimeServer_Stats(){
 	
 	echo "Stats last updated: $timenowfriendly" > /tmp/ntpstatstitle.txt
 	WriteStats_ToJS /tmp/ntpstatstitle.txt "$SCRIPT_STORAGE_DIR/ntpstatstext.js" SetNTPDStatsTitle statstitle
+	rm -f /tmp/ntpstatstitle.txt
 	
 	echo 'var ntpstatus = "Done";' > /tmp/detect_ntpmerlin.js
-	
-	rm -f /tmp/ntpstatstitle.txt
 }
 
 Generate_CSVs(){
-	rm -f "$CSV_OUTPUT_DIR/Sys_Jitter"*
-	rm -f "$CSV_OUTPUT_DIR/Frequency"*
 	
 	OUTPUTDATAMODE="$(OutputDataMode check)"
 	OUTPUTTIMEMODE="$(OutputTimeMode check)"
@@ -1709,22 +1707,6 @@ case "$1" in
 	forceupdate)
 		Update_Version force
 		exit 0
-	;;
-	setversion)
-		Create_Dirs
-		Conf_Exists
-		ScriptStorageLocation load
-		Create_Symlinks
-		Auto_Startup create 2>/dev/null
-		Auto_Cron create 2>/dev/null
-		Auto_ServiceEvent create 2>/dev/null
-		Shortcut_Script create
-		Set_Version_Custom_Settings local "$SCRIPT_VERSION"
-		Set_Version_Custom_Settings server "$SCRIPT_VERSION"
-		Process_Upgrade
-		if Auto_NAT check; then
-			NTP_Redirect create
-		fi
 	;;
 	postupdate)
 		Create_Dirs
