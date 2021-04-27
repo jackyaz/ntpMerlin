@@ -952,7 +952,7 @@ Get_TimeServer_Stats(){
 		
 		NOFFSET="$(echo "$NOFFSET" | awk '{printf ($1*1000)}')"
 		NSJIT="$(echo "$NSJIT" | awk '{printf ($1*1000)}')"
-		NCJIT="0"
+		NCJIT=0
 		NDISPER="$(echo "$NDISPER" | awk '{printf ($1*1000)}')"
 		rm -f "$tmpfile"
 	fi
@@ -965,7 +965,7 @@ Get_TimeServer_Stats(){
 	Process_Upgrade
 	
 	{
-		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([StatID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
+		echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([StatID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);"
 		echo "INSERT INTO ntpstats ([Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp]) values($timenow,$NOFFSET,$NFREQ,$NSJIT,$NCJIT,$NWANDER,$NDISPER);"
 	} > /tmp/ntp-stats.sql
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
