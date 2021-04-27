@@ -398,18 +398,12 @@ Conf_Exists(){
 		dos2unix "$SCRIPT_CONF"
 		chmod 0644 "$SCRIPT_CONF"
 		sed -i -e 's/"//g' "$SCRIPT_CONF"
-		if [ "$(wc -l < "$SCRIPT_CONF")" -eq 1 ]; then
-			echo "OUTPUTTIMEMODE=unix" >> "$SCRIPT_CONF"
-		fi
-		if [ "$(wc -l < "$SCRIPT_CONF")" -eq 2 ]; then
-			echo "STORAGELOCATION=jffs" >> "$SCRIPT_CONF"
-		fi
-		if [ "$(wc -l < "$SCRIPT_CONF")" -eq 3 ]; then
-			echo "TIMESERVER=ntpd" >> "$SCRIPT_CONF"
+		if grep -q "OUTPUTDATAMODE" "$SCRIPT_CONF"; then
+			sed -i '/OUTPUTDATAMODE/d;' "$SCRIPT_CONF"
 		fi
 		return 0
 	else
-		{ echo "OUTPUTDATAMODE=raw"; echo "OUTPUTTIMEMODE=unix"; echo "STORAGELOCATION=jffs"; echo "TIMESERVER=ntpd"; } > "$SCRIPT_CONF"
+		{ echo "OUTPUTTIMEMODE=unix"; echo "STORAGELOCATION=jffs"; echo "TIMESERVER=ntpd"; } > "$SCRIPT_CONF"
 		return 1
 	fi
 }
@@ -821,23 +815,6 @@ ScriptStorageLocation(){
 	esac
 }
 
-OutputDataMode(){
-	case "$1" in
-		raw)
-			sed -i 's/^OUTPUTDATAMODE.*$/OUTPUTDATAMODE=raw/' "$SCRIPT_CONF"
-			Generate_CSVs
-		;;
-		average)
-			sed -i 's/^OUTPUTDATAMODE.*$/OUTPUTDATAMODE=average/' "$SCRIPT_CONF"
-			Generate_CSVs
-		;;
-		check)
-			OUTPUTDATAMODE=$(grep "OUTPUTDATAMODE" "$SCRIPT_CONF" | cut -f2 -d"=")
-			echo "$OUTPUTDATAMODE"
-		;;
-	esac
-}
-
 OutputTimeMode(){
 	case "$1" in
 		unix)
@@ -907,15 +884,22 @@ WriteStats_ToJS(){
 WriteSql_ToFile(){
 	timenow="$8"
 	maxcount="$(echo "$3" "$4" | awk '{printf ((24*$2)/$1)}')"
-	multiplier="$(echo "$3" | awk '{printf (60*60*$1)}')"
 	
-	{
-		echo ".mode csv"
-		echo ".headers on"
-		echo ".output ${5}${6}.htm"
-	} >> "$7"
-	
-	echo "SELECT '$1' Metric, Min([Timestamp]) Time, IFNULL(Avg(printf('%f', $1)),'NaN') Value FROM $2 WHERE ([Timestamp] >= $timenow - ($multiplier*$maxcount)) GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+	if ! echo "$5" | grep -q "day"; then
+		{
+			echo ".mode csv"
+			echo ".headers on"
+			echo ".output ${5}_${6}.htm"
+			echo "SELECT '$1' Metric,Min(strftime('%s',datetime(strftime('%Y-%m-%d %H:00:00',datetime([Timestamp],'unixepoch'))))) Time,IFNULL(Avg(printf('%f', $1)),'NaN') Value FROM $2 WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-$maxcount hour'))) GROUP BY strftime('%m',datetime([Timestamp],'unixepoch')),strftime('%d',datetime([Timestamp],'unixepoch')),strftime('%H',datetime([Timestamp],'unixepoch')) ORDER BY [Timestamp] DESC;"
+		} > "$7"
+	else
+		{
+			echo ".mode csv"
+			echo ".headers on"
+			echo ".output ${5}_${6}.htm"
+			echo "SELECT '$1' Metric,Min(strftime('%s',datetime([Timestamp],'unixepoch','start of day'))) Time,IFNULL(Avg(printf('%f', $1)),'NaN') Value FROM $2 WHERE ([Timestamp] > strftime('%s',datetime($timenow,'unixepoch','start of day','+1 day','-$maxcount day'))) GROUP BY strftime('%m',datetime([Timestamp],'unixepoch')),strftime('%d',datetime([Timestamp],'unixepoch')) ORDER BY [Timestamp] DESC;"
+		} > "$7"
+	fi
 }
 
 Get_TimeServer_Stats(){
@@ -989,7 +973,6 @@ Get_TimeServer_Stats(){
 
 Generate_CSVs(){
 	
-	OUTPUTDATAMODE="$(OutputDataMode check)"
 	OUTPUTTIMEMODE="$(OutputTimeMode check)"
 	TZ=$(cat /etc/TZ)
 	export TZ
@@ -1006,40 +989,48 @@ Generate_CSVs(){
 		{
 			echo ".mode csv"
 			echo ".headers on"
-			echo ".output $CSV_OUTPUT_DIR/${FILENAME}daily.htm"
-			echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400);"
+			echo ".output $CSV_OUTPUT_DIR/${FILENAME}_raw_daily.htm"
+			echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-1 day'))) ORDER BY [Timestamp] DESC;"
 		} > /tmp/ntp-stats.sql
-		
 		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
-		rm -f /tmp/ntp-stats.sql
 		
-		if [ "$OUTPUTDATAMODE" = "raw" ]; then
-			{
-				echo ".mode csv"
-				echo ".headers on"
-				echo ".output $CSV_OUTPUT_DIR/${FILENAME}weekly.htm"
-				echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400*7);"
-			} > /tmp/ntp-stats.sql
-			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
-			rm -f /tmp/ntp-stats.sql
-			
-			{
-				echo ".mode csv"
-				echo ".headers on"
-				echo ".output $CSV_OUTPUT_DIR/${FILENAME}monthly.htm"
-				echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400*30);"
-			} > /tmp/ntp-stats.sql
-			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
-			rm -f /tmp/ntp-stats.sql
-		elif [ "$OUTPUTDATAMODE" = "average" ]; then
-			WriteSql_ToFile "$metric" ntpstats 1 7 "$CSV_OUTPUT_DIR/$FILENAME" weekly /tmp/ntp-stats.sql "$timenow"
-			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
-			rm -f /tmp/ntp-stats.sql
-			
-			WriteSql_ToFile "$metric" ntpstats 3 30 "$CSV_OUTPUT_DIR/$FILENAME" monthly /tmp/ntp-stats.sql "$timenow"
-			"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
-			rm -f /tmp/ntp-stats.sql
-		fi
+		{
+			echo ".mode csv"
+			echo ".headers on"
+			echo ".output $CSV_OUTPUT_DIR/${FILENAME}_raw_weekly.htm"
+			echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-7 day'))) ORDER BY [Timestamp] DESC;"
+		} > /tmp/ntp-stats.sql
+		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+		
+		{
+			echo ".mode csv"
+			echo ".headers on"
+			echo ".output $CSV_OUTPUT_DIR/${FILENAME}_raw_monthly.htm"
+			echo "SELECT '$metric' Metric,[Timestamp] Time,printf('%f', $metric) Value FROM ntpstats WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-30 day'))) ORDER BY [Timestamp] DESC;"
+		} > /tmp/ntp-stats.sql
+		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+		
+		WriteSql_ToFile "$metric" connstats 1 1 "$CSV_OUTPUT_DIR/${metric}_hour" daily /tmp/ntp-stats.sql "$timenow"
+		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+		
+		WriteSql_ToFile "$metric" connstats 1 7 "$CSV_OUTPUT_DIR/${metric}_hour" weekly /tmp/ntp-stats.sql "$timenow"
+		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+		
+		WriteSql_ToFile "$metric" connstats 1 30 "$CSV_OUTPUT_DIR/${metric}_hour" monthly /tmp/ntp-stats.sql "$timenow"
+		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+		
+		WriteSql_ToFile "$metric" connstats 24 1 "$CSV_OUTPUT_DIR/${metric}_day" daily /tmp/ntp-stats.sql "$timenow"
+		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+		
+		WriteSql_ToFile "$metric" connstats 24 7 "$CSV_OUTPUT_DIR/${metric}_day" weekly /tmp/ntp-stats.sql "$timenow"
+		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+		
+		WriteSql_ToFile "$metric" connstats 24 30 "$CSV_OUTPUT_DIR/${metric}_day" monthly /tmp/ntp-stats.sql "$timenow"
+		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+		
+		rm -f "$CSV_OUTPUT_DIR/${metric}daily.htm"
+		rm -f "$CSV_OUTPUT_DIR/${metric}weekly.htm"
+		rm -f "$CSV_OUTPUT_DIR/${metric}monthly.htm"
 	done
 	
 	rm -f /tmp/ntp-stats.sql
@@ -1048,8 +1039,8 @@ Generate_CSVs(){
 		echo ".mode csv"
 		echo ".headers on"
 		echo ".output $CSV_OUTPUT_DIR/CompleteResults.htm"
+		echo "SELECT [Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp] FROM ntpstats WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-30 day'))) ORDER BY [Timestamp] DESC;"
 	} > /tmp/ntp-complete.sql
-	echo "SELECT [Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp] FROM ntpstats WHERE [Timestamp] >= ($timenow - 86400*30) ORDER BY [Timestamp] DESC;" >> /tmp/ntp-complete.sql
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-complete.sql
 	rm -f /tmp/ntp-complete.sql
 	
@@ -1187,8 +1178,7 @@ MainMenu(){
 	printf "1.    Update timeserver stats now\\n\\n"
 	printf "2.    Toggle redirect of all NTP traffic to %s\\n      Currently: ${SETTING}%s\\e[0m\\n\\n" "$SCRIPT_NAME" "$NTP_REDIRECT_ENABLED"
 	printf "3.    Edit ${SETTING}%s\\e[0m config\\n\\n" "$(TimeServer check)"
-	printf "4.    Toggle data output mode\\n      Currently ${SETTING}%s\\e[0m values will be used for weekly and monthly charts\\n\\n" "$(OutputDataMode check)"
-	printf "5.    Toggle time output mode\\n      Currently ${SETTING}%s\\e[0m time values will be used for CSV exports\\n\\n" "$(OutputTimeMode check)"
+	printf "4.    Toggle time output mode\\n      Currently ${SETTING}%s\\e[0m time values will be used for CSV exports\\n\\n" "$(OutputTimeMode check)"
 	printf "s.    Toggle storage location for stats and config\\n      Current location is ${SETTING}%s\\e[0m \\n\\n" "$(ScriptStorageLocation check)"
 	printf "t.    Switch timeserver between ntpd and chronyd\\n      Currently using ${SETTING}%s\\e[0m\\n      Config location: ${SETTING}%s\\e[0m\\n\\n" "$(TimeServer check)" "$CONFFILE_MENU"
 	printf "r.    Restart ${SETTING}%s\\e[0m\\n\\n" "$(TimeServer check)"
@@ -1197,7 +1187,7 @@ MainMenu(){
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
 	printf "z.    Uninstall %s\\n" "$SCRIPT_NAME"
 	printf "\\n"
-	printf "\\e[1m############################################################\\e[0m\\n"
+	printf "\\e[1m##############################################################\\e[0m\\n"
 	printf "\\n"
 	
 	while true; do
@@ -1235,15 +1225,6 @@ MainMenu(){
 				break
 			;;
 			4)
-				printf "\\n"
-				if [ "$(OutputDataMode check)" = "raw" ]; then
-					OutputDataMode average
-				elif [ "$(OutputDataMode check)" = "average" ]; then
-					OutputDataMode raw
-				fi
-				break
-			;;
-			5)
 				printf "\\n"
 				if [ "$(OutputTimeMode check)" = "unix" ]; then
 					OutputTimeMode non-unix
