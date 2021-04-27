@@ -974,6 +974,8 @@ Get_TimeServer_Stats(){
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	rm -f /tmp/ntp-stats.sql
 	
+	echo 'var ntpstatus = "GenerateCSV";' > /tmp/detect_ntpmerlin.js
+	
 	Generate_CSVs
 	
 	echo "Stats last updated: $timenowfriendly" > /tmp/ntpstatstitle.txt
@@ -1048,6 +1050,8 @@ Generate_CSVs(){
 	
 	rm -f /tmp/ntp-stats.sql
 	
+	Generate_LastXResults
+	
 	{
 		echo ".mode csv"
 		echo ".headers on"
@@ -1077,6 +1081,18 @@ Generate_CSVs(){
 	mv "$tmpoutputdir/CompleteResults.csv" "$CSV_OUTPUT_DIR/CompleteResults.htm"
 	rm -f "$CSV_OUTPUT_DIR/ntpmerlindata.zip"
 	rm -rf "$tmpoutputdir"
+}
+
+Generate_LastXResults(){
+	{
+		echo ".mode csv"
+		echo ".output /tmp/ntp-lastx.csv"
+		echo "SELECT [Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp] FROM ntpstats ORDER BY [Timestamp] DESC LIMIT $(LastXResults check);"
+	} > /tmp/ntp-lastx.sql
+	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-lastx.sql
+	rm -f /tmp/ntp-lastx.sql
+	sed -i 's/"//g' /tmp/ntp-lastx.csv
+	mv /tmp/ntp-lastx.csv "$SCRIPT_STORAGE_DIR/lastx.htm"
 }
 
 Shortcut_Script(){
