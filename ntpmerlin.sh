@@ -775,6 +775,7 @@ ScriptStorageLocation(){
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/.tableupgraded" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/.chronyugraded" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/.indexcreated" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 			SCRIPT_CONF="/opt/share/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation load
@@ -794,6 +795,7 @@ ScriptStorageLocation(){
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/.tableupgraded" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/.chronyugraded" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
+			mv "/opt/share/$SCRIPT_NAME_LOWER.d/.indexcreated" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
 			SCRIPT_CONF="/jffs/addons/$SCRIPT_NAME_LOWER.d/config"
 			ScriptStorageLocation load
@@ -982,6 +984,7 @@ Get_TimeServer_Stats(){
 }
 
 Generate_CSVs(){
+	Process_Upgrade
 	
 	OUTPUTTIMEMODE="$(OutputTimeMode check)"
 	TZ=$(cat /etc/TZ)
@@ -1110,6 +1113,20 @@ Process_Upgrade(){
 			fi
 			touch "$SCRIPT_STORAGE_DIR/.chronyugraded"
 		fi
+	fi
+	if [ ! -f "$SCRIPT_STORAGE_DIR/.indexcreated" ]; then
+		Print_Output true "Creating database table indexes..." "$PASS"
+		echo "CREATE INDEX idx_time_offset ON ntpstats (Timestamp,Offset);" > /tmp/ntp-upgrade.sql
+		while ! "$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-upgrade.sql >/dev/null 2>&1; do
+			:
+		done
+		echo "CREATE INDEX idx_time_frequency ON ntpstats (Timestamp,Frequency);" > /tmp/ntp-upgrade.sql
+		while ! "$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-upgrade.sql >/dev/null 2>&1; do
+			:
+		done
+		rm -f /tmp/ntp-upgrade.sql
+		touch "$SCRIPT_STORAGE_DIR/.indexcreated"
+		Print_Output true "Database ready, continuing..." "$PASS"
 	fi
 }
 
