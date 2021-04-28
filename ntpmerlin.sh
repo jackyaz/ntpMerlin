@@ -1025,27 +1025,27 @@ Generate_CSVs(){
 		} > /tmp/ntp-stats.sql
 		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 		
-		WriteSql_ToFile "$metric" ntpstats 1 1 "$CSV_OUTPUT_DIR/${metric}_hour" daily /tmp/ntp-stats.sql "$timenow"
+		WriteSql_ToFile "$metric" ntpstats 1 1 "$CSV_OUTPUT_DIR/${FILENAME}_hour" daily /tmp/ntp-stats.sql "$timenow"
 		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 		
-		WriteSql_ToFile "$metric" ntpstats 1 7 "$CSV_OUTPUT_DIR/${metric}_hour" weekly /tmp/ntp-stats.sql "$timenow"
+		WriteSql_ToFile "$metric" ntpstats 1 7 "$CSV_OUTPUT_DIR/${FILENAME}_hour" weekly /tmp/ntp-stats.sql "$timenow"
 		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 		
-		WriteSql_ToFile "$metric" ntpstats 1 30 "$CSV_OUTPUT_DIR/${metric}_hour" monthly /tmp/ntp-stats.sql "$timenow"
+		WriteSql_ToFile "$metric" ntpstats 1 30 "$CSV_OUTPUT_DIR/${FILENAME}_hour" monthly /tmp/ntp-stats.sql "$timenow"
 		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 		
-		WriteSql_ToFile "$metric" ntpstats 24 1 "$CSV_OUTPUT_DIR/${metric}_day" daily /tmp/ntp-stats.sql "$timenow"
+		WriteSql_ToFile "$metric" ntpstats 24 1 "$CSV_OUTPUT_DIR/${FILENAME}_day" daily /tmp/ntp-stats.sql "$timenow"
 		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 		
-		WriteSql_ToFile "$metric" ntpstats 24 7 "$CSV_OUTPUT_DIR/${metric}_day" weekly /tmp/ntp-stats.sql "$timenow"
+		WriteSql_ToFile "$metric" ntpstats 24 7 "$CSV_OUTPUT_DIR/${FILENAME}_day" weekly /tmp/ntp-stats.sql "$timenow"
 		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 		
-		WriteSql_ToFile "$metric" ntpstats 24 30 "$CSV_OUTPUT_DIR/${metric}_day" monthly /tmp/ntp-stats.sql "$timenow"
+		WriteSql_ToFile "$metric" ntpstats 24 30 "$CSV_OUTPUT_DIR/${FILENAME}_day" monthly /tmp/ntp-stats.sql "$timenow"
 		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 		
-		rm -f "$CSV_OUTPUT_DIR/${metric}daily.htm"
-		rm -f "$CSV_OUTPUT_DIR/${metric}weekly.htm"
-		rm -f "$CSV_OUTPUT_DIR/${metric}monthly.htm"
+		rm -f "$CSV_OUTPUT_DIR/${FILENAME}daily.htm"
+		rm -f "$CSV_OUTPUT_DIR/${FILENAME}weekly.htm"
+		rm -f "$CSV_OUTPUT_DIR/${FILENAME}monthly.htm"
 	done
 	
 	rm -f /tmp/ntp-stats.sql
