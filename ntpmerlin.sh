@@ -1050,7 +1050,7 @@ Generate_CSVs(){
 	
 	rm -f /tmp/ntp-stats.sql
 	
-	Generate_LastXResults
+	#Generate_LastXResults
 	
 	{
 		echo ".mode csv"
