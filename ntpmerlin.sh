@@ -1497,6 +1497,7 @@ Check_Requirements(){
 }
 
 Menu_Install(){
+	ScriptHeader
 	Print_Output true "Welcome to $SCRIPT_NAME $SCRIPT_VERSION, a script by JackYaz"
 	sleep 1
 	
@@ -1527,8 +1528,18 @@ Menu_Install(){
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_Script create
 	TimeServer_Customise
+	
+	echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([StatID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);" > /tmp/ntp-stats.sql
+	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+	rm -f /tmp/ntp-stats.sql
+	touch "$SCRIPT_STORAGE_DIR/lastx.htm"
+	Process_Upgrade
+	
 	Get_TimeServer_Stats
 	Clear_Lock
+	
+	ScriptHeader
+	MainMenu
 }
 
 Menu_Startup(){
