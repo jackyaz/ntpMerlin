@@ -630,7 +630,7 @@ NTP_Redirect(){
 			iptables -D FORWARD -i br0 -p udp --dport 123 -j REJECT 2>/dev/null
 			ip6tables -D FORWARD -i br0 -p tcp --dport 123 -j REJECT 2>/dev/null
 			ip6tables -D FORWARD -i br0 -p udp --dport 123 -j REJECT 2>/dev/null
-			##
+			
 			Auto_DNSMASQ delete 2>/dev/null
 		;;
 	esac
@@ -1137,7 +1137,7 @@ Generate_CSVs(){
 	
 	rm -f /tmp/ntp-stats.sql
 	
-	#Generate_LastXResults
+	Generate_LastXResults
 	
 	{
 		echo ".mode csv"
