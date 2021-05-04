@@ -781,7 +781,6 @@ ScriptStorageLocation(){
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/ntp.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
-			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/.tableupgraded" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/.chronyugraded" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/jffs/addons/$SCRIPT_NAME_LOWER.d/.indexcreated" "/opt/share/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
@@ -801,7 +800,6 @@ ScriptStorageLocation(){
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/ntp.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/chrony.conf.default" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
-			mv "/opt/share/$SCRIPT_NAME_LOWER.d/.tableupgraded" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/.chronyugraded" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			mv "/opt/share/$SCRIPT_NAME_LOWER.d/.indexcreated" "/jffs/addons/$SCRIPT_NAME_LOWER.d/" 2>/dev/null
 			"/opt/etc/init.d/S77$TIMESERVER_NAME" restart >/dev/null 2>&1
@@ -1075,6 +1073,8 @@ Get_TimeServer_Stats(){
 Generate_CSVs(){
 	Process_Upgrade
 	
+	renice 15 $$
+	
 	OUTPUTTIMEMODE="$(OutputTimeMode check)"
 	TZ=$(cat /etc/TZ)
 	export TZ
@@ -1168,6 +1168,8 @@ Generate_CSVs(){
 	mv "$tmpoutputdir/CompleteResults.csv" "$CSV_OUTPUT_DIR/CompleteResults.htm"
 	rm -f "$CSV_OUTPUT_DIR/ntpmerlindata.zip"
 	rm -rf "$tmpoutputdir"
+	
+	renice 0 $$
 }
 
 Generate_LastXResults(){
@@ -1199,6 +1201,7 @@ Shortcut_Script(){
 }
 
 Process_Upgrade(){
+	rm -f "$SCRIPT_STORAGE_DIR/.tableupgraded"
 	if [ ! -f "$SCRIPT_STORAGE_DIR/.chronyugraded" ]; then
 		if [ "$(TimeServer check)" = "chronyd" ]; then
 			Print_Output true "Checking if chrony-nts is available for your router..." "$PASS"
@@ -1218,6 +1221,7 @@ Process_Upgrade(){
 		fi
 	fi
 	if [ ! -f "$SCRIPT_STORAGE_DIR/.indexcreated" ]; then
+		renice 15 $$
 		Print_Output true "Creating database table indexes..." "$PASS"
 		echo "CREATE INDEX idx_time_offset ON ntpstats (Timestamp,Offset);" > /tmp/ntp-upgrade.sql
 		while ! "$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-upgrade.sql >/dev/null 2>&1; do
@@ -1230,6 +1234,7 @@ Process_Upgrade(){
 		rm -f /tmp/ntp-upgrade.sql
 		touch "$SCRIPT_STORAGE_DIR/.indexcreated"
 		Print_Output true "Database ready, continuing..." "$PASS"
+		renice 0 $$
 	fi
 }
 
