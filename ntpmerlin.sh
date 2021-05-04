@@ -44,7 +44,9 @@ readonly CRIT="\\e[41m"
 readonly ERR="\\e[31m"
 readonly WARN="\\e[33m"
 readonly PASS="\\e[32m"
-readonly SETTING="\\e[1m\\e[36m"
+readonly BOLD="\\e[1m"
+readonly SETTING="${BOLD}\\e[36m"
+readonly CLEARFORMAT="\\e[0m"
 ### End of output format variables ###
 
 # $1 = print to syslog, $2 = message to print, $3 = log level
@@ -52,7 +54,7 @@ Print_Output(){
 	if [ "$1" = "true" ]; then
 		logger -t "$SCRIPT_NAME" "$2"
 	fi
-	printf "\\e[1m${3}%s\\e[0m\\n\\n" "$2"
+	printf "${BOLD}${3}%s${CLEARFORMAT}\\n\\n" "$2"
 }
 
 Firmware_Version_Check(){
@@ -164,7 +166,7 @@ Update_Version(){
 		fi
 		
 		if [ "$isupdate" != "false" ]; then
-			printf "\\n\\e[1mDo you want to continue with the update? (y/n)\\e[0m  "
+			printf "\\n${BOLD}Do you want to continue with the update? (y/n)${CLEARFORMAT}  "
 			read -r confirm
 			case "$confirm" in
 				y|Y)
@@ -1185,27 +1187,27 @@ ScriptHeader(){
 	DST_END="Month $(echo "$DST_END" | cut -f1 -d".") Week $(echo "$DST_END" | cut -f2 -d".") Weekday $(echo "$DST_END" | cut -f3 -d"." | cut -f1 -d"/") Hour $(echo "$DST_END" | cut -f3 -d"." | cut -f2 -d"/")"
 	
 	printf "\\n"
-	printf "\\e[1m##############################################################\\e[0m\\n"
-	printf "\\e[1m##                                                          ##\\e[0m\\n"
-	printf "\\e[1m##           _           __  __              _  _           ##\\e[0m\\n"
-	printf "\\e[1m##          | |         |  \/  |            | |(_)          ##\\e[0m\\n"
-	printf "\\e[1m##    _ __  | |_  _ __  | \  / |  ___  _ __ | | _  _ __     ##\\e[0m\\n"
-	printf "\\e[1m##   | '_ \ | __|| '_ \ | |\/| | / _ \| '__|| || || '_ \    ##\\e[0m\\n"
-	printf "\\e[1m##   | | | || |_ | |_) || |  | ||  __/| |   | || || | | |   ##\\e[0m\\n"
-	printf "\\e[1m##   |_| |_| \__|| .__/ |_|  |_| \___||_|   |_||_||_| |_|   ##\\e[0m\\n"
-	printf "\\e[1m##               | |                                        ##\\e[0m\\n"
-	printf "\\e[1m##               |_|                                        ##\\e[0m\\n"
-	printf "\\e[1m##                                                          ##\\e[0m\\n"
-	printf "\\e[1m##                   %s on %-11s                  ##\\e[0m\\n" "$SCRIPT_VERSION" "$ROUTER_MODEL"
-	printf "\\e[1m##                                                          ##\\e[0m\\n"
-	printf "\\e[1m##         https://github.com/jackyaz/ntpMerlin             ##\\e[0m\\n"
-	printf "\\e[1m##                                                          ##\\e[0m\\n"
-	printf "\\e[1m##                 DST is currently %-8s                ##\\e[0m\\n" "$DST_ENABLED"
-	printf "\\e[1m##                                                          ##\\e[0m\\n"
-	printf "\\e[1m##      DST starts on %-33s     ##\\e[0m\\n" "$DST_START"
-	printf "\\e[1m##      DST ends on %-33s       ##\\e[0m\\n" "$DST_END"
-	printf "\\e[1m##                                                          ##\\e[0m\\n"
-	printf "\\e[1m##############################################################\\e[0m\\n"
+	printf "${BOLD}##############################################################${CLEARFORMAT}\\n"
+	printf "${BOLD}##                                                          ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##           _           __  __              _  _           ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##          | |         |  \/  |            | |(_)          ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##    _ __  | |_  _ __  | \  / |  ___  _ __ | | _  _ __     ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##   | '_ \ | __|| '_ \ | |\/| | / _ \| '__|| || || '_ \    ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##   | | | || |_ | |_) || |  | ||  __/| |   | || || | | |   ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##   |_| |_| \__|| .__/ |_|  |_| \___||_|   |_||_||_| |_|   ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##               | |                                        ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##               |_|                                        ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##                                                          ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##                   %s on %-11s                  ##${CLEARFORMAT}\\n" "$SCRIPT_VERSION" "$ROUTER_MODEL"
+	printf "${BOLD}##                                                          ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##         https://github.com/jackyaz/ntpMerlin             ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##                                                          ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##                 DST is currently %-8s                ##${CLEARFORMAT}\\n" "$DST_ENABLED"
+	printf "${BOLD}##                                                          ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##      DST starts on %-33s     ##${CLEARFORMAT}\\n" "$DST_START"
+	printf "${BOLD}##      DST ends on %-33s       ##${CLEARFORMAT}\\n" "$DST_END"
+	printf "${BOLD}##                                                          ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##############################################################${CLEARFORMAT}\\n"
 	printf "\\n"
 }
 
@@ -1217,20 +1219,20 @@ MainMenu(){
 		NTP_REDIRECT_ENABLED="Disabled"
 	fi
 	
-	printf "WebUI for %s is available at:\\n${SETTING}%s\\e[0m\\n\\n" "$SCRIPT_NAME" "$(Get_WebUI_URL)"
+	printf "WebUI for %s is available at:\\n${SETTING}%s${CLEARFORMAT}\\n\\n" "$SCRIPT_NAME" "$(Get_WebUI_URL)"
 	printf "1.    Update timeserver stats now\\n\\n"
-	printf "2.    Toggle redirect of all NTP traffic to %s\\n      Currently: ${SETTING}%s\\e[0m\\n\\n" "$SCRIPT_NAME" "$NTP_REDIRECT_ENABLED"
-	printf "3.    Edit ${SETTING}%s\\e[0m config\\n\\n" "$(TimeServer check)"
-	printf "4.    Toggle time output mode\\n      Currently ${SETTING}%s\\e[0m time values will be used for CSV exports\\n\\n" "$(OutputTimeMode check)"
-	printf "s.    Toggle storage location for stats and config\\n      Current location is ${SETTING}%s\\e[0m \\n\\n" "$(ScriptStorageLocation check)"
-	printf "t.    Switch timeserver between ntpd and chronyd\\n      Currently using ${SETTING}%s\\e[0m\\n      Config location: ${SETTING}%s\\e[0m\\n\\n" "$(TimeServer check)" "$CONFFILE_MENU"
-	printf "r.    Restart ${SETTING}%s\\e[0m\\n\\n" "$(TimeServer check)"
+	printf "2.    Toggle redirect of all NTP traffic to %s\\n      Currently: ${SETTING}%s${CLEARFORMAT}\\n\\n" "$SCRIPT_NAME" "$NTP_REDIRECT_ENABLED"
+	printf "3.    Edit ${SETTING}%s${CLEARFORMAT} config\\n\\n" "$(TimeServer check)"
+	printf "4.    Toggle time output mode\\n      Currently ${SETTING}%s${CLEARFORMAT} time values will be used for CSV exports\\n\\n" "$(OutputTimeMode check)"
+	printf "s.    Toggle storage location for stats and config\\n      Current location is ${SETTING}%s${CLEARFORMAT} \\n\\n" "$(ScriptStorageLocation check)"
+	printf "t.    Switch timeserver between ntpd and chronyd\\n      Currently using ${SETTING}%s${CLEARFORMAT}\\n      Config location: ${SETTING}%s${CLEARFORMAT}\\n\\n" "$(TimeServer check)" "$CONFFILE_MENU"
+	printf "r.    Restart ${SETTING}%s${CLEARFORMAT}\\n\\n" "$(TimeServer check)"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
 	printf "z.    Uninstall %s\\n" "$SCRIPT_NAME"
 	printf "\\n"
-	printf "\\e[1m##############################################################\\e[0m\\n"
+	printf "${BOLD}##############################################################${CLEARFORMAT}\\n"
 	printf "\\n"
 	
 	while true; do
@@ -1251,11 +1253,11 @@ MainMenu(){
 				if Auto_NAT check; then
 					Auto_NAT delete
 					NTP_Redirect delete
-					printf "\\e[1mNTP Redirect has been disabled\\e[0m\\n\\n"
+					printf "${BOLD}NTP Redirect has been disabled${CLEARFORMAT}\\n\\n"
 				else
 					Auto_NAT create
 					NTP_Redirect create
-					printf "\\e[1mNTP Redirect has been enabled\\e[0m\\n\\n"
+					printf "${BOLD}NTP Redirect has been enabled${CLEARFORMAT}\\n\\n"
 				fi
 				PressEnter
 				break
@@ -1327,12 +1329,12 @@ MainMenu(){
 			;;
 			e)
 				ScriptHeader
-				printf "\\n\\e[1mThanks for using %s!\\e[0m\\n\\n\\n" "$SCRIPT_NAME"
+				printf "\\n${BOLD}Thanks for using %s!${CLEARFORMAT}\\n\\n\\n" "$SCRIPT_NAME"
 				exit 0
 			;;
 			z)
 				while true; do
-					printf "\\n\\e[1mAre you sure you want to uninstall %s? (y/n)\\e[0m  " "$SCRIPT_NAME"
+					printf "\\n${BOLD}Are you sure you want to uninstall %s? (y/n)${CLEARFORMAT}  " "$SCRIPT_NAME"
 					read -r confirm
 					case "$confirm" in
 						y|Y)
@@ -1462,13 +1464,13 @@ Menu_Edit(){
 	texteditor=""
 	exitmenu="false"
 	
-	printf "\\n\\e[1mA choice of text editors is available:\\e[0m\\n"
+	printf "\\n${BOLD}A choice of text editors is available:${CLEARFORMAT}\\n"
 	printf "1.    nano (recommended for beginners)\\n"
 	printf "2.    vi\\n"
 	printf "\\ne.    Exit to main menu\\n"
 	
 	while true; do
-		printf "\\n\\e[1mChoose an option:\\e[0m  "
+		printf "\\n${BOLD}Choose an option:${CLEARFORMAT}  "
 		read -r editor
 		case "$editor" in
 			1)
@@ -1544,7 +1546,7 @@ Menu_Uninstall(){
 	sed -i '/ntpmerlin_version_local/d' "$SETTINGSFILE"
 	sed -i '/ntpmerlin_version_server/d' "$SETTINGSFILE"
 	
-	printf "\\n\\e[1mDo you want to delete %s configuration file and stats? (y/n)\\e[0m  " "$SCRIPT_NAME"
+	printf "\\n${BOLD}Do you want to delete %s configuration file and stats? (y/n)${CLEARFORMAT}  " "$SCRIPT_NAME"
 	read -r confirm
 	case "$confirm" in
 		y|Y)
