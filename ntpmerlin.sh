@@ -1647,7 +1647,8 @@ Menu_Uninstall(){
 		sed -i "\\~$MyPage~d" /tmp/menuTree.js
 		umount /www/require/modules/menuTree.js
 		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
-		rm -rf "{$SCRIPT_WEBPAGE_DIR:?}/$MyPage"
+		rm -f "$SCRIPT_WEBPAGE_DIR/$MyPage"
+		rm -f "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
 	fi
 	flock -u "$FD"
 	rm -f "$SCRIPT_DIR/ntpdstats_www.asp" 2>/dev/null
