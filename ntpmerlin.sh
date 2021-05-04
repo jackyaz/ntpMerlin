@@ -385,6 +385,7 @@ Create_Symlinks(){
 	
 	ln -s /tmp/detect_ntpmerlin.js "$SCRIPT_WEB_DIR/detect_ntpmerlin.js" 2>/dev/null
 	ln -s "$SCRIPT_STORAGE_DIR/ntpstatstext.js" "$SCRIPT_WEB_DIR/ntpstatstext.js" 2>/dev/null
+	ln -s "$SCRIPT_STORAGE_DIR/lastx.htm" "$SCRIPT_WEB_DIR/lastx.htm" 2>/dev/null
 	
 	ln -s "$SCRIPT_CONF" "$SCRIPT_WEB_DIR/config.htm" 2>/dev/null
 	
