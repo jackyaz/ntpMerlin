@@ -403,9 +403,15 @@ Conf_Exists(){
 		if grep -q "OUTPUTDATAMODE" "$SCRIPT_CONF"; then
 			sed -i '/OUTPUTDATAMODE/d;' "$SCRIPT_CONF"
 		fi
+		if ! grep -q "DAYSTOKEEP" "$SCRIPT_CONF"; then
+			echo "DAYSTOKEEP=30" >> "$SCRIPT_CONF"
+		fi
+		if ! grep -q "LASTXRESULTS" "$SCRIPT_CONF"; then
+			echo "LASTXRESULTS=10" >> "$SCRIPT_CONF"
+		fi
 		return 0
 	else
-		{ echo "OUTPUTTIMEMODE=unix"; echo "STORAGELOCATION=jffs"; echo "TIMESERVER=ntpd"; } > "$SCRIPT_CONF"
+		{ echo "OUTPUTTIMEMODE=unix"; echo "STORAGELOCATION=jffs"; echo "TIMESERVER=ntpd"; echo "DAYSTOKEEP=30"; echo "LASTXRESULTS=10"; } > "$SCRIPT_CONF"
 		return 1
 	fi
 }
@@ -874,6 +880,85 @@ TimeServer(){
 	esac
 }
 
+DaysToKeep(){
+	case "$1" in
+		update)
+			daystokeep=30
+			exitmenu=""
+			ScriptHeader
+			while true; do
+				printf "\\n${BOLD}Please enter the desired number of days\\nto keep data for (30-365 days):${CLEARFORMAT}  "
+				read -r daystokeep_choice
+				
+				if [ "$daystokeep_choice" = "e" ]; then
+					exitmenu="exit"
+					break
+				elif ! Validate_Number "$daystokeep_choice"; then
+					printf "\\n${ERR}Please enter a valid number (30-365)${CLEARFORMAT}\\n"
+				elif [ "$daystokeep_choice" -lt 30 ] || [ "$daystokeep_choice" -gt 365 ]; then
+						printf "\\n${ERR}Please enter a number between 30 and 365${CLEARFORMAT}\\n"
+				else
+					daystokeep="$daystokeep_choice"
+					printf "\\n"
+					break
+				fi
+			done
+			
+			if [ "$exitmenu" != "exit" ]; then
+				sed -i 's/^DAYSTOKEEP.*$/DAYSTOKEEP='"$daystokeep"'/' "$SCRIPT_CONF"
+				return 0
+			else
+				printf "\\n"
+				return 1
+			fi
+		;;
+		check)
+			DAYSTOKEEP=$(grep "DAYSTOKEEP" "$SCRIPT_CONF" | cut -f2 -d"=")
+			echo "$DAYSTOKEEP"
+		;;
+	esac
+}
+
+LastXResults(){
+	case "$1" in
+		update)
+			lastxresults=10
+			exitmenu=""
+			ScriptHeader
+			while true; do
+				printf "\\n${BOLD}Please enter the desired number of results\\nto display in the WebUI (1-100):${CLEARFORMAT}  "
+				read -r lastx_choice
+				
+				if [ "$lastx_choice" = "e" ]; then
+					exitmenu="exit"
+					break
+				elif ! Validate_Number "$lastx_choice"; then
+					printf "\\n${ERR}Please enter a valid number (1-100)${CLEARFORMAT}\\n"
+				elif [ "$lastx_choice" -lt 1 ] || [ "$lastx_choice" -gt 100 ]; then
+						printf "\\n${ERR}Please enter a number between 1 and 100${CLEARFORMAT}\\n"
+				else
+					lastxresults="$lastx_choice"
+					printf "\\n"
+					break
+				fi
+			done
+			
+			if [ "$exitmenu" != "exit" ]; then
+				sed -i 's/^LASTXRESULTS.*$/LASTXRESULTS='"$lastxresults"'/' "$SCRIPT_CONF"
+				Generate_LastXResults
+				return 0
+			else
+				printf "\\n"
+				return 1
+			fi
+		;;
+		check)
+			LASTXRESULTS=$(grep "LASTXRESULTS" "$SCRIPT_CONF" | cut -f2 -d"=")
+			echo "$LASTXRESULTS"
+		;;
+	esac
+}
+
 WriteStats_ToJS(){
 	echo "function $3(){" > "$2"
 	html='document.getElementById("'"$4"'").innerHTML="'
@@ -972,7 +1057,7 @@ Get_TimeServer_Stats(){
 	} > /tmp/ntp-stats.sql
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
-	echo "DELETE FROM [ntpstats] WHERE [Timestamp] < ($timenow - (86400*30));" > /tmp/ntp-stats.sql
+	echo "DELETE FROM [ntpstats] WHERE [Timestamp] < strftime('%s',datetime($timenow,'unixepoch','-$(DaysToKeep check) day'));" > /tmp/ntp-stats.sql
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	rm -f /tmp/ntp-stats.sql
 	
@@ -1089,7 +1174,7 @@ Generate_LastXResults(){
 	{
 		echo ".mode csv"
 		echo ".output /tmp/ntp-lastx.csv"
-		echo "SELECT [Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp] FROM ntpstats ORDER BY [Timestamp] DESC LIMIT $(LastXResults check);"
+		echo "SELECT [Timestamp],[Offset],[Frequency] FROM ntpstats ORDER BY [Timestamp] DESC LIMIT $(LastXResults check);"
 	} > /tmp/ntp-lastx.sql
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-lastx.sql
 	rm -f /tmp/ntp-lastx.sql
@@ -1224,6 +1309,8 @@ MainMenu(){
 	printf "2.    Toggle redirect of all NTP traffic to %s\\n      Currently: ${SETTING}%s${CLEARFORMAT}\\n\\n" "$SCRIPT_NAME" "$NTP_REDIRECT_ENABLED"
 	printf "3.    Edit ${SETTING}%s${CLEARFORMAT} config\\n\\n" "$(TimeServer check)"
 	printf "4.    Toggle time output mode\\n      Currently ${SETTING}%s${CLEARFORMAT} time values will be used for CSV exports\\n\\n" "$(OutputTimeMode check)"
+	printf "5.    Set number of timeserver stats to show in WebUI\\n      Currently: ${SETTING}%s results will be shown${CLEARFORMAT}\\n\\n" "$(LastXResults check)"
+	printf "6.    Set number of days data to keep in database\\n      Currently: ${SETTING}%s days data will be kept${CLEARFORMAT}\\n\\n" "$(DaysToKeep check)"
 	printf "s.    Toggle storage location for stats and config\\n      Current location is ${SETTING}%s${CLEARFORMAT} \\n\\n" "$(ScriptStorageLocation check)"
 	printf "t.    Switch timeserver between ntpd and chronyd\\n      Currently using ${SETTING}%s${CLEARFORMAT}\\n      Config location: ${SETTING}%s${CLEARFORMAT}\\n\\n" "$(TimeServer check)" "$CONFFILE_MENU"
 	printf "r.    Restart ${SETTING}%s${CLEARFORMAT}\\n\\n" "$(TimeServer check)"
@@ -1276,6 +1363,18 @@ MainMenu(){
 				elif [ "$(OutputTimeMode check)" = "non-unix" ]; then
 					OutputTimeMode unix
 				fi
+				break
+			;;
+			5)
+				printf "\\n"
+				LastXResults update
+				PressEnter
+				break
+			;;
+			6)
+				printf "\\n"
+				DaysToKeep update
+				PressEnter
 				break
 			;;
 			s)
