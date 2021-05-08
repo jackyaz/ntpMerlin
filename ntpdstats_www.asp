@@ -11,115 +11,7 @@
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <style>
-p {
-  font-weight: bolder;
-}
-
-thead.collapsible-jquery {
-  color: white;
-  padding: 0px;
-  width: 100%;
-  border: none;
-  text-align: left;
-  outline: none;
-  cursor: pointer;
-}
-
-.SettingsTable {
-  text-align: left;
-}
-
-.SettingsTable input {
-  text-align: left;
-  margin-left: 3px !important;
-}
-
-.SettingsTable input.savebutton {
-  text-align: center;
-  margin-top: 5px;
-  margin-bottom: 5px;
-  border-right: solid 1px black;
-  border-left: solid 1px black;
-  border-bottom: solid 1px black;
-}
-
-.SettingsTable td.savebutton {
-  border-right: solid 1px black;
-  border-left: solid 1px black;
-  border-bottom: solid 1px black;
-  background-color:rgb(77, 89, 93);
-}
-
-.SettingsTable .cronbutton {
-  text-align: center;
-  min-width: 50px;
-  width: 50px;
-  height: 23px;
-  vertical-align: middle;
-}
-
-.SettingsTable select {
-  margin-left: 3px !important;
-}
-
-.SettingsTable label {
-  margin-right: 10px !important;
-  vertical-align: top !important;
-}
-
-.SettingsTable th {
-  background-color: #1F2D35 !important;
-  background: #2F3A3E !important;
-  border-bottom: none !important;
-  border-top: none !important;
-  font-size: 12px !important;
-  color: white !important;
-  padding: 4px !important;
-  font-weight: bolder !important;
-  padding: 0px !important;
-}
-
-.SettingsTable td {
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
-  border-right: none;
-  border-left: none;
-}
-
-.SettingsTable span.settingname {
-  background-color: #1F2D35 !important;
-  background: #2F3A3E !important;
-}
-
-.SettingsTable td.settingname {
-  border-right: solid 1px black;
-  border-left: solid 1px black;
-  background-color: #1F2D35 !important;
-  background: #2F3A3E !important;
-  width: 35% !important;
-}
-
-.SettingsTable td.settingvalue {
-  text-align: left !important;
-  border-right: solid 1px black;
-}
-
-.SettingsTable th:first-child{
-  border-left: none !important;
-}
-
-.SettingsTable th:last-child {
-  border-right: none !important;
-}
-
-.SettingsTable .invalid {
-  background-color: darkred !important;
-}
-
-.SettingsTable .disabled {
-  background-color: #CCCCCC !important;
-  color: #888888 !important;
-}
+p{font-weight:bolder}thead.collapsible-jquery{color:#fff;padding:0;width:100%;border:none;text-align:left;outline:none;cursor:pointer}td.nodata{height:65px!important;border:none!important;text-align:center!important;font:bolder 48px Arial!important}.SettingsTable{text-align:left}.SettingsTable input{text-align:left;margin-left:3px!important}.SettingsTable input.savebutton{text-align:center;margin-top:5px;margin-bottom:5px;border-right:solid 1px #000;border-left:solid 1px #000;border-bottom:solid 1px #000}.SettingsTable td.savebutton{border-right:solid 1px #000;border-left:solid 1px #000;border-bottom:solid 1px #000;background-color:#4d595d}.SettingsTable .cronbutton{text-align:center;min-width:50px;width:50px;height:23px;vertical-align:middle}.SettingsTable select{margin-left:3px!important}.SettingsTable label{margin-right:10px!important;vertical-align:top!important}.SettingsTable th{background-color:#1F2D35!important;background:#2F3A3E!important;border-bottom:none!important;border-top:none!important;font-size:12px!important;color:#fff!important;padding:4px!important;font-weight:bolder!important;padding:0!important}.SettingsTable td{word-wrap:break-word!important;overflow-wrap:break-word!important;border-right:none;border-left:none}.SettingsTable span.settingname{background-color:#1F2D35!important;background:#2F3A3E!important}.SettingsTable td.settingname{border-right:solid 1px #000;border-left:solid 1px #000;background-color:#1F2D35!important;background:#2F3A3E!important;width:35%!important}.SettingsTable td.settingvalue{text-align:left!important;border-right:solid 1px #000}.SettingsTable th:first-child{border-left:none!important}.SettingsTable th:last-child{border-right:none!important}.SettingsTable .invalid{background-color:#8b0000!important}.SettingsTable .disabled{background-color:#CCC!important;color:#888!important}.removespacing{padding-left:0!important;margin-left:0!important;margin-bottom:5px!important;text-align:center!important}div.sortTableContainer{height:300px;overflow-y:scroll;width:745px;border:1px solid #000}.sortTable{table-layout:fixed!important;border:none}thead.sortTableHeader th{background-image:linear-gradient(#92a0a5 0%,#66757c 100%);border-top:none!important;border-left:none!important;border-right:none!important;border-bottom:1px solid #000!important;font-weight:bolder;padding:2px;text-align:center;color:#fff;position:sticky;top:0;font-size:11px!important}thead.sortTableHeader th:first-child,thead.sortTableHeader th:last-child{border-right:none!important}thead.sortTableHeader th:first-child,thead.sortTableHeader td:first-child{border-left:none!important}tbody.sortTableContent td{border-bottom:1px solid #000!important;border-left:none!important;border-right:1px solid #000!important;border-top:none!important;padding:2px;text-align:center;overflow:hidden!important;white-space:nowrap!important;font-size:12px!important}tbody.sortTableContent tr.sortRow:nth-child(odd) td{background-color:#2F3A3E!important}tbody.sortTableContent tr.sortRow:nth-child(even) td{background-color:#475A5F!important}th.sortable{cursor:pointer}
 </style>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/moment.js"></script>
@@ -137,20 +29,19 @@ thead.collapsible-jquery {
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/ntpmerlin/ntpstatstext.js"></script>
 <script>
 var custom_settings;
 function LoadCustomSettings(){
 	custom_settings = <% get_custom_settings(); %>;
 	for(var prop in custom_settings){
 		if(Object.prototype.hasOwnProperty.call(custom_settings, prop)){
-			if(prop.indexOf("ntpmerlin") != -1 && prop.indexOf("ntpmerlin_version") == -1){
+			if(prop.indexOf('ntpmerlin') != -1 && prop.indexOf('ntpmerlin_version') == -1){
 				eval("delete custom_settings."+prop)
 			}
 		}
 	}
 }
-var $j=jQuery.noConflict(),maxNoCharts=6,currentNoCharts=0,ShowLines=GetCookie("ShowLines","string"),ShowFill=GetCookie("ShowFill","string"),DragZoom=!0,ChartPan=!1;Chart.defaults.global.defaultFontColor="#CCC",Chart.Tooltip.positioners.cursor=function(a,b){return b};var metriclist=["Offset","Drift"],measureunitlist=["ms","ppm"],chartlist=["daily","weekly","monthly"],timeunitlist=["hour","day","day"],intervallist=[24,7,30],bordercolourlist=["#fc8500","#ffffff"],backgroundcolourlist=["rgba(252,133,0,0.5)","rgba(255,255,255,0.5)"];function keyHandler(a){27==a.keyCode&&($j(document).off("keydown"),ResetZoom())}$j(document).keydown(function(a){keyHandler(a)}),$j(document).keyup(function(){$j(document).keydown(function(a){keyHandler(a)})});function Draw_Chart_NoData(a){document.getElementById("divLineChart_"+a).width="730",document.getElementById("divLineChart_"+a).height="500",document.getElementById("divLineChart_"+a).style.width="730px",document.getElementById("divLineChart_"+a).style.height="500px";var b=document.getElementById("divLineChart_"+a).getContext("2d");b.save(),b.textAlign="center",b.textBaseline="middle",b.font="normal normal bolder 48px Arial",b.fillStyle="white",b.fillText("No data to display",365,250),b.restore()}function Draw_Chart(a,b,c,d,e){var f=getChartPeriod($j("#"+a+"_Period option:selected").val()),g=timeunitlist[$j("#"+a+"_Period option:selected").val()],h=intervallist[$j("#"+a+"_Period option:selected").val()],i=window[a+f];if("undefined"==typeof i||null===i)return void Draw_Chart_NoData(a);if(0==i.length)return void Draw_Chart_NoData(a);var j=i.map(function(a){return a.Metric}),k=i.map(function(a){return{x:a.Time,y:a.Value}}),l=window["LineChart_"+a],m=getTimeFormat($j("#Time_Format option:selected").val(),"axis"),n=getTimeFormat($j("#Time_Format option:selected").val(),"tooltip");factor=0,"hour"==g?factor=3600000:"day"==g&&(factor=86400000),l!=null&&l.destroy();var o=document.getElementById("divLineChart_"+a).getContext("2d"),p={segmentShowStroke:!1,segmentStrokeColor:"#000",animationEasing:"easeOutQuart",animationSteps:100,maintainAspectRatio:!1,animateScale:!0,hover:{mode:"point"},legend:{display:!1,position:"bottom",onClick:null},title:{display:!0,text:b},tooltips:{callbacks:{title:function(a){return moment(a[0].xLabel,"X").format(n)},label:function(a,b){return round(b.datasets[a.datasetIndex].data[a.index].y,3).toFixed(3)+" "+c}},mode:"point",position:"cursor",intersect:!0},scales:{xAxes:[{type:"time",gridLines:{display:!0,color:"#282828"},ticks:{min:moment().subtract(h,g+"s"),display:!0},time:{parser:"X",unit:g,stepSize:1,displayFormats:m}}],yAxes:[{gridLines:{display:!1,color:"#282828"},scaleLabel:{display:!1,labelString:c},ticks:{display:!0,callback:function(a){return round(a,3).toFixed(3)+" "+c}}}]},plugins:{zoom:{pan:{enabled:ChartPan,mode:"xy",rangeMin:{x:new Date().getTime()-factor*h,y:getLimit(k,"y","min",!1)-.1*Math.sqrt(Math.pow(getLimit(k,"y","min",!1),2))},rangeMax:{x:new Date().getTime(),y:getLimit(k,"y","max",!1)+.1*getLimit(k,"y","max",!1)}},zoom:{enabled:!0,drag:DragZoom,mode:"xy",rangeMin:{x:new Date().getTime()-factor*h,y:getLimit(k,"y","min",!1)-.1*Math.sqrt(Math.pow(getLimit(k,"y","min",!1),2))},rangeMax:{x:new Date().getTime(),y:getLimit(k,"y","max",!1)+.1*getLimit(k,"y","max",!1)},speed:.1}}},annotation:{drawTime:"afterDatasetsDraw",annotations:[{type:ShowLines,mode:"horizontal",scaleID:"y-axis-0",value:getAverage(k),borderColor:d,borderWidth:1,borderDash:[5,5],label:{backgroundColor:"rgba(0,0,0,0.3)",fontFamily:"sans-serif",fontSize:10,fontStyle:"bold",fontColor:"#fff",xPadding:6,yPadding:6,cornerRadius:6,position:"center",enabled:!0,xAdjust:0,yAdjust:0,content:"Avg="+round(getAverage(k),3).toFixed(3)+c}},{type:ShowLines,mode:"horizontal",scaleID:"y-axis-0",value:getLimit(k,"y","max",!0),borderColor:d,borderWidth:1,borderDash:[5,5],label:{backgroundColor:"rgba(0,0,0,0.3)",fontFamily:"sans-serif",fontSize:10,fontStyle:"bold",fontColor:"#fff",xPadding:6,yPadding:6,cornerRadius:6,position:"right",enabled:!0,xAdjust:15,yAdjust:0,content:"Max="+round(getLimit(k,"y","max",!0),3).toFixed(3)+c}},{type:ShowLines,mode:"horizontal",scaleID:"y-axis-0",value:getLimit(k,"y","min",!0),borderColor:d,borderWidth:1,borderDash:[5,5],label:{backgroundColor:"rgba(0,0,0,0.3)",fontFamily:"sans-serif",fontSize:10,fontStyle:"bold",fontColor:"#fff",xPadding:6,yPadding:6,cornerRadius:6,position:"left",enabled:!0,xAdjust:15,yAdjust:0,content:"Min="+round(getLimit(k,"y","min",!0),3).toFixed(3)+c}}]}},q={labels:j,datasets:[{data:k,borderWidth:1,pointRadius:1,lineTension:0,fill:ShowFill,backgroundColor:e,borderColor:d}]};l=new Chart(o,{type:"line",data:q,options:p}),window["LineChart_"+a]=l}function getLimit(a,b,c,d){var e,f=0;return e="x"==b?a.map(function(a){return a.x}):a.map(function(a){return a.y}),f="max"==c?Math.max.apply(Math,e):Math.min.apply(Math,e),"max"==c&&0==f&&!1==d&&(f=1),f}function getAverage(a){for(var b=0,c=0;c<a.length;c++)b+=1*a[c].y;var d=b/a.length;return d}function round(a,b){return+(Math.round(a+"e"+b)+"e-"+b)}function ToggleLines(){""==ShowLines?(ShowLines="line",SetCookie("ShowLines","line")):(ShowLines="",SetCookie("ShowLines",""));for(var a=0;a<metriclist.length;a++){for(var b=0;3>b;b++)window["LineChart_"+metriclist[a]].options.annotation.annotations[b].type=ShowLines;window["LineChart_"+metriclist[a]].update()}}function ToggleFill(){"false"==ShowFill?(ShowFill="origin",SetCookie("ShowFill","origin")):(ShowFill="false",SetCookie("ShowFill","false"));for(var a=0;a<metriclist.length;a++)window["LineChart_"+metriclist[a]].data.datasets[0].fill=ShowFill,window["LineChart_"+metriclist[a]].update()}function RedrawAllCharts(){for(var a=0;a<metriclist.length;a++)for(var b=0;b<chartlist.length;b++)d3.csv("/ext/ntpmerlin/csv/"+metriclist[a]+chartlist[b]+".htm").then(SetGlobalDataset.bind(null,metriclist[a]+chartlist[b]))}function SetGlobalDataset(a,b){if(window[a]=b,currentNoCharts++,currentNoCharts==maxNoCharts){document.getElementById("ntpupdate_text").innerHTML="",showhide("imgNTPUpdate",!1),showhide("ntpupdate_text",!1),showhide("btnUpdateStats",!0);for(var c=0;c<metriclist.length;c++)$j("#"+metriclist[c]+"_Period").val(GetCookie(metriclist[c]+"_Period","number")),Draw_Chart(metriclist[c],metriclist[c],measureunitlist[c],bordercolourlist[c],backgroundcolourlist[c]);AddEventHandlers()}}function getTimeFormat(a,b){var c;return"axis"==b?0==a?c={millisecond:"HH:mm:ss.SSS",second:"HH:mm:ss",minute:"HH:mm",hour:"HH:mm"}:1==a&&(c={millisecond:"h:mm:ss.SSS A",second:"h:mm:ss A",minute:"h:mm A",hour:"h A"}):"tooltip"==b&&(0==a?c="YYYY-MM-DD HH:mm:ss":1==a&&(c="YYYY-MM-DD h:mm:ss A")),c}function GetCookie(a,b){var c;if(null!=(c=cookie.get("ntp_"+a)))return cookie.get("ntp_"+a);return"string"==b?"":"number"==b?0:void 0}function SetCookie(a,b){cookie.set("ntp_"+a,b,3650)}function AddEventHandlers(){$j(".collapsible-jquery").off("click").on("click",function(){$j(this).siblings().toggle("fast",function(){"none"==$j(this).css("display")?SetCookie($j(this).siblings()[0].id,"collapsed"):SetCookie($j(this).siblings()[0].id,"expanded")})}),$j(".collapsible-jquery").each(function(){"collapsed"==GetCookie($j(this)[0].id,"string")?$j(this).siblings().toggle(!1):$j(this).siblings().toggle(!0)})}$j.fn.serializeObject=function(){var b=custom_settings,c=this.serializeArray();return $j.each(c,function(){void 0!==b[this.name]&&-1!=this.name.indexOf("ntpmerlin")&&-1==this.name.indexOf("version")?(!b[this.name].push&&(b[this.name]=[b[this.name]]),b[this.name].push(this.value||"")):-1!=this.name.indexOf("ntpmerlin")&&-1==this.name.indexOf("version")&&(b[this.name]=this.value||"")}),b};function SetCurrentPage(){document.form.next_page.value=window.location.pathname.substring(1),document.form.current_page.value=window.location.pathname.substring(1)}function ErrorCSVExport(){document.getElementById("aExport").href="javascript:alert(\"Error exporting CSV, please refresh the page and try again\")"}function ParseCSVExport(a){for(var b,c="Timestamp,Offset,Frequency,Sys_Jitter,Clk_Jitter,Clk_Wander,Rootdisp\n",d=0;d<a.length;d++)b=a[d].Timestamp+","+a[d].Offset+","+a[d].Frequency+","+a[d].Sys_Jitter+","+a[d].Clk_Jitter+","+a[d].Clk_Wander+","+a[d].Rootdisp,c+=d<a.length-1?b+"\n":b;document.getElementById("aExport").href="data:text/csv;charset=utf-8,"+encodeURIComponent(c)}function initial(){SetCurrentPage(),LoadCustomSettings(),show_menu(),get_conf_file(),d3.csv("/ext/ntpmerlin/csv/CompleteResults.htm").then(function(a){ParseCSVExport(a)}).catch(function(){ErrorCSVExport()}),$j("#Time_Format").val(GetCookie("Time_Format","number")),ScriptUpdateLayout(),SetNTPDStatsTitle(),RedrawAllCharts()}function ScriptUpdateLayout(){var a=GetVersionNumber("local"),b=GetVersionNumber("server");$j("#ntpmerlin_version_local").text(a),a!=b&&"N/A"!=b&&($j("#ntpmerlin_version_server").text("Updated version available: "+b),showhide("btnChkUpdate",!1),showhide("ntpmerlin_version_server",!0),showhide("btnDoUpdate",!0))}function reload(){location.reload(!0)}function getChartPeriod(a){var b="daily";return 0==a?b="daily":1==a?b="weekly":2==a&&(b="monthly"),b}function ResetZoom(){for(var a,b=0;b<metriclist.length;b++)(a=window["LineChart_"+metriclist[b]],"undefined"!=typeof a&&null!==a)&&a.resetZoom()}function ToggleDragZoom(a){var b=!0,c=!1,d="";-1==a.value.indexOf("On")?(b=!0,c=!1,DragZoom=!0,ChartPan=!1,d="Drag Zoom On"):(b=!1,c=!0,DragZoom=!1,ChartPan=!0,d="Drag Zoom Off");for(var e,f=0;f<metriclist.length;f++)(e=window["LineChart_"+metriclist[f]],"undefined"!=typeof e&&null!==e)&&(e.options.plugins.zoom.zoom.drag=b,e.options.plugins.zoom.pan.enabled=c,a.value=d,e.update())}function update_status(){$j.ajax({url:"/ext/ntpmerlin/detect_update.js",dataType:"script",timeout:3e3,error:function(){setTimeout(update_status,1e3)},success:function(){"InProgress"==updatestatus?setTimeout(update_status,1e3):(document.getElementById("imgChkUpdate").style.display="none",showhide("ntpmerlin_version_server",!0),"None"==updatestatus?($j("#ntpmerlin_version_server").text("No update available"),showhide("btnChkUpdate",!0),showhide("btnDoUpdate",!1)):($j("#ntpmerlin_version_server").text("Updated version available: "+updatestatus),showhide("btnChkUpdate",!1),showhide("btnDoUpdate",!0)))}})}function CheckUpdate(){showhide("btnChkUpdate",!1),document.formScriptActions.action_script.value="start_ntpmerlincheckupdate",document.formScriptActions.submit(),document.getElementById("imgChkUpdate").style.display="",setTimeout(update_status,2e3)}function DoUpdate(){document.form.action_script.value="start_ntpmerlindoupdate",document.form.action_wait.value=10,showLoading(),document.form.submit()}function update_ntpstats(){$j.ajax({url:"/ext/ntpmerlin/detect_ntpmerlin.js",dataType:"script",timeout:1e3,error:function(){setTimeout(update_ntpstats,1e3)},success:function(){"InProgress"==ntpstatus?setTimeout(update_ntpstats,1e3):"Done"==ntpstatus&&(document.getElementById("ntpupdate_text").innerHTML="Refreshing charts...",PostNTPUpdate())}})}function PostNTPUpdate(){currentNoCharts=0,reload_js("/ext/ntpmerlin/ntpstatstext.js"),$j("#Time_Format").val(GetCookie("Time_Format","number")),SetNTPDStatsTitle(),setTimeout(RedrawAllCharts,3e3)}function reload_js(a){$j("script[src=\""+a+"\"]").remove(),$j("<script>").attr("src",a+"?cachebuster="+new Date().getTime()).appendTo("head")}function UpdateStats(){showhide("btnUpdateStats",!1),document.formScriptActions.action_script.value="start_ntpmerlin",document.formScriptActions.submit(),document.getElementById("ntpupdate_text").innerHTML="Retrieving timeserver stats",showhide("imgNTPUpdate",!0),showhide("ntpupdate_text",!0),setTimeout(update_ntpstats,2e3)}function SaveConfig(){document.getElementById("amng_custom").value=JSON.stringify($j("form").serializeObject()),document.form.action_script.value="start_ntpmerlinconfig",document.form.action_wait.value=10,showLoading(),document.form.submit()}function GetVersionNumber(a){var b;return"local"==a?b=custom_settings.ntpmerlin_version_local:"server"==a&&(b=custom_settings.ntpmerlin_version_server),"undefined"==typeof b||null==b?"N/A":b}function get_conf_file(){$j.ajax({url:"/ext/ntpmerlin/config.htm",dataType:"text",error:function(){setTimeout(get_conf_file,1e3)},success:function(data){var configdata=data.split("\n");configdata=configdata.filter(Boolean);for(var i=0;i<configdata.length;i++)eval("document.form.ntpmerlin_"+configdata[i].split("=")[0].toLowerCase()).value=configdata[i].split("=")[1].replace(/(\r\n|\n|\r)/gm,"")}})}function changeChart(a){value=1*a.value,name=a.id.substring(0,a.id.indexOf("_")),SetCookie(a.id,value),"Offset"==name?Draw_Chart("Offset",metriclist[0],measureunitlist[0],bordercolourlist[0],backgroundcolourlist[0]):"Drift"==name&&Draw_Chart("Drift",metriclist[1],measureunitlist[1],bordercolourlist[1],backgroundcolourlist[1])}function changeAllCharts(a){value=1*a.value,name=a.id.substring(0,a.id.indexOf("_")),SetCookie(a.id,value);for(var b=0;b<metriclist.length;b++)Draw_Chart(metriclist[b],metriclist[b],measureunitlist[b],bordercolourlist[b],backgroundcolourlist[b])}
+var $j=jQuery.noConflict(),arraysortlistlines=[],originalarraysortlistlines=[],sortfield="Time",sortname="Time",sortdir="desc",maxNoCharts=18,currentNoCharts=0,ShowLines=GetCookie("ShowLines","string"),ShowFill=GetCookie("ShowFill","string"),DragZoom=!0,ChartPan=!1;Chart.defaults.global.defaultFontColor="#CCC",Chart.Tooltip.positioners.cursor=function(a,b){return b};var dataintervallist=["raw","hour","day"],metriclist=["Offset","Drift"],measureunitlist=["ms","ppm"],chartlist=["daily","weekly","monthly"],timeunitlist=["hour","day","day"],intervallist=[24,7,30],bordercolourlist=["#fc8500","#ffffff"],backgroundcolourlist=["rgba(252,133,0,0.5)","rgba(255,255,255,0.5)"];function keyHandler(a){82==a.keyCode?($j(document).off("keydown"),ResetZoom()):68==a.keyCode?($j(document).off("keydown"),ToggleDragZoom(document.form.btnDragZoom)):70==a.keyCode?($j(document).off("keydown"),ToggleFill()):76==a.keyCode&&($j(document).off("keydown"),ToggleLines())}$j(document).keydown(function(a){keyHandler(a)}),$j(document).keyup(function(){$j(document).keydown(function(a){keyHandler(a)})});function Draw_Chart_NoData(a){document.getElementById("divLineChart_"+a).width="730",document.getElementById("divLineChart_"+a).height="500",document.getElementById("divLineChart_"+a).style.width="730px",document.getElementById("divLineChart_"+a).style.height="500px";var b=document.getElementById("divLineChart_"+a).getContext("2d");b.save(),b.textAlign="center",b.textBaseline="middle",b.font="normal normal bolder 48px Arial",b.fillStyle="white",b.fillText("No data to display",365,250),b.restore()}function Draw_Chart(a,b,c,d,e){var f=getChartPeriod($j("#"+a+"_Period option:selected").val()),g=getChartInterval($j("#"+a+"_Interval option:selected").val()),h=timeunitlist[$j("#"+a+"_Period option:selected").val()],i=intervallist[$j("#"+a+"_Period option:selected").val()],j=null,k=moment().subtract(i,h+"s"),l="line",m=window[a+"_"+g+"_"+f];if("undefined"==typeof m||null===m)return void Draw_Chart_NoData(a);if(0==m.length)return void Draw_Chart_NoData(a);var n=m.map(function(a){return a.Metric}),o=m.map(function(a){return{x:a.Time,y:a.Value}}),p=window["LineChart_"+a],q=getTimeFormat($j("#Time_Format option:selected").val(),"axis"),r=getTimeFormat($j("#Time_Format option:selected").val(),"tooltip");"day"==g&&(l="bar",j=moment().endOf("day").subtract(9,"hours"),k=moment().startOf("day").subtract(i-1,h+"s").subtract(12,"hours")),"daily"==f&&"day"==g&&(h="day",i=1,j=moment().endOf("day").subtract(9,"hours"),k=moment().startOf("day").subtract(12,"hours")),factor=0,"hour"==h?factor=3600000:"day"==h&&(factor=86400000),p!=null&&p.destroy();var s=document.getElementById("divLineChart_"+a).getContext("2d"),t={segmentShowStroke:!1,segmentStrokeColor:"#000",animationEasing:"easeOutQuart",animationSteps:100,maintainAspectRatio:!1,animateScale:!0,hover:{mode:"point"},legend:{display:!1,position:"bottom",onClick:null},title:{display:!0,text:b},tooltips:{callbacks:{title:function(a){return"day"==g?moment(a[0].xLabel,"X").format("YYYY-MM-DD"):moment(a[0].xLabel,"X").format(r)},label:function(a,b){return round(b.datasets[a.datasetIndex].data[a.index].y,3).toFixed(3)+" "+c}},mode:"point",position:"cursor",intersect:!0},scales:{xAxes:[{type:"time",gridLines:{display:!0,color:"#282828"},ticks:{min:k,max:j,display:!0},time:{parser:"X",unit:h,stepSize:1,displayFormats:q}}],yAxes:[{gridLines:{display:!1,color:"#282828"},scaleLabel:{display:!1,labelString:c},ticks:{display:!0,callback:function(a){return round(a,3).toFixed(3)+" "+c}}}]},plugins:{zoom:{pan:{enabled:ChartPan,mode:"xy",rangeMin:{x:new Date().getTime()-factor*i,y:getLimit(o,"y","min",!1)-.1*Math.sqrt(Math.pow(getLimit(o,"y","min",!1),2))},rangeMax:{x:new Date().getTime(),y:getLimit(o,"y","max",!1)+.1*getLimit(o,"y","max",!1)}},zoom:{enabled:!0,drag:DragZoom,mode:"xy",rangeMin:{x:new Date().getTime()-factor*i,y:getLimit(o,"y","min",!1)-.1*Math.sqrt(Math.pow(getLimit(o,"y","min",!1),2))},rangeMax:{x:new Date().getTime(),y:getLimit(o,"y","max",!1)+.1*getLimit(o,"y","max",!1)},speed:.1}}},annotation:{drawTime:"afterDatasetsDraw",annotations:[{type:ShowLines,mode:"horizontal",scaleID:"y-axis-0",value:getAverage(o),borderColor:d,borderWidth:1,borderDash:[5,5],label:{backgroundColor:"rgba(0,0,0,0.3)",fontFamily:"sans-serif",fontSize:10,fontStyle:"bold",fontColor:"#fff",xPadding:6,yPadding:6,cornerRadius:6,position:"center",enabled:!0,xAdjust:0,yAdjust:0,content:"Avg="+round(getAverage(o),3).toFixed(3)+c}},{type:ShowLines,mode:"horizontal",scaleID:"y-axis-0",value:getLimit(o,"y","max",!0),borderColor:d,borderWidth:1,borderDash:[5,5],label:{backgroundColor:"rgba(0,0,0,0.3)",fontFamily:"sans-serif",fontSize:10,fontStyle:"bold",fontColor:"#fff",xPadding:6,yPadding:6,cornerRadius:6,position:"right",enabled:!0,xAdjust:15,yAdjust:0,content:"Max="+round(getLimit(o,"y","max",!0),3).toFixed(3)+c}},{type:ShowLines,mode:"horizontal",scaleID:"y-axis-0",value:getLimit(o,"y","min",!0),borderColor:d,borderWidth:1,borderDash:[5,5],label:{backgroundColor:"rgba(0,0,0,0.3)",fontFamily:"sans-serif",fontSize:10,fontStyle:"bold",fontColor:"#fff",xPadding:6,yPadding:6,cornerRadius:6,position:"left",enabled:!0,xAdjust:15,yAdjust:0,content:"Min="+round(getLimit(o,"y","min",!0),3).toFixed(3)+c}}]}},u={labels:n,datasets:[{data:o,borderWidth:1,pointRadius:1,lineTension:0,fill:ShowFill,backgroundColor:e,borderColor:d}]};p=new Chart(s,{type:l,data:u,options:t}),window["LineChart_"+a]=p}function getLimit(a,b,c,d){var e,f=0;return e="x"==b?a.map(function(a){return a.x}):a.map(function(a){return a.y}),f="max"==c?Math.max.apply(Math,e):Math.min.apply(Math,e),"max"==c&&0==f&&!1==d&&(f=1),f}function getAverage(a){for(var b=0,c=0;c<a.length;c++)b+=1*a[c].y;var d=b/a.length;return d}function round(a,b){return+(Math.round(a+"e"+b)+"e-"+b)}function ToggleLines(){""==ShowLines?(ShowLines="line",SetCookie("ShowLines","line")):(ShowLines="",SetCookie("ShowLines",""));for(var a=0;a<metriclist.length;a++){for(var b=0;3>b;b++)window["LineChart_"+metriclist[a]].options.annotation.annotations[b].type=ShowLines;window["LineChart_"+metriclist[a]].update()}}function ToggleFill(){"false"==ShowFill?(ShowFill="origin",SetCookie("ShowFill","origin")):(ShowFill="false",SetCookie("ShowFill","false"));for(var a=0;a<metriclist.length;a++)window["LineChart_"+metriclist[a]].data.datasets[0].fill=ShowFill,window["LineChart_"+metriclist[a]].update()}function RedrawAllCharts(){for(var a=0;a<metriclist.length;a++){Draw_Chart_NoData(metriclist[a]);for(var b=0;b<chartlist.length;b++)for(var c=0;c<dataintervallist.length;c++)d3.csv("/ext/ntpmerlin/csv/"+metriclist[a]+"_"+dataintervallist[c]+"_"+chartlist[b]+".htm").then(SetGlobalDataset.bind(null,metriclist[a]+"_"+dataintervallist[c]+"_"+chartlist[b]))}}function SetGlobalDataset(a,b){if(window[a]=b,currentNoCharts++,currentNoCharts==maxNoCharts){document.getElementById("ntpupdate_text").innerHTML="",showhide("imgNTPUpdate",!1),showhide("ntpupdate_text",!1),showhide("btnUpdateStats",!0);for(var c=0;c<metriclist.length;c++)$j("#"+metriclist[c]+"_Interval").val(GetCookie(metriclist[c]+"_Interval","number")),changePeriod(document.getElementById(metriclist[c]+"_Interval")),$j("#"+metriclist[c]+"_Period").val(GetCookie(metriclist[c]+"_Period","number")),Draw_Chart(metriclist[c],metriclist[c],measureunitlist[c],bordercolourlist[c],backgroundcolourlist[c]);AddEventHandlers(),get_lastx_file()}}function getTimeFormat(a,b){var c;return"axis"==b?0==a?c={millisecond:"HH:mm:ss.SSS",second:"HH:mm:ss",minute:"HH:mm",hour:"HH:mm"}:1==a&&(c={millisecond:"h:mm:ss.SSS A",second:"h:mm:ss A",minute:"h:mm A",hour:"h A"}):"tooltip"==b&&(0==a?c="YYYY-MM-DD HH:mm:ss":1==a&&(c="YYYY-MM-DD h:mm:ss A")),c}function GetCookie(a,b){var c;if(null!=(c=cookie.get("ntp_"+a)))return cookie.get("ntp_"+a);return"string"==b?"":"number"==b?0:void 0}function SetCookie(a,b){cookie.set("ntp_"+a,b,3650)}function AddEventHandlers(){$j(".collapsible-jquery").off("click").on("click",function(){$j(this).siblings().toggle("fast",function(){"none"==$j(this).css("display")?SetCookie($j(this).siblings()[0].id,"collapsed"):SetCookie($j(this).siblings()[0].id,"expanded")})}),$j(".collapsible-jquery").each(function(){"collapsed"==GetCookie($j(this)[0].id,"string")?$j(this).siblings().toggle(!1):$j(this).siblings().toggle(!0)})}$j.fn.serializeObject=function(){var b=custom_settings,c=this.serializeArray();return $j.each(c,function(){void 0!==b[this.name]&&-1!=this.name.indexOf("ntpmerlin")&&-1==this.name.indexOf("version")?(!b[this.name].push&&(b[this.name]=[b[this.name]]),b[this.name].push(this.value||"")):-1!=this.name.indexOf("ntpmerlin")&&-1==this.name.indexOf("version")&&(b[this.name]=this.value||"")}),b};function SetCurrentPage(){document.form.next_page.value=window.location.pathname.substring(1),document.form.current_page.value=window.location.pathname.substring(1)}function ErrorCSVExport(){document.getElementById("aExport").href="javascript:alert('Error exporting CSV,please refresh the page and try again')"}function ParseCSVExport(a){for(var b,c="Timestamp,Offset,Frequency,Sys_Jitter,Clk_Jitter,Clk_Wander,Rootdisp\n",d=0;d<a.length;d++)b=a[d].Timestamp+","+a[d].Offset+","+a[d].Frequency+","+a[d].Sys_Jitter+","+a[d].Clk_Jitter+","+a[d].Clk_Wander+","+a[d].Rootdisp,c+=d<a.length-1?b+"\n":b;document.getElementById("aExport").href="data:text/csv;charset=utf-8,"+encodeURIComponent(c)}function initial(){SetCurrentPage(),LoadCustomSettings(),show_menu(),$j("#sortTableContainer").empty(),$j("#sortTableContainer").append(BuildLastXTableNoData()),get_conf_file(),d3.csv("/ext/ntpmerlin/csv/CompleteResults.htm").then(function(a){ParseCSVExport(a)}).catch(function(){ErrorCSVExport()}),$j("#Time_Format").val(GetCookie("Time_Format","number")),ScriptUpdateLayout(),get_statstitle_file(),RedrawAllCharts()}function ScriptUpdateLayout(){var a=GetVersionNumber("local"),b=GetVersionNumber("server");$j("#ntpmerlin_version_local").text(a),a!=b&&"N/A"!=b&&($j("#ntpmerlin_version_server").text("Updated version available: "+b),showhide("btnChkUpdate",!1),showhide("ntpmerlin_version_server",!0),showhide("btnDoUpdate",!0))}function reload(){location.reload(!0)}function Validate_Number_Setting(a,b,c){var d=a.name,e=1*a.value;return e>b||e<c?($j(a).addClass("invalid"),!1):($j(a).removeClass("invalid"),!0)}function Format_Number_Setting(a){var b=a.name,c=1*a.value;return 0!=a.value.length&&c!=NaN&&(a.value=parseInt(a.value),!0)}function Validate_All(){var a=!1;return Validate_Number_Setting(document.form.ntpmerlin_lastxresults,100,10)||(a=!0),Validate_Number_Setting(document.form.ntpmerlin_daystokeep,365,30)||(a=!0),!a||(alert("Validation for some fields failed. Please correct invalid values and try again."),!1)}function getChartPeriod(a){var b="daily";return 0==a?b="daily":1==a?b="weekly":2==a&&(b="monthly"),b}function getChartInterval(a){var b="raw";return 0==a?b="raw":1==a?b="hour":2==a&&(b="day"),b}function changePeriod(a){value=1*a.value,name=a.id.substring(0,a.id.indexOf("_")),2==value?$j("select[id=\""+name+"_Period\"] option:contains(24)").text("Today"):$j("select[id=\""+name+"_Period\"] option:contains(\"Today\")").text("Last 24 hours")}function ResetZoom(){for(var a,b=0;b<metriclist.length;b++)(a=window["LineChart_"+metriclist[b]],"undefined"!=typeof a&&null!==a)&&a.resetZoom()}function ToggleDragZoom(a){var b=!0,c=!1,d="";-1==a.value.indexOf("On")?(b=!0,c=!1,DragZoom=!0,ChartPan=!1,d="Drag Zoom On"):(b=!1,c=!0,DragZoom=!1,ChartPan=!0,d="Drag Zoom Off");for(var e,f=0;f<metriclist.length;f++)(e=window["LineChart_"+metriclist[f]],"undefined"!=typeof e&&null!==e)&&(e.options.plugins.zoom.zoom.drag=b,e.options.plugins.zoom.pan.enabled=c,a.value=d,e.update())}function update_status(){$j.ajax({url:"/ext/ntpmerlin/detect_update.js",dataType:"script",timeout:3e3,error:function(){setTimeout(update_status,1e3)},success:function(){"InProgress"==updatestatus?setTimeout(update_status,1e3):(document.getElementById("imgChkUpdate").style.display="none",showhide("ntpmerlin_version_server",!0),"None"==updatestatus?($j("#ntpmerlin_version_server").text("No update available"),showhide("btnChkUpdate",!0),showhide("btnDoUpdate",!1)):($j("#ntpmerlin_version_server").text("Updated version available: "+updatestatus),showhide("btnChkUpdate",!1),showhide("btnDoUpdate",!0)))}})}function CheckUpdate(){showhide("btnChkUpdate",!1),document.formScriptActions.action_script.value="start_ntpmerlincheckupdate",document.formScriptActions.submit(),document.getElementById("imgChkUpdate").style.display="",setTimeout(update_status,2e3)}function DoUpdate(){document.form.action_script.value="start_ntpmerlindoupdate",document.form.action_wait.value=10,showLoading(),document.form.submit()}function update_ntpstats(){$j.ajax({url:"/ext/ntpmerlin/detect_ntpmerlin.js",dataType:"script",timeout:1e3,error:function(){setTimeout(update_ntpstats,1e3)},success:function(){"InProgress"==ntpstatus?setTimeout(update_ntpstats,1e3):"GenerateCSV"==ntpstatus?(document.getElementById("ntpupdate_text").innerHTML="Retrieving data for charts...",setTimeout(update_ntpstats,1e3)):"Done"==ntpstatus&&(document.getElementById("ntpupdate_text").innerHTML="Refreshing charts...",PostNTPUpdate())}})}function PostNTPUpdate(){currentNoCharts=0,$j("#Time_Format").val(GetCookie("Time_Format","number")),get_statstitle_file(),setTimeout(RedrawAllCharts,3e3)}function UpdateStats(){showhide("btnUpdateStats",!1),document.formScriptActions.action_script.value="start_ntpmerlin",document.formScriptActions.submit(),document.getElementById("ntpupdate_text").innerHTML="Retrieving timeserver stats",showhide("imgNTPUpdate",!0),showhide("ntpupdate_text",!0),setTimeout(update_ntpstats,2e3)}function SaveConfig(){document.getElementById("amng_custom").value=JSON.stringify($j("form").serializeObject()),document.form.action_script.value="start_ntpmerlinconfig",document.form.action_wait.value=10,showLoading(),document.form.submit()}function GetVersionNumber(a){var b;return"local"==a?b=custom_settings.ntpmerlin_version_local:"server"==a&&(b=custom_settings.ntpmerlin_version_server),"undefined"==typeof b||null==b?"N/A":b}function get_conf_file(){$j.ajax({url:"/ext/ntpmerlin/config.htm",dataType:"text",error:function(){setTimeout(get_conf_file,1e3)},success:function(data){var configdata=data.split("\n");configdata=configdata.filter(Boolean);for(var i=0;i<configdata.length;i++)eval("document.form.ntpmerlin_"+configdata[i].split("=")[0].toLowerCase()).value=configdata[i].split("=")[1].replace(/(\r\n|\n|\r)/gm,"")}})}function get_statstitle_file(){$j.ajax({url:"/ext/ntpmerlin/ntpstatstext.js",dataType:"script",timeout:3e3,error:function(){setTimeout(get_statstitle_file,1e3)},success:function(){SetNTPDStatsTitle()}})}function get_lastx_file(){$j.ajax({url:"/ext/ntpmerlin/lastx.htm",dataType:"text",timeout:3e3,error:function(){setTimeout(get_lastx_file,1e3)},success:function(a){ParseLastXData(a)}})}function ParseLastXData(a){var b=a.split("\n");b=b.filter(Boolean),arraysortlistlines=[];for(var c=0;c<b.length;c++)try{var d=b[c].split(","),e={};e.Time=moment.unix(d[0].trim()).format("YYYY-MM-DD HH:mm:ss"),e.Offset=d[1].trim(),e.Drift=d[2].trim(),arraysortlistlines.push(e)}catch{}originalarraysortlistlines=arraysortlistlines,SortTable(sortname+" "+sortdir.replace("desc","\u2191").replace("asc","\u2193").trim())}function SortTable(sorttext){sortname=sorttext.replace("\u2191","").replace("\u2193","").trim();var sorttype="number";sortfield=sortname;"Time"===sortname?sorttype="date":void 0;"string"==sorttype?-1==sorttext.indexOf("\u2193")&&-1==sorttext.indexOf("\u2191")?(eval("arraysortlistlines = arraysortlistlines.sort((a,b) => (a."+sortfield+" > b."+sortfield+") ? 1 : ((b."+sortfield+" > a."+sortfield+") ? -1 : 0));"),sortdir="asc"):-1==sorttext.indexOf("\u2193")?(eval("arraysortlistlines = arraysortlistlines.sort((a,b) => (a."+sortfield+" < b."+sortfield+") ? 1 : ((b."+sortfield+" < a."+sortfield+") ? -1 : 0));"),sortdir="desc"):(eval("arraysortlistlines = arraysortlistlines.sort((a,b) => (a."+sortfield+" > b."+sortfield+") ? 1 : ((b."+sortfield+" > a."+sortfield+") ? -1 : 0));"),sortdir="asc"):"number"==sorttype?-1==sorttext.indexOf("\u2193")&&-1==sorttext.indexOf("\u2191")?(eval("arraysortlistlines = arraysortlistlines.sort((a, b) => parseFloat(a."+sortfield+".replace(\"m\",\"000\")) - parseFloat(b."+sortfield+".replace(\"m\",\"000\")));"),sortdir="asc"):-1==sorttext.indexOf("\u2193")?(eval("arraysortlistlines = arraysortlistlines.sort((a, b) => parseFloat(b."+sortfield+".replace(\"m\",\"000\")) - parseFloat(a."+sortfield+".replace(\"m\",\"000\")));"),sortdir="desc"):(eval("arraysortlistlines = arraysortlistlines.sort((a, b) => parseFloat(a."+sortfield+".replace(\"m\",\"000\")) - parseFloat(b."+sortfield+".replace(\"m\",\"000\"))); "),sortdir="asc"):"date"==sorttype&&(-1==sorttext.indexOf("\u2193")&&-1==sorttext.indexOf("\u2191")?(eval("arraysortlistlines = arraysortlistlines.sort((a, b) => new Date(a."+sortfield+") - new Date(b."+sortfield+"));"),sortdir="asc"):-1==sorttext.indexOf("\u2193")?(eval("arraysortlistlines = arraysortlistlines.sort((a, b) => new Date(b."+sortfield+") - new Date(a."+sortfield+"));"),sortdir="desc"):(eval("arraysortlistlines = arraysortlistlines.sort((a, b) => new Date(a."+sortfield+") - new Date(b."+sortfield+"));"),sortdir="asc")),$j("#sortTableContainer").empty(),$j("#sortTableContainer").append(BuildLastXTable()),$j(".sortable").each(function(a,b){b.innerHTML.replace(/ \(.*\)/,"").replace(" ","")==sortname&&("asc"==sortdir?b.innerHTML+=" \u2191":b.innerHTML+=" \u2193")})}function BuildLastXTableNoData(){var a="<table width=\"100%\" border=\"1\" align=\"center\" cellpadding=\"4\" cellspacing=\"0\" bordercolor=\"#6b8fa3\" class=\"sortTable\">";return a+="<tr>",a+="<td colspan=\"3\" class=\"nodata\">",a+="Data loading...",a+="</td>",a+="</tr>",a+="</table>",a}function BuildLastXTable(){var a="<table width=\"100%\" border=\"1\" align=\"center\" cellpadding=\"4\" cellspacing=\"0\" bordercolor=\"#6b8fa3\" class=\"sortTable\">";a+="<col style=\"width:150px;\">",a+="<col style=\"width:280px;\">",a+="<col style=\"width:280px;\">",a+="<thead class=\"sortTableHeader\">",a+="<tr>",a+="<th class=\"sortable\" onclick=\"SortTable(this.innerHTML.replace(/ \\(.*\\)/,''))\">Time</th>",a+="<th class=\"sortable\" onclick=\"SortTable(this.innerHTML.replace(/ \\(.*\\)/,''))\">Offset (ms)</th>",a+="<th class=\"sortable\" onclick=\"SortTable(this.innerHTML.replace(/ \\(.*\\)/,''))\">Drift (ppm)</th>",a+="</tr>",a+="</thead>",a+="<tbody class=\"sortTableContent\">";for(var b=0;b<arraysortlistlines.length;b++)a+="<tr class=\"sortRow\">",a+="<td>"+arraysortlistlines[b].Time+"</td>",a+="<td>"+arraysortlistlines[b].Offset+"</td>",a+="<td>"+arraysortlistlines[b].Drift+"</td>",a+="</tr>";return a+="</tbody>",a+="</table>",a}function changeChart(a){value=1*a.value,name=a.id.substring(0,a.id.indexOf("_")),SetCookie(a.id,value),"Offset"==name?Draw_Chart("Offset",metriclist[0],measureunitlist[0],bordercolourlist[0],backgroundcolourlist[0]):"Drift"==name&&Draw_Chart("Drift",metriclist[1],measureunitlist[1],bordercolourlist[1],backgroundcolourlist[1])}function changeAllCharts(a){value=1*a.value,name=a.id.substring(0,a.id.indexOf("_")),SetCookie(a.id,value);for(var b=0;b<metriclist.length;b++)Draw_Chart(metriclist[b],metriclist[b],measureunitlist[b],bordercolourlist[b],backgroundcolourlist[b])}
 </script>
 </head>
 <body onload="initial();" onunload="return unload_body();">
@@ -227,15 +118,6 @@ var $j=jQuery.noConflict(),maxNoCharts=6,currentNoCharts=0,ShowLines=GetCookie("
 <thead class="collapsible-jquery" id="scriptconfig">
 <tr><td colspan="2">Configuration (click to expand/collapse)</td></tr>
 </thead>
-<tr class="even" id="rowdataoutput">
-<td class="settingname">Data Output Mode<br/><span class="settingname">(for weekly and monthly charts)</span></td>
-<td class="settingvalue">
-<input type="radio" name="ntpmerlin_outputdatamode" id="ntpmerlin_dataoutput_average" class="input" value="average" checked>
-<label for="ntpmerlin_dataoutput_average">Average</label>
-<input type="radio" name="ntpmerlin_outputdatamode" id="ntpmerlin_dataoutput_raw" class="input" value="raw">
-<label for="ntpmerlin_dataoutput_raw">Raw</label>
-</td>
-</tr>
 <tr class="even" id="rowtimeoutput">
 <td class="settingname">Time Output Mode<br/><span class="settingname">(for CSV export)</span></td>
 <td class="settingvalue">
@@ -263,9 +145,34 @@ var $j=jQuery.noConflict(),maxNoCharts=6,currentNoCharts=0,ShowLines=GetCookie("
 <label for="ntpmerlin_timeserver_chronyd">Chrony</label>
 </td>
 </tr>
+<tr class="even" id="rowlastxresults">
+<td class="settingname">Last X results to display</td>
+<td class="settingvalue">
+<input autocomplete="off" type="text" maxlength="3" class="input_6_table removespacing" name="ntpmerlin_lastxresults" value="10" onkeypress="return validator.isNumber(this,event)" onblur="Validate_Number_Setting(this,100,1);Format_Number_Setting(this)" onkeyup="Validate_Number_Setting(this,100,1)"/>
+&nbsp;results <span style="color:#FFCC00;">(between 1 and 100, default: 10)</span>
+</td>
+</tr>
+<tr class="even" id="rowdaystokeep">
+<td class="settingname">Number of days of data to keep</td>
+<td class="settingvalue">
+<input autocomplete="off" type="text" maxlength="3" class="input_6_table removespacing" name="ntpmerlin_daystokeep" value="30" onkeypress="return validator.isNumber(this,event)" onblur="Validate_Number_Setting(this,365,30);Format_Number_Setting(this)" onkeyup="Validate_Number_Setting(this,365,30)"/>
+&nbsp;days <span style="color:#FFCC00;">(between 30 and 365, default: 30)</span>
+</td>
+</tr>
 <tr class="apply_gen" valign="top" height="35px">
 <td colspan="2" class="savebutton">
 <input type="button" onclick="SaveConfig();" value="Save" class="button_gen savebutton" name="button">
+</td>
+</tr>
+</table>
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="resulttable_timeserver">
+<thead class="collapsible-jquery" id="resultthead_timeserver">
+<tr><td colspan="2">Latest timeserver stats (click to expand/collapse)</td></tr>
+</thead>
+<tr>
+<td colspan="2" align="center" style="padding: 0px;">
+<div id="sortTableContainer" class="sortTableContainer"></div>
 </td>
 </tr>
 </table>
@@ -310,6 +217,16 @@ var $j=jQuery.noConflict(),maxNoCharts=6,currentNoCharts=0,ShowLines=GetCookie("
 </tr>
 </thead>
 <tr class="even">
+<th width="40%">Data interval</th>
+<td>
+<select style="width:150px" class="input_option" onchange="changeChart(this);changePeriod(this);" id="Offset_Interval">
+<option value="0">Raw</option>
+<option value="1">Hours</option>
+<option value="2">Days</option>
+</select>
+</td>
+</tr>
+<tr class="even">
 <th width="40%">Period to display</th>
 <td>
 <select style="width:150px" class="input_option" onchange="changeChart(this)" id="Offset_Period">
@@ -332,6 +249,16 @@ var $j=jQuery.noConflict(),maxNoCharts=6,currentNoCharts=0,ShowLines=GetCookie("
 <td colspan="2">Drift (click to expand/collapse)</td>
 </tr>
 </thead>
+<tr class="even">
+<th width="40%">Data interval</th>
+<td>
+<select style="width:150px" class="input_option" onchange="changeChart(this);changePeriod(this);" id="Drift_Interval">
+<option value="0">Raw</option>
+<option value="1">Hours</option>
+<option value="2">Days</option>
+</select>
+</td>
+</tr>
 <tr class="even">
 <th width="40%">Period to display</th>
 <td>

@@ -3,15 +3,16 @@
 trap '' SIGHUP
 
 # Wait for NTP before starting
-logger -st "timeserverd" "Waiting for NTP to sync before starting..."
-ntptimer=0
-while [ "$(nvram get ntp_ready)" -eq 0 ] && [ "$ntptimer" -lt 300 ]; do
-	ntptimer=$((ntptimer+1))
-	sleep 1
+logger -st timeserverd "Waiting for NTP to sync before starting..."
+ntpwaitcount=0
+while [ "$(nvram get ntp_ready)" -eq 0 ] && [ "$ntpwaitcount" -lt 600 ]; do
+	ntpwaitcount="$((ntpwaitcount + 30))"
+	Print_Output true "Waiting for NTP to sync..." "$WARN"
+	sleep 30
 done
 
-if [ "$ntptimer" -ge 300 ]; then
-	logger -st "timeserverd" "NTP failed to sync after 5 minutes - please check immediately!"
+if [ "$ntpwaitcount" -ge 600 ]; then
+	logger -st timeserverd "NTP failed to sync after 10 minutes - please check immediately!"
 	exit 1
 fi
 
@@ -27,11 +28,11 @@ if [ "$1" = "S77ntpd" ]; then
 	while true; do
 		sleep 5
 		if [ "$(pidof ntpd | wc -w)" -lt 1 ]; then
-			logger -t "timeserverd" "ntpd dead, restarting..."
+			logger -t timeserverd "ntpd dead, restarting..."
 			killall -q ntpd
 			sleep 5
 			ntpd -c "$SCRIPT_STORAGE_DIR/ntp.conf" -g > /dev/null 2>&1 &
-			logger -t "timeserverd" "ntpd restarted"
+			logger -t timeserverd "ntpd restarted"
 		fi
 	done
 elif [ "$1" = "S77chronyd" ]; then
@@ -52,11 +53,11 @@ elif [ "$1" = "S77chronyd" ]; then
 	while true; do
 		sleep 5
 		if [ "$(pidof chronyd | wc -w)" -lt 1 ]; then
-			logger -t "timeserverd" "chronyd dead, restarting..."
+			logger -t timeserverd "chronyd dead, restarting..."
 			killall -q chronyd
 			sleep 5
 			chronyd -r -u nobody -f "$SCRIPT_STORAGE_DIR/chrony.conf" > /dev/null 2>&1 &
-			logger -t "timeserverd" "chronyd restarted"
+			logger -t timeserverd "chronyd restarted"
 		fi
 	done
 fi
