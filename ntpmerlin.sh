@@ -1226,11 +1226,11 @@ Process_Upgrade(){
 		Print_Output true "Creating database table indexes..." "$PASS"
 		echo "CREATE INDEX IF NOT EXISTS idx_time_offset ON ntpstats (Timestamp,Offset);" > /tmp/ntp-upgrade.sql
 		while ! "$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-upgrade.sql >/dev/null 2>&1; do
-			:
+			sleep 1
 		done
 		echo "CREATE INDEX IF NOT EXISTS idx_time_frequency ON ntpstats (Timestamp,Frequency);" > /tmp/ntp-upgrade.sql
 		while ! "$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-upgrade.sql >/dev/null 2>&1; do
-			:
+			sleep 1
 		done
 		rm -f /tmp/ntp-upgrade.sql
 		touch "$SCRIPT_STORAGE_DIR/.indexcreated"
