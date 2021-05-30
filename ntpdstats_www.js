@@ -1,7 +1,6 @@
 var $j = jQuery.noConflict(); //avoid conflicts on John's fork (state.js)
 
 var arraysortlistlines = [];
-var originalarraysortlistlines = [];
 var sortfield = 'Time';
 var sortname = 'Time';
 var sortdir = 'desc';
@@ -809,7 +808,6 @@ function ParseLastXData(data){
 			//do nothing, continue
 		}
 	}
-	originalarraysortlistlines = arraysortlistlines;
 	SortTable(sortname+' '+sortdir.replace('desc','↑').replace('asc','↓').trim());
 }
 

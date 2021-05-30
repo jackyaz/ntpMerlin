@@ -26,7 +26,7 @@
 ### Start of script variables ###
 readonly SCRIPT_NAME="ntpMerlin"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v3.4.0"
+readonly SCRIPT_VERSION="v3.4.1"
 SCRIPT_BRANCH="master"
 SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
@@ -1185,6 +1185,26 @@ Generate_LastXResults(){
 	mv /tmp/ntp-lastx.csv "$SCRIPT_STORAGE_DIR/lastx.htm"
 }
 
+Reset_DB(){
+	SIZEAVAIL="$(df -P -k "$SCRIPT_STORAGE_DIR" | awk '{print $4}' | tail -n 1)"
+	SIZEDB="$(ls -l "$SCRIPT_STORAGE_DIR/ntpdstats.db" | awk '{print $5}')"
+	if [ "$SIZEDB" -gt "$SIZEAVAIL" ]; then
+		Print_Output true "Database size exceeds available space. $(ls -lh "$SCRIPT_STORAGE_DIR/ntpdstats.db" | awk '{print $5}')B is required to create backup." "$ERR"
+		return 1
+	else
+		Print_Output true "Sufficient free space to back up database, proceeding..." "$PASS"
+		if ! cp -a "$SCRIPT_STORAGE_DIR/ntpdstats.db" "$SCRIPT_STORAGE_DIR/ntpdstats.db.bak"; then
+			Print_Output true "Database backup failed, please check storage device" "$WARN"
+		fi
+		
+		echo "DELETE FROM [ntpstats];" > /tmp/ntpmerlin-stats.sql
+		"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntpmerlin-stats.sql
+		rm -f /tmp/ntpmerlin-stats.sql
+		
+		Print_Output true "Database reset complete" "$WARN"
+	fi
+}
+
 Shortcut_Script(){
 	case $1 in
 		create)
@@ -1322,6 +1342,7 @@ MainMenu(){
 	printf "r.    Restart ${SETTING}%s${CLEARFORMAT}\\n\\n" "$(TimeServer check)"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
+	printf "rs.   Reset %s database / delete all data\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
 	printf "z.    Uninstall %s\\n" "$SCRIPT_NAME"
 	printf "\\n"
@@ -1360,6 +1381,7 @@ MainMenu(){
 				if Check_Lock menu; then
 					Menu_Edit
 				fi
+				PressEnter
 				break
 			;;
 			4)
@@ -1404,6 +1426,7 @@ MainMenu(){
 					fi
 					Clear_Lock
 				fi
+				PressEnter
 				break
 			;;
 			r)
@@ -1427,6 +1450,15 @@ MainMenu(){
 				printf "\\n"
 				if Check_Lock menu; then
 					Update_Version force
+					Clear_Lock
+				fi
+				PressEnter
+				break
+			;;
+			rs)
+				printf "\\n"
+				if Check_Lock menu; then
+					Menu_ResetDB
 					Clear_Lock
 				fi
 				PressEnter
@@ -1623,6 +1655,22 @@ Menu_Edit(){
 		fi
 	fi
 	Clear_Lock
+}
+
+Menu_ResetDB(){
+	printf "${BOLD}\\e[33mWARNING: This will reset the %s database by deleting all database records.\\n" "$SCRIPT_NAME"
+	printf "A backup of the database will be created if you change your mind.${CLEARFORMAT}\\n"
+	printf "\\n${BOLD}Do you want to continue? (y/n)${CLEARFORMAT}  "
+	read -r confirm
+	case "$confirm" in
+		y|Y)
+			printf "\\n"
+			Reset_DB
+		;;
+		*)
+			printf "\\n${BOLD}\\e[33mDatabase reset cancelled${CLEARFORMAT}\\n\\n"
+		;;
+	esac
 }
 
 Menu_Uninstall(){
