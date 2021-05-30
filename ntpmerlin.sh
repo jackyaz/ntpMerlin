@@ -1381,6 +1381,7 @@ MainMenu(){
 				if Check_Lock menu; then
 					Menu_Edit
 				fi
+				PressEnter
 				break
 			;;
 			4)
@@ -1425,6 +1426,7 @@ MainMenu(){
 					fi
 					Clear_Lock
 				fi
+				PressEnter
 				break
 			;;
 			r)
