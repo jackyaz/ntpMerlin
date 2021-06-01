@@ -1282,14 +1282,6 @@ ScriptHeader(){
 		DST_ENABLED="Active"
 	fi
 	
-	TIMESERVER_NAME_MENU="$(TimeServer check)"
-	CONFFILE_MENU=""
-	if [ "$TIMESERVER_NAME_MENU" = "ntpd" ]; then
-		CONFFILE_MENU="$SCRIPT_STORAGE_DIR/ntp.conf"
-	elif [ "$TIMESERVER_NAME_MENU" = "chronyd" ]; then
-		CONFFILE_MENU="$SCRIPT_STORAGE_DIR/chrony.conf"
-	fi
-	
 	DST_SETTING="$(nvram get time_zone_dstoff)"
 	DST_SETTING="$(echo "$DST_SETTING" | sed 's/M//g')"
 	DST_START="$(echo "$DST_SETTING" | cut -f1 -d",")"
@@ -1328,6 +1320,13 @@ MainMenu(){
 		NTP_REDIRECT_ENABLED="Enabled"
 	else
 		NTP_REDIRECT_ENABLED="Disabled"
+	fi
+	TIMESERVER_NAME_MENU="$(TimeServer check)"
+	CONFFILE_MENU=""
+	if [ "$TIMESERVER_NAME_MENU" = "ntpd" ]; then
+		CONFFILE_MENU="$SCRIPT_STORAGE_DIR/ntp.conf"
+	elif [ "$TIMESERVER_NAME_MENU" = "chronyd" ]; then
+		CONFFILE_MENU="$SCRIPT_STORAGE_DIR/chrony.conf"
 	fi
 	
 	printf "WebUI for %s is available at:\\n${SETTING}%s${CLEARFORMAT}\\n\\n" "$SCRIPT_NAME" "$(Get_WebUI_URL)"
