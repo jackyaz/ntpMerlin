@@ -1,6 +1,6 @@
 # ntpMerlin
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bc89c12c4bf44b49b28161f328e49b0)](https://www.codacy.com/app/jackyaz/ntpMerlin?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/ntpMerlin&amp;utm_campaign=Badge_Grade)
-[![Build Status](https://travis-ci.com/jackyaz/ntpMerlin.svg?branch=master)](https://travis-ci.com/jackyaz/ntpMerlin)
+![Shellcheck](https://github.com/jackyaz/ntpmerlin/actions/workflows/shellcheck.yml/badge.svg)
 
 ## v3.4.1
 ### Updated on 2021-05-30
