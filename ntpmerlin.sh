@@ -1058,8 +1058,13 @@ Get_TimeServer_Stats(){
 	} > /tmp/ntp-stats.sql
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
-	echo "DELETE FROM [ntpstats] WHERE [Timestamp] < strftime('%s',datetime($timenow,'unixepoch','-$(DaysToKeep check) day'));" > /tmp/ntp-stats.sql
-	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+	{
+		echo "DELETE FROM [ntpstats] WHERE [Timestamp] < strftime('%s',datetime($timenow,'unixepoch','-$(DaysToKeep check) day'));"
+		echo "PRAGMA analysis_limit=0;"
+		echo "PRAGMA cache_size=-20000;"
+		echo "ANALYZE ntpstats;"
+	} > /tmp/ntp-stats.sql
+	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql >/dev/null 2>&1
 	rm -f /tmp/ntp-stats.sql
 	
 	echo 'var ntpstatus = "GenerateCSV";' > /tmp/detect_ntpmerlin.js
