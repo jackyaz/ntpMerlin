@@ -19,7 +19,7 @@ Chart.Tooltip.positioners.cursor = function(chartElements,coordinates){
 	return coordinates;
 };
 
-var dataintervallist = ["raw","hour","day"];
+var dataintervallist = ['raw','hour','day'];
 var metriclist = ['Offset','Drift'];
 var measureunitlist = ['ms','ppm'];
 var chartlist = ['daily','weekly','monthly'];
