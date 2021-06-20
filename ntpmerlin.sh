@@ -387,7 +387,7 @@ Create_Symlinks(){
 	
 	ln -s /tmp/detect_ntpmerlin.js "$SCRIPT_WEB_DIR/detect_ntpmerlin.js" 2>/dev/null
 	ln -s "$SCRIPT_STORAGE_DIR/ntpstatstext.js" "$SCRIPT_WEB_DIR/ntpstatstext.js" 2>/dev/null
-	ln -s "$SCRIPT_STORAGE_DIR/lastx.htm" "$SCRIPT_WEB_DIR/lastx.htm" 2>/dev/null
+	ln -s "$SCRIPT_STORAGE_DIR/lastx.csv" "$SCRIPT_WEB_DIR/lastx.htm" 2>/dev/null
 	
 	ln -s "$SCRIPT_CONF" "$SCRIPT_WEB_DIR/config.htm" 2>/dev/null
 	
@@ -1181,6 +1181,7 @@ Generate_CSVs(){
 }
 
 Generate_LastXResults(){
+	rm -f "$SCRIPT_STORAGE_DIR/lastx.htm"
 	{
 		echo ".mode csv"
 		echo ".output /tmp/ntp-lastx.csv"
@@ -1189,7 +1190,7 @@ Generate_LastXResults(){
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-lastx.sql
 	rm -f /tmp/ntp-lastx.sql
 	sed -i 's/"//g' /tmp/ntp-lastx.csv
-	mv /tmp/ntp-lastx.csv "$SCRIPT_STORAGE_DIR/lastx.htm"
+	mv /tmp/ntp-lastx.csv "$SCRIPT_STORAGE_DIR/lastx.csv"
 }
 
 Reset_DB(){
@@ -1264,7 +1265,7 @@ Process_Upgrade(){
 		Print_Output true "Database ready, continuing..." "$PASS"
 		renice 0 $$
 	fi
-	if [ ! -f "$SCRIPT_STORAGE_DIR/lastx.htm" ]; then
+	if [ ! -f "$SCRIPT_STORAGE_DIR/lastx.csv" ]; then
 		Generate_LastXResults
 	fi
 }
@@ -1574,7 +1575,7 @@ Menu_Install(){
 	echo "CREATE TABLE IF NOT EXISTS [ntpstats] ([StatID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[Offset] REAL NOT NULL,[Frequency] REAL NOT NULL,[Sys_Jitter] REAL NOT NULL,[Clk_Jitter] REAL NOT NULL,[Clk_Wander] REAL NOT NULL,[Rootdisp] REAL NOT NULL);" > /tmp/ntp-stats.sql
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	rm -f /tmp/ntp-stats.sql
-	touch "$SCRIPT_STORAGE_DIR/lastx.htm"
+	touch "$SCRIPT_STORAGE_DIR/lastx.csv"
 	Process_Upgrade
 	
 	Get_TimeServer_Stats
