@@ -1259,6 +1259,9 @@ Process_Upgrade(){
 		Print_Output true "Database ready, continuing..." "$PASS"
 		renice 0 $$
 	fi
+	if [ ! -f "$SCRIPT_STORAGE_DIR/lastx.htm" ]; then
+		Generate_LastXResults
+	fi
 }
 
 PressEnter(){
