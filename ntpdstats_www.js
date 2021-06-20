@@ -71,12 +71,12 @@ function Draw_Chart_NoData(txtchartname){
 
 function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundcolourname){
 	var chartperiod = getChartPeriod($j('#'+txtchartname+'_Period option:selected').val());
-	var chartinterval = getChartInterval($j("#" + txtchartname + "_Interval option:selected").val());
+	var chartinterval = getChartInterval($j('#' + txtchartname + '_Interval option:selected').val());
 	var txtunitx = timeunitlist[$j('#'+txtchartname+'_Period option:selected').val()];
 	var numunitx = intervallist[$j('#'+txtchartname+'_Period option:selected').val()];
 	var chartxaxismax = null;
 	var chartaxismin = moment().subtract(numunitx,txtunitx+'s');
-	var charttype = "line";
+	var charttype = 'line';
 	var dataobject = window[txtchartname+'_'+chartinterval+'_'+chartperiod];
 	
 	if(typeof dataobject === 'undefined' || dataobject === null){ Draw_Chart_NoData(txtchartname); return; }
@@ -589,10 +589,10 @@ function changePeriod(e){
 	value = e.value * 1;
 	name = e.id.substring(0,e.id.indexOf('_'));
 	if(value == 2){
-		$j('select[id="'+name+'_Period"] option:contains(24)').text("Today");
+		$j('select[id="'+name+'_Period"] option:contains(24)').text('Today');
 	}
 	else{
-		$j('select[id="'+name+'_Period"] option:contains("Today")').text("Last 24 hours");
+		$j('select[id="'+name+'_Period"] option:contains("Today")').text('Last 24 hours');
 	}
 }
 
@@ -769,7 +769,7 @@ function get_statstitle_file(){
 		dataType: 'script',
 		timeout: 3000,
 		error: function(xhr){
-			setTimeout(get_statstitle_file, 1000);
+			setTimeout(get_statstitle_file,1000);
 		},
 		success: function(){
 			SetNTPDStatsTitle();
@@ -783,7 +783,7 @@ function get_lastx_file(){
 		dataType: 'text',
 		timeout: 3000,
 		error: function(xhr){
-			setTimeout(get_lastx_file, 1000);
+			setTimeout(get_lastx_file,1000);
 		},
 		success: function(data){
 			ParseLastXData(data);
@@ -805,7 +805,7 @@ function ParseLastXData(data){
 			arraysortlistlines.push(parsedsortline);
 		}
 		catch{
-			//do nothing, continue
+			//do nothing,continue
 		}
 	}
 	SortTable(sortname+' '+sortdir.replace('desc','↑').replace('asc','↓').trim());
@@ -837,29 +837,29 @@ function SortTable(sorttext){
 	}
 	else if(sorttype == 'number'){
 		if(sorttext.indexOf('↓') == -1 && sorttext.indexOf('↑') == -1){
-			eval('arraysortlistlines = arraysortlistlines.sort((a, b) => parseFloat(a.'+sortfield+'.replace("m","000")) - parseFloat(b.'+sortfield+'.replace("m","000")));');
+			eval('arraysortlistlines = arraysortlistlines.sort((a,b) => parseFloat(a.'+sortfield+'.replace("m","000")) - parseFloat(b.'+sortfield+'.replace("m","000")));');
 			sortdir = 'asc';
 		}
 		else if(sorttext.indexOf('↓') != -1){
-			eval('arraysortlistlines = arraysortlistlines.sort((a, b) => parseFloat(a.'+sortfield+'.replace("m","000")) - parseFloat(b.'+sortfield+'.replace("m","000"))); ');
+			eval('arraysortlistlines = arraysortlistlines.sort((a,b) => parseFloat(a.'+sortfield+'.replace("m","000")) - parseFloat(b.'+sortfield+'.replace("m","000"))); ');
 			sortdir = 'asc';
 		}
 		else{
-			eval('arraysortlistlines = arraysortlistlines.sort((a, b) => parseFloat(b.'+sortfield+'.replace("m","000")) - parseFloat(a.'+sortfield+'.replace("m","000")));');
+			eval('arraysortlistlines = arraysortlistlines.sort((a,b) => parseFloat(b.'+sortfield+'.replace("m","000")) - parseFloat(a.'+sortfield+'.replace("m","000")));');
 			sortdir = 'desc';
 		}
 	}
 	else if(sorttype == 'date'){
 		if(sorttext.indexOf('↓') == -1 && sorttext.indexOf('↑') == -1){
-			eval('arraysortlistlines = arraysortlistlines.sort((a, b) => new Date(a.'+sortfield+') - new Date(b.'+sortfield+'));');
+			eval('arraysortlistlines = arraysortlistlines.sort((a,b) => new Date(a.'+sortfield+') - new Date(b.'+sortfield+'));');
 			sortdir = 'asc';
 		}
 		else if(sorttext.indexOf('↓') != -1){
-			eval('arraysortlistlines = arraysortlistlines.sort((a, b) => new Date(a.'+sortfield+') - new Date(b.'+sortfield+'));');
+			eval('arraysortlistlines = arraysortlistlines.sort((a,b) => new Date(a.'+sortfield+') - new Date(b.'+sortfield+'));');
 			sortdir = 'asc';
 		}
 		else{
-			eval('arraysortlistlines = arraysortlistlines.sort((a, b) => new Date(b.'+sortfield+') - new Date(a.'+sortfield+'));');
+			eval('arraysortlistlines = arraysortlistlines.sort((a,b) => new Date(b.'+sortfield+') - new Date(a.'+sortfield+'));');
 			sortdir = 'desc';
 		}
 	}
