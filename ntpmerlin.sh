@@ -28,7 +28,7 @@
 ### Start of script variables ###
 readonly SCRIPT_NAME="ntpMerlin"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v3.4.1"
+readonly SCRIPT_VERSION="v3.4.2"
 SCRIPT_BRANCH="master"
 SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
@@ -1058,8 +1058,13 @@ Get_TimeServer_Stats(){
 	} > /tmp/ntp-stats.sql
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
 	
-	echo "DELETE FROM [ntpstats] WHERE [Timestamp] < strftime('%s',datetime($timenow,'unixepoch','-$(DaysToKeep check) day'));" > /tmp/ntp-stats.sql
-	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql
+	{
+		echo "DELETE FROM [ntpstats] WHERE [Timestamp] < strftime('%s',datetime($timenow,'unixepoch','-$(DaysToKeep check) day'));"
+		echo "PRAGMA analysis_limit=0;"
+		echo "PRAGMA cache_size=-20000;"
+		echo "ANALYZE ntpstats;"
+	} > /tmp/ntp-stats.sql
+	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-stats.sql >/dev/null 2>&1
 	rm -f /tmp/ntp-stats.sql
 	
 	echo 'var ntpstatus = "GenerateCSV";' > /tmp/detect_ntpmerlin.js
@@ -1146,7 +1151,7 @@ Generate_CSVs(){
 		echo ".mode csv"
 		echo ".headers on"
 		echo ".output $CSV_OUTPUT_DIR/CompleteResults.htm"
-		echo "SELECT [Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp] FROM ntpstats WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-30 day'))) ORDER BY [Timestamp] DESC;"
+		echo "SELECT [Timestamp],[Offset],[Frequency],[Sys_Jitter],[Clk_Jitter],[Clk_Wander],[Rootdisp] FROM ntpstats WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-$(DaysToKeep check) day'))) ORDER BY [Timestamp] DESC;"
 	} > /tmp/ntp-complete.sql
 	"$SQLITE3_PATH" "$SCRIPT_STORAGE_DIR/ntpdstats.db" < /tmp/ntp-complete.sql
 	rm -f /tmp/ntp-complete.sql
@@ -1258,6 +1263,9 @@ Process_Upgrade(){
 		touch "$SCRIPT_STORAGE_DIR/.indexcreated"
 		Print_Output true "Database ready, continuing..." "$PASS"
 		renice 0 $$
+	fi
+	if [ ! -f "$SCRIPT_STORAGE_DIR/lastx.htm" ]; then
+		Generate_LastXResults
 	fi
 }
 
