@@ -74,8 +74,9 @@ function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundco
 	var chartinterval = getChartInterval($j('#' + txtchartname + '_Interval option:selected').val());
 	var txtunitx = timeunitlist[$j('#'+txtchartname+'_Period option:selected').val()];
 	var numunitx = intervallist[$j('#'+txtchartname+'_Period option:selected').val()];
+	var zoompanxaxismax = moment();
 	var chartxaxismax = null;
-	var chartaxismin = moment().subtract(numunitx,txtunitx+'s');
+	var chartxaxismin = moment().subtract(numunitx,txtunitx+'s');
 	var charttype = 'line';
 	var dataobject = window[txtchartname+'_'+chartinterval+'_'+chartperiod];
 	
@@ -92,14 +93,16 @@ function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundco
 	if(chartinterval == 'day'){
 		charttype = 'bar';
 		chartxaxismax = moment().endOf('day').subtract(9,'hours');
-		chartaxismin = moment().startOf('day').subtract(numunitx-1,txtunitx+'s').subtract(12,'hours');
+		chartxaxismin = moment().startOf('day').subtract(numunitx-1,txtunitx+'s').subtract(12,'hours');
+		zoompanxaxismax = chartxaxismax;
 	}
 	
 	if(chartperiod == 'daily' && chartinterval == 'day'){
 		txtunitx = 'day';
 		numunitx = 1;
 		chartxaxismax = moment().endOf('day').subtract(9,'hours');
-		chartaxismin = moment().startOf('day').subtract(12,'hours');
+		chartxaxismin = moment().startOf('day').subtract(12,'hours');
+		zoompanxaxismax = chartxaxismax;
 	}
 	
 	factor=0;
@@ -142,7 +145,7 @@ function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundco
 				type: 'time',
 				gridLines: { display: true,color: '#282828' },
 				ticks: {
-					min: chartaxismin,
+					min: chartxaxismin,
 					max: chartxaxismax,
 					display: true
 				},
@@ -170,11 +173,11 @@ function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundco
 					enabled: ChartPan,
 					mode: 'xy',
 					rangeMin: {
-						x: new Date().getTime() - (factor * numunitx),
+						x: chartxaxismin,
 						y: getLimit(chartData,'y','min',false) - Math.sqrt(Math.pow(getLimit(chartData,'y','min',false),2))*0.1
 					},
 					rangeMax: {
-						x: new Date().getTime(),
+						x: zoompanxaxismax,
 						y: getLimit(chartData,'y','max',false)+getLimit(chartData,'y','max',false)*0.1
 					},
 				},
@@ -183,11 +186,11 @@ function Draw_Chart(txtchartname,txttitle,txtunity,bordercolourname,backgroundco
 					drag: DragZoom,
 					mode: 'xy',
 					rangeMin: {
-						x: new Date().getTime() - (factor * numunitx),
+						x: chartxaxismin,
 						y: getLimit(chartData,'y','min',false) - Math.sqrt(Math.pow(getLimit(chartData,'y','min',false),2))*0.1
 					},
 					rangeMax: {
-						x: new Date().getTime(),
+						x: zoompanxaxismax,
 						y: getLimit(chartData,'y','max',false)+getLimit(chartData,'y','max',false)*0.1
 					},
 					speed: 0.1

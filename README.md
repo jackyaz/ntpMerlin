@@ -2,7 +2,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1bc89c12c4bf44b49b28161f328e49b0)](https://www.codacy.com/app/jackyaz/ntpMerlin?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/ntpMerlin&amp;utm_campaign=Badge_Grade)
 ![Shellcheck](https://github.com/jackyaz/ntpmerlin/actions/workflows/shellcheck.yml/badge.svg)
 
-## v3.4.2
+## v3.4.3
 ### Updated on 2021-06-20
 ## About
 ntpMerlin implements an NTP time server for AsusWRT Merlin with charts for daily, weekly and monthly summaries of performance. A choice between ntpd and chrony is available.
