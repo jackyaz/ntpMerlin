@@ -28,7 +28,7 @@
 ### Start of script variables ###
 readonly SCRIPT_NAME="ntpMerlin"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z' | sed 's/d//')
-readonly SCRIPT_VERSION="v3.4.3"
+readonly SCRIPT_VERSION="v3.4.4"
 SCRIPT_BRANCH="master"
 SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
@@ -987,7 +987,7 @@ WriteSql_ToFile(){
 			echo ".mode csv"
 			echo ".headers on"
 			echo ".output ${5}_${6}.htm"
-			echo "SELECT '$1' Metric,Min(strftime('%s',datetime([Timestamp],'unixepoch','start of day'))) Time,IFNULL(printf('%f',Avg($1)),'NaN') Value FROM $2 WHERE ([Timestamp] > strftime('%s',datetime($timenow,'unixepoch','start of day','+1 day','-$maxcount day'))) GROUP BY strftime('%m',datetime([Timestamp],'unixepoch')),strftime('%d',datetime([Timestamp],'unixepoch')) ORDER BY [Timestamp] DESC;"
+			echo "SELECT '$1' Metric,Max(strftime('%s',datetime([Timestamp],'unixepoch','localtime','start of day','utc'))) Time,IFNULL(printf('%f',Avg($1)),'NaN') Value FROM $2 WHERE ([Timestamp] > strftime('%s',datetime($timenow,'unixepoch','localtime','start of day','utc','+1 day','-$maxcount day'))) GROUP BY strftime('%m',datetime([Timestamp],'unixepoch')),strftime('%d',datetime([Timestamp],'unixepoch','localtime')) ORDER BY [Timestamp] DESC;"
 		} > "$7"
 	fi
 }
@@ -1196,7 +1196,7 @@ Generate_LastXResults(){
 Reset_DB(){
 	SIZEAVAIL="$(df -P -k "$SCRIPT_STORAGE_DIR" | awk '{print $4}' | tail -n 1)"
 	SIZEDB="$(ls -l "$SCRIPT_STORAGE_DIR/ntpdstats.db" | awk '{print $5}')"
-	if [ "$SIZEDB" -gt "$SIZEAVAIL" ]; then
+	if [ "$SIZEDB" -gt "$((SIZEAVAIL*1024))" ]; then
 		Print_Output true "Database size exceeds available space. $(ls -lh "$SCRIPT_STORAGE_DIR/ntpdstats.db" | awk '{print $5}')B is required to create backup." "$ERR"
 		return 1
 	else
