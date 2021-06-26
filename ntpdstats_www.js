@@ -640,7 +640,6 @@ function update_status(){
 	$j.ajax({
 		url: '/ext/ntpmerlin/detect_update.js',
 		dataType: 'script',
-		timeout: 3000,
 		error:	function(xhr){
 			setTimeout(update_status,1000);
 		},
@@ -685,7 +684,6 @@ function update_ntpstats(){
 	$j.ajax({
 		url: '/ext/ntpmerlin/detect_ntpmerlin.js',
 		dataType: 'script',
-		timeout: 1000,
 		error: function(xhr){
 			setTimeout(update_ntpstats,1000);
 		},
@@ -770,7 +768,6 @@ function get_statstitle_file(){
 	$j.ajax({
 		url: '/ext/ntpmerlin/ntpstatstext.js',
 		dataType: 'script',
-		timeout: 3000,
 		error: function(xhr){
 			setTimeout(get_statstitle_file,1000);
 		},
@@ -784,7 +781,6 @@ function get_lastx_file(){
 	$j.ajax({
 		url: '/ext/ntpmerlin/lastx.htm',
 		dataType: 'text',
-		timeout: 3000,
 		error: function(xhr){
 			setTimeout(get_lastx_file,1000);
 		},
