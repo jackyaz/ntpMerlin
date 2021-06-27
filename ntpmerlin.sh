@@ -1032,11 +1032,11 @@ Get_TimeServer_Stats(){
 		tmpfile=/tmp/chrony-stats.$$
 		chronyc tracking > "$tmpfile"
 		
-		[ -n "$(grep "Last offset" "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}')" ] && NOFFSET=$(grep Last "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}') || NOFFSET=0
-		[ -n "$(grep Frequency "$tmpfile" | awk 'BEGIN{FS=" "}{print $3}')" ] && NFREQ=$(grep Frequency "$tmpfile" | awk 'BEGIN{FS=" "}{print $3}') || NFREQ=0
-		[ -n "$(grep System "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}')" ] && NSJIT=$(grep System "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}') || NSJIT=0
-		[ -n "$(grep Skew "$tmpfile" | awk 'BEGIN{FS=" "}{print $3}')" ] && NWANDER=$(grep Skew "$tmpfile" | awk 'BEGIN{FS=" "}{print $3}') || NWANDER=0
-		[ -n "$(grep dispersion "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}')" ] && NDISPER=$(grep dispersion "$tmpfile" | awk 'BEGIN{FS=" "}{print $4}') || NDISPER=0
+		[ -n "$(grep "Last offset" "$tmpfile" | awk '{print $4}')" ] && NOFFSET=$(grep Last "$tmpfile" | awk '{print $4}') || NOFFSET=0
+		[ -n "$(grep Frequency "$tmpfile" | awk '{print $3}')" ] && NFREQ=$(grep Frequency "$tmpfile" | awk '{print $3}') || NFREQ=0
+		[ -n "$(grep System "$tmpfile" | awk '{print $4}')" ] && NSJIT=$(grep System "$tmpfile" | awk '{print $4}') || NSJIT=0
+		[ -n "$(grep Skew "$tmpfile" | awk '{print $3}')" ] && NWANDER=$(grep Skew "$tmpfile" | awk '{print $3}') || NWANDER=0
+		[ -n "$(grep dispersion "$tmpfile" | awk '{print $4}')" ] && NDISPER=$(grep dispersion "$tmpfile" | awk '{print $4}') || NDISPER=0
 		
 		NOFFSET="$(echo "$NOFFSET" | awk '{printf ($1*1000)}')"
 		NSJIT="$(echo "$NSJIT" | awk '{printf ($1*1000)}')"
