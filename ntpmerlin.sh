@@ -1884,7 +1884,9 @@ case "$1" in
 	;;
 	service_event)
 		if [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME_LOWER" ]; then
+			rm -f /tmp/detect_ntpmerlin.js
 			Check_Lock
+			sleep 3
 			Get_TimeServer_Stats
 			Clear_Lock
 			exit 0
