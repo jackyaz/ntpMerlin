@@ -717,7 +717,7 @@ function UpdateStats(){
 	document.getElementById('ntpupdate_text').innerHTML = 'Retrieving timeserver stats';
 	showhide('imgNTPUpdate',true);
 	showhide('ntpupdate_text',true);
-	setTimeout(update_ntpstats,2000);
+	setTimeout(update_ntpstats,5000);
 }
 
 function SaveConfig(){
