@@ -7,7 +7,7 @@ logger -st timeserverd "Waiting for NTP to sync before starting..."
 ntpwaitcount=0
 while [ "$(nvram get ntp_ready)" -eq 0 ] && [ "$ntpwaitcount" -lt 600 ]; do
 	ntpwaitcount="$((ntpwaitcount + 30))"
-	Print_Output true "Waiting for NTP to sync..." "$WARN"
+	logger -st timeserverd "Waiting for NTP to sync..."
 	sleep 30
 done
 
